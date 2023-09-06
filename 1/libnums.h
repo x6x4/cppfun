@@ -1,18 +1,21 @@
 #pragma once
 
-//  Library for operations with numbers
-
-//  input-output stream library
 #include <iostream>
-//  min-max values library
 #include <limits>
-//  string library
-#include <cstring>
+#include <cstring> 
 
 
-#define TYPE_MAX std::numeric_limits<T>::max() 
-#define TYPE_MIN std::numeric_limits<T>::min()
-#define BETWEEN(min, num, max) (num >= min && num <= max)
+//----------------  Library for operations with numbers  ----------------//
+
+
+template <typename T>
+constexpr T MAX() { return std::numeric_limits<T>::max(); }
+template <typename T>
+constexpr T MIN() { return std::numeric_limits<T>::min(); }
+
+template <typename T>
+constexpr bool BETWEEN(T min, T num, T max) { return num >= min && num <= max; }
+
 
 namespace Numbers {
 
@@ -20,7 +23,7 @@ namespace Numbers {
     template <typename T> 
 
     //  default values are TYPE_MIN and TYPE_MAX
-    T get_num (T min = TYPE_MIN, T max = TYPE_MAX) {
+    T get_num (T min = MIN<T>(), T max = MAX<T>()) {
 
         T num;
 
@@ -36,14 +39,12 @@ namespace Numbers {
             //  non-blocking error 
             else if (std::cin.fail()) {
                 std::cin.clear();
-                std::cin.ignore(TYPE_MAX, '\n');
+                std::cin.ignore(MAX<T>(), '\n');
                 std::cout << "Invalid output: try again" << std::endl;
             }
             
-            else if (BETWEEN(min, num, max))
+            else if (BETWEEN<T>(min, num, max))
                 return num;
-
-            else continue;
         }
     }
 }
