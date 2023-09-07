@@ -5,17 +5,15 @@
 int main () {
     
     sparse_matrix::Sparse_mx mx = {};
-    sparse_matrix::Sparse_mx& Mx = mx;
     sparse_matrix::Sparse_mx new_mx = {};
-    sparse_matrix::Sparse_mx& New_mx = new_mx;
 
     try {
         mx = sparse_matrix::Input();
         
-        new_mx = sparse_matrix::Create_modify(Mx);
+        new_mx = sparse_matrix::Create_modify(mx);
         
-        sparse_matrix::Output ("Source matrix", Mx);
-        sparse_matrix::Output ("Destination matrix", New_mx);
+        sparse_matrix::Output ("Source matrix", mx);
+        sparse_matrix::Output ("Destination matrix", new_mx);
     }
 
     catch(const std::bad_alloc& ba) { // в случае ошибок выделения памяти

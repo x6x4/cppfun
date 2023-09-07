@@ -64,24 +64,11 @@ namespace sparse_matrix {
 
             for (const auto& val : ln.second) {
 
-                if (!nonzero_sgn) {
-                    
-                    if (val.second > 0) 
-                        nonzero_sgn = 1; 
-                    if (val.second < 0) 
-                        nonzero_sgn = -1; 
-                }
+                if (!nonzero_sgn) nonzero_sgn = (val.second > 0) ? 1 : (-1) ;
+                
+                new_ln.push_back(val);
 
-                if (nonzero_sgn == 1 && val.second > 0)
-                    new_ln.push_back(val);
-
-                else if (nonzero_sgn == -1 && val.second < 0)
-                    new_ln.push_back(val);
-
-                else {
-                    new_ln.push_back(val);
-                    break;
-                }
+                if (nonzero_sgn * val.second < 0) break;
             }
 
             if (new_ln.size()) 
