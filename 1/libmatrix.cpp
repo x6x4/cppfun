@@ -12,30 +12,23 @@ namespace sparse_matrix {
         
         Sparse_mx mx;
 
-        try {
-            std::cout << "Enter number of lines: ";
-            mx.height = Numbers::get_num<int>();
+        std::cout << "Enter number of lines: ";
+        mx.height = Numbers::get_num<int>();
 
-            std::cout << "Enter number of items in line: ";
-            mx.width = Numbers::get_num<int>();
+        std::cout << "Enter number of items in line: ";
+        mx.width = Numbers::get_num<int>();
 
-            for (std::size_t i = 0; i < mx.height; i++) {
-                Sparse_line *ln = sparse_line::Input (mx.width);
-                if (ln) mx.m.push_back ({i, ln});
-            }
-
-            std::cout << std::endl;
+        for (std::size_t i = 0; i < mx.height; i++) {
+            Sparse_line ln = sparse_line::Input (mx.width);
+            if (ln.size()) mx.m.push_back ({i, ln});
         }
 
-        catch (...) { 
-            Erase (mx); 
-            throw; 
-        }
+        std::cout << std::endl;
 
         return mx;
     }
 
-    void Output (const char *msg, const Sparse_mx mx) noexcept {
+    void Output (const char *msg, const Sparse_mx &mx) noexcept {
 
         std::cout << msg << ":\n";
 
@@ -61,113 +54,77 @@ namespace sparse_matrix {
 
         Sparse_mx new_mx = {};
 
-        try {
+        std::size_t line_num = 0;
 
-            std::size_t line_num = 0;
+        for (const auto& ln : mx.m) {
 
-            for (const auto& ln : mx.m) {
+            Sparse_line new_ln {};
 
-                auto new_ln = new Sparse_line {};
+            int nonzero_sgn = 0;
 
-                int nonzero_sgn = 0;
+            for (const auto& val : ln.second) {
 
-                for (const auto& val : *ln.second) {
-
-                    if (!nonzero_sgn) {
-                        
-                        if (val.second > 0) 
-                            nonzero_sgn = 1; 
-                        if (val.second < 0) 
-                            nonzero_sgn = -1; 
-                    }
-
-                    if (nonzero_sgn == 1 && val.second > 0)
-                        new_ln->push_back(val);
-
-                    else if (nonzero_sgn == -1 && val.second < 0)
-                        new_ln->push_back(val);
-
-                    else {
-                        new_ln->push_back(val);
-                        break;
-                    }
+                if (!nonzero_sgn) {
+                    
+                    if (val.second > 0) 
+                        nonzero_sgn = 1; 
+                    if (val.second < 0) 
+                        nonzero_sgn = -1; 
                 }
 
-                if (new_ln && new_ln->size() == 0) {
-                    delete (new_ln);
-                    new_ln = nullptr;
-                }
+                if (nonzero_sgn == 1 && val.second > 0)
+                    new_ln.push_back(val);
 
-                if (new_ln) 
-                    new_mx.m.push_back ({line_num++, new_ln});
+                else if (nonzero_sgn == -1 && val.second < 0)
+                    new_ln.push_back(val);
+
+                else {
+                    new_ln.push_back(val);
+                    break;
+                }
             }
 
-            new_mx.height = line_num;
-            new_mx.width  = mx.width;
+            if (new_ln.size()) 
+                new_mx.m.push_back ({line_num++, new_ln});
         }
 
-        catch (...) { 
-            Erase (new_mx); 
-            throw; 
-        }
-        
+        new_mx.height = line_num;
+        new_mx.width  = mx.width;
+    
         return new_mx;
     }
 
     void Erase (Sparse_mx& mx) noexcept {
-        
-        for (const auto& ln : mx.m) 
-            if (ln.second) delete ln.second;
 
-        mx.m = {};
-        mx.height = 0;
-        mx.width = 0;
     }
 }
 
 namespace sparse_line {
 
-    Sparse_line *Input (std::size_t ln_width) {
+    Sparse_line Input (std::size_t ln_width) {
 
-        Sparse_line *ln = nullptr; 
+        Sparse_line ln = {}; 
 
-        try {
-            ln = new Sparse_line {};
+        std::cout << "Enter items in line: ";
 
-            std::cout << "Enter items in line: ";
+        for (std::size_t i = 0; i < ln_width; i++) {
 
-            for (std::size_t i = 0; i < ln_width; i++) {
-
-                int val = Numbers::get_num<int>();
-        
-                if (val) {
-                    List_pair pair = {i, val};
-                    ln->push_back (pair);
-                }
+            int val = Numbers::get_num<int>();
+    
+            if (val) {
+                List_pair pair = {i, val};
+                ln.push_back (pair);
             }
-
-            if (ln && ln->size() == 0) {
-                delete (ln);
-                ln = nullptr;
-            }
-        }
-
-        catch (...) { 
-            delete ln; 
-            ln = nullptr;
-            throw; 
         }
 
         return ln;
     }
 
-    void Output (Sparse_line *ln, std::size_t width) noexcept {
-
-        if (!ln) return;
+    void Output (Sparse_line ln, std::size_t width) noexcept {
 
         std::size_t cnt = 0;
 
-        for (const auto& val : *ln) {
+        for (const auto& val : ln) {
             for (; val.first > cnt; cnt++) 
                 std::cout << 0 << " ";
             cnt = val.first + 1;
