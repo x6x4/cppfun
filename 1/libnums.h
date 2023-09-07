@@ -19,10 +19,8 @@ constexpr bool BETWEEN(T min, T num, T max) { return num >= min && num <= max; }
 
 namespace Numbers {
 
-    //  Template function for generic number type. T is abstract type, nothing more.
     template <typename T> 
 
-    //  default values are TYPE_MIN and TYPE_MAX
     T get_num (T min = MIN<T>(), T max = MAX<T>()) {
 
         T num;

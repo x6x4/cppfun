@@ -1,7 +1,5 @@
 #pragma once
 
-#include <iostream>
-#include <utility>
 #include <vector>
 #include <list>
 
@@ -13,7 +11,7 @@ using List_pair = std::pair<std::size_t, int>;
 using Sparse_line = std::list<List_pair>;
 
 using Line_pair = std::pair<std::size_t, Sparse_line*>;
-using Sparse_matrix = std::vector<Line_pair>;
+using Sparse_matrix = std::list<Line_pair>;
 
 
 namespace sparse_matrix {
