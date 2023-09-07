@@ -3,6 +3,7 @@
 
 #include "libmatrix.h"
 #include "libnums.h"
+#include <cstddef>
 #include <iostream>
 
 
@@ -63,8 +64,7 @@ namespace sparse_matrix {
 
         try {
 
-            new_mx.height = mx.height;
-            new_mx.width  = mx.width;
+            std::size_t line_num = 0;
 
             for (const auto& ln : mx.m) {
 
@@ -76,9 +76,10 @@ namespace sparse_matrix {
 
                     if (!nonzero_sgn) {
                         
-                        if (val.second > 0) nonzero_sgn = 1; 
-                        if (val.second < 0) nonzero_sgn = -1; 
-
+                        if (val.second > 0) 
+                            nonzero_sgn = 1; 
+                        if (val.second < 0) 
+                            nonzero_sgn = -1; 
                     }
 
                     if (nonzero_sgn == 1 && val.second > 0)
@@ -87,8 +88,10 @@ namespace sparse_matrix {
                     else if (nonzero_sgn == -1 && val.second < 0)
                         new_ln->push_back(val);
 
-                    else 
+                    else {
+                        new_ln->push_back(val);
                         break;
+                    }
                 }
 
                 if (new_ln && new_ln->size() == 0) {
@@ -96,8 +99,12 @@ namespace sparse_matrix {
                     new_ln = nullptr;
                 }
 
-                if (new_ln) new_mx.m.push_back ({ln.first, new_ln});
+                if (new_ln) 
+                    new_mx.m.push_back ({line_num++, new_ln});
             }
+
+            new_mx.height = line_num;
+            new_mx.width  = mx.width;
         }
 
         catch (...) { 
