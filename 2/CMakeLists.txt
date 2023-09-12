@@ -7,8 +7,8 @@ project(1)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++20 -Wall -Wextra -Wpedantic")
 
-add_library(libmatrix.o libmatrix.h libmatrix.cpp)
+add_library(lib_res.o lib/lib_res.h lib/lib_res.cpp)
 
-link_libraries(libmatrix.o)
+link_libraries(lib_res.o)
 
-add_executable(main main.cpp)
+add_executable(main ui.cpp)
