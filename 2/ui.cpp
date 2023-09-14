@@ -4,11 +4,17 @@
 
 int main (void) {
 
-    Res res_a = {"A", 50, 70, 10};
-    Res res_b = {"A", 60, 110, 20};
-    Res res_c = res_a + res_b;
+    Res res_a {"A", 10, 20, 30};
+    Res res_b {"B", 40};
 
-    std::cout << res_c << std::endl;
+    std::cout << res_a << std::endl;
+    std::cout << res_b << std::endl;
+
+    Res res[] = {res_a, res_b};
+
+    Res_Table t {res, 2};
+
+    std::cout << t << std::endl;
 
     try {
 

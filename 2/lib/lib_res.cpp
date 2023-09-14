@@ -68,9 +68,7 @@ void Res_Table::operator+= (Res r) {
  */
 
 int Res_Table::check () noexcept {
-    if (vec.sz == 0)        return EMPTY; 
-    if (vec.sz == vec.cap)  return FULL;
-    else                    return PART;
+    return vec.check();
 }
 
 /**

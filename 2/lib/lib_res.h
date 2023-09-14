@@ -1,22 +1,39 @@
-
-#include <cstddef>
 #pragma once
 
+#include <cstddef>
 #include <string>
 #include <vector>
 #include <iostream>
 
 
+enum state {
+    EMPTY,
+    PART,
+    FULL
+};
+
+
 class Res {
+
 public:
-    std::string name  = "";
-    std::size_t cons  = 0;
-    std::size_t prod  = 0;
-    std::size_t price = 0;
 
-    //  constructors
+//  CONSTRUCTORS
+    
+    Res () {};  //  default
 
-    //  io
+    //  init
+
+    Res (std::string name, std::size_t cons, std::size_t prod, std::size_t price) : 
+                     name(name), cons(cons), prod(prod), price(price) {};
+    Res (std::string name, std::size_t price) : name(name), price(price) {};
+
+//  GETTERS
+
+
+//  SETTERS
+
+
+//  IO
 
     /*friend std::istream& operator>> (std::istream& is, const Res &r) { 
         is >> r.name >> r.cons >> r.price >> r.prod;
@@ -27,6 +44,9 @@ public:
         os << r.name << ' ' << r.cons << ' '<< r.prod << ' ' << r.price;
         return os;
     }
+
+
+//  OTHER
 
     //  join same resources
     Res operator+ (Res r);
@@ -39,40 +59,81 @@ public:
 
     //  multiply resource turnover 
     void operator* (std::size_t n);
+
+
+//  DEVELOPERS-ONLY
+
+//  gains access to fields
+friend class Res_Table;
+
+private:
+    //  fields
+    std::string name  = "(default)";
+    std::size_t cons  = 0;
+    std::size_t prod  = 0;
+    std::size_t price = 0;
+
 };
 
 template<typename T> 
 class Vector {
+
 public:
+
+    int check () noexcept {
+        if (sz == 0)    return EMPTY; 
+        if (sz == cap)  return FULL;
+        else            return PART;
+    }
+
+    Vector () {};
+    Vector (T* data, std::size_t sz) : data(data), cap(sz), sz(sz) {};
+
+    const T* begin () { return data; }
+    const T*   end () { return data + this->sz; }
+
+
+//  DEVELOPERS-ONLY
+
+private:
     T* data;
     std::size_t cap = 0;
     std::size_t sz  = 0; 
-
-    const T* begin () { return data; }
-    const T*   end () { return data + this->sz - 1; }
-    
 };
 
 
 class Res_Table {
 
-    std::pair<bool, Res> find (std::string name) noexcept;
-
 public:
-    Vector<Res> vec;
 
-    //  constructors
+//  CONSTRUCTORS
+
+    Res_Table () {};  //  default
+
+    //  init
+
+    Res_Table (Res *data, std::size_t sz) : vec(data, sz) {};
+
+    //  copy
+
+
+    //  move
+
+
+//  DESTRUCTOR
 
 
 
-    //  io
+//  IO
 
     friend std::ostream& operator<< (std::ostream& os, Res_Table &t) { 
         for (auto r : t.vec) {
-            os << r;
+            os << r << std::endl;
         }
         return os;
     }
+
+//  OTHER
 
     //  add resource
     void operator+= (Res r);
@@ -82,12 +143,6 @@ public:
 
     //  set resource name
     void set (std::string old_name, std::string new_name);
-
-    enum state {
-        EMPTY,
-        PART,
-        FULL
-    };
 
     //  check table state
     int check () noexcept;
@@ -100,5 +155,15 @@ public:
 
     //  multiply turnover for all resources
     void operator* (std::size_t n);
+
+
+//  DEVELOPERS-ONLY
+
+private:
+    //  fields
+    Vector<Res> vec;
+
+    //  methods
+    std::pair<bool, Res> find (std::string name) noexcept;
 };
 
