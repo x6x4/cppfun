@@ -1,22 +1,24 @@
 #include <iostream>
-#include "lib/lib_res.h"
+#include "lib/res.h"
 
 
 int main (void) {
 
     Res res_a {"A", 10, 20, 30};
     Res res_b {"B", 40};
-
-    std::cout << res_a << std::endl;
-    std::cout << res_b << std::endl;
-
-    Res res[] = {res_a, res_b};
-
-    Res_Table t {res, 2};
-
-    std::cout << t << std::endl;
+    Res res_c {"A", 80, 90, 50};
 
     try {
+
+    Res res_d = res_a + res_c;
+
+    std::cout << res_d << std::endl;
+    //std::cout << res_b << std::endl;
+
+    Res_Table t {res_a, res_b, res_c};
+    Res_Table t2 = t;
+
+    std::cout << t2 << std::endl;
 
     }
 
