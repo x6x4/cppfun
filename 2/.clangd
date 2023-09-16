@@ -1,0 +1,22 @@
+Diagnostics:
+  Suppress: -Wc++20-compat 
+  
+---
+Diagnostics:
+  Suppress: invalid_token_after_toplevel_declarator 
+
+---
+Diagnostics:
+  Suppress: bad_variable_name
+
+---
+Diagnostics:
+  Suppress: no_member
+ 
+---
+Diagnostics:
+  Suppress: expected_expression
+
+---
+Diagnostics:
+  Suppress: typename_nested_not_found

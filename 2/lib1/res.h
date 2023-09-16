@@ -1,20 +1,6 @@
 #pragma once
 
-#include <algorithm>
-#include <stdexcept>
-#include <string>
-#include <vector>
 #include <iostream>
-#include <compare>
-#include <fmt/core.h>
-#include <fmt/ranges.h>
-
-
-enum state {
-    EMPTY,
-    PART,
-    FULL
-};
 
 
 //  SIMPLE CLASS
@@ -145,7 +131,7 @@ public:
     * @brief       Increase turnover by the specified number of times
     * @param       n  Times 
     */
-    void operator* (int n) noexcept;
+    Res operator* (int n) noexcept;
 
 //  DEVELOPERS-ONLY
 
@@ -167,140 +153,13 @@ Res operator+ (const Res &r1, const Res &r2);
  * @param       r2  Second resource 
  * @return      less, greater or equivalent
  */
-//std::weak_ordering operator<=> (const Res& r1, const Res& r2) noexcept;
+std::weak_ordering operator<=> (const Res& r1, const Res& r2) noexcept;
 
-
-//  VECTOR
-
-template<typename T> 
-class Vector {
-
-public:
-
-    int check () noexcept {
-        if (sz == 0)    return EMPTY; 
-        if (sz == cap)  return FULL;
-        else            return PART;
-    }
-
-    Vector () {};
-    Vector (std::initializer_list<T> lst) 
-            : data(new T[lst.size()]), cap(lst.size()), sz(lst.size()) {
-        std::copy(lst.begin(), lst.end(), data);
-    };
-    Vector (Vector &v) {
-        data = new T[v.cap];
-        std::copy(v.begin(), v.end(), data);
-    };
-
-
-    void resize () {
-        if (check() == FULL) {
-            T* new_data = new T[cap];
-            std::move (begin(), end(), new_data);
-            delete[] data;
-        }
-    }
-
-    ~Vector() { delete[] data; }
-
-    T* begin () { return data; }
-    T*   end () { return data + this->sz; }
-
-    void swap (Vector<T> &v2) {
-        std::swap (data, v2.data);
-        std::swap (cap, v2.cap);
-        std::swap (sz, v2.sz);
-        std::cout << "Vec" << std::endl;
-    }
-
-//  DEVELOPERS-ONLY
-
-private:
-    T* data;
-    std::size_t cap = 0;
-    std::size_t sz  = 0; 
-};
-
-
-//  COMPLEX CLASS
-
-class Res_Table {
-
-public:
-
-//  CONSTRUCTORS
-
-    Res_Table () {};  //  default
-
-    //  init
-
-    Res_Table (std::initializer_list<Res> data) : vec(data) {};
-
-    //  copy
-
-    Res_Table (Res_Table &t) : vec (t.vec) {};
-
-    auto operator= (Res_Table &t) 
-    {
-        swap (t);
-        std::cout << "vec";
-        return *this;
-    }
-
-    void swap (Res_Table &t) {
-        vec.Vector<Res>::swap(t.vec);
-    }
-
-    //  move
-
-    //Res_Table (const Res_Table &&t);
-    //Res_Table &operator= (const Res_Table &&t);
-
-//  DESTRUCTOR
-
-    ~Res_Table () = default;
-
-//  IO
-
-    friend std::ostream& operator<< (std::ostream& os, Res_Table &t) { 
-        for (auto r : t.vec) {
-            os << r << std::endl;
-        }
-        return os;
-    }
-
-//  OTHER
-
-    //  add resource
-    auto operator+= (Res r);
-
-    //  get resource by name
-    auto operator[] (std::string name);
-
-    //  set resource name
-    void set (std::string old_name, std::string new_name);
-
-    //  check table state
-    int check () noexcept;
-
-    //  delete resource
-    void del (Res r);
-
-    //  calculate total week profit for all resources
-    std::size_t get_profit ();
-
-    //  multiply turnover for all resources
-    void operator* (std::size_t n);
-
-
-//  DEVELOPERS-ONLY
-
-private:
-    //  fields
-    Vector<Res> vec;
-
-    //  methods
-    std::pair<bool, Res> find (std::string name) noexcept;
-};
-
+/**
+ * @brief       Check if two resources are equal 
+                (have same fields values for all fields)
+ * @param       r1  First resource
+ * @param       r2  Second resource 
+ * @return      true/false
+ */
+bool equal (const Res &r1, const Res &r2);

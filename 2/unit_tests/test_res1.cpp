@@ -1,8 +1,7 @@
-#include <compare>
 #define CATCH_CONFIG_MAIN
 
 #include <sstream>
-#include "../lib/res.h"
+#include "../lib1/res.h"
 #include <catch2/catch.hpp>
 
 
@@ -100,7 +99,7 @@ TEST_CASE("Resource Other") {
         Res s_inval;
         REQUIRE_THROWS(s_inval = r3 + r1);
     }
-/*    SECTION("COMPARE") {
+    SECTION("COMPARE") {
         Res r1 ("A", 5, 7, 10);
         Res r2 ("B", 2, 6, 4);
 
@@ -112,7 +111,7 @@ TEST_CASE("Resource Other") {
         Res r3 {"B", 7, 2, 5};
         auto b2 = r2 <=> r3;
         REQUIRE(b2 == std::weak_ordering::equivalent);
-    }*/
+    }
     SECTION("PROFIT") {
         Res r1 ("A", 5, 7, 10);
         REQUIRE(r1.get_profit() == 140);

@@ -1,5 +1,6 @@
 #include <iostream>
-#include "lib/res.h"
+#include "lib1/res.h"
+#include "lib2/res_table.h"
 
 
 int main (void) {
