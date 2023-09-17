@@ -18,6 +18,12 @@ public:
     Res () {}; 
 
     /**
+    * @brief       Initing resource constructor (name)
+    * @return      Created resource 
+    */
+    Res (std::string name) : name(name) {};
+
+    /**
     * @brief       Initing resource constructor (all fields)
     * @param       name   Resource name
     * @param       cons   Resource consumption
@@ -152,6 +158,15 @@ private:
  * @exception   std::logic_error  In cases of negative cons, prod or price.
  */
 Res operator+ (const Res &r1, const Res &r2);
+
+/**
+ * @brief       Compare two resources by name
+ * @param       r1  First resource
+ * @param       r2  Second resource 
+ * @return      true/false
+ */
+bool operator< (const Res& r1, const Res& r2) noexcept;
+
 /**
  * @brief       Compare two resources by name
  * @param       r1  First resource

@@ -1,5 +1,6 @@
 #include "res_table.h"
 #include <algorithm>
+#include <vector>
 
 
 //  CLASS Res_Table
@@ -17,10 +18,8 @@ int Res_Table::get_profit () noexcept {
 
 Res &Res_Table::operator[](std::string name) {
     auto p = find (name);
-    if (p.first)
-        return p.second;
-    else 
-        throw std::runtime_error ("Name not found");
+    if (p.first) return *p.second;
+    else throw std::runtime_error ("Name not found");
 }
 
 void Res_Table::rename (std::string old_name, std::string new_name) {
@@ -44,15 +43,17 @@ Res_Table Res_Table::operator* (int n) noexcept {
  * @exception   std::runtime_error  Duplicate resource
  */
 Res_Table &Res_Table::operator+= (Res r) {
-
-/*    vec.resize();
+    
+    vec.inc_size();
+    vec.resize();
 
     auto p = find (r.get_name());
     if (p.first)
-        throw std::runtime_error ("Duplicate resource");
+        *p.second = *p.second + r;
     else {
-        ;
-    }*/
+        std::move (p.second, vec.end() - 1, p.second + 1);
+        *p.second = r;
+    }
 
     return *this;
 }

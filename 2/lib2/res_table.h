@@ -4,6 +4,7 @@
 #include "../lib1/res.h"
 #include <algorithm>
 #include <utility>
+#include <compare>
 
 
 //  COMPLEX CLASS
@@ -148,9 +149,9 @@ private:
     * @param       name  Resource name
     * @return      Pair <is_found, resouce ref>
     */
-    std::pair<bool, Res&> find (std::string name) noexcept {
-        auto r = std::lower_bound(vec.begin(), vec.end(), name, operator<=>);
-        std::pair<bool, Res&> p = std::make_pair(r != std::end(vec), r);
+    std::pair<bool, Res*> find (std::string name) noexcept {
+        auto r = std::lower_bound(vec.begin(), vec.end(), name, operator<);
+        std::pair<bool, Res*> p = {r != std::end(vec) && (r->get_name() == name), r};
         return p;
     };
 };

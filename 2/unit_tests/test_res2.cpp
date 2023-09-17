@@ -1,3 +1,4 @@
+#include <iostream>
 #define CATCH_CONFIG_MAIN
 
 #include <sstream>
@@ -126,11 +127,14 @@ TEST_CASE("Resource Other") {
     SECTION("GET_BY_NAME") {
         Res r1 ("A", 5, 7, 10);
         Res r2 ("B", 2, 6, 4);
-        Res r3 ("C", 4, 3, 8);
+        Res r3 ("D", 4, 3, 8);
         Res_Table t = {r1, r2, r3};
 
         REQUIRE(equal(t["A"], r1));
+        REQUIRE(equal(t["B"], r2));
+        REQUIRE(equal(t["D"], r3));
         REQUIRE_THROWS(t["a"]);
+        REQUIRE_THROWS(t["C"]);
     }
 
     SECTION("RENAME") {
@@ -141,9 +145,24 @@ TEST_CASE("Resource Other") {
         Res r4 ("D", 2, 6, 4);
 
         t.rename("B", "D");
-        REQUIRE(equal(t["D"], r4));
+        REQUIRE(equal(t["D"], r4)); 
         REQUIRE_THROWS(t.rename("B", "D"));
     }
 
-    
+    SECTION("ADD") {
+        Res r1 ("A", 5, 7, 10);
+        Res r2 ("C", 7, 1, 9);
+        Res r3 ("D", 4, 3, 8);
+        Res_Table t = {r1, r2};
+
+        t+=r3;
+        REQUIRE(t.size() == 3);
+        REQUIRE(equal(t["C"], r3));
+
+        Res r4 ("B", 2, 6, 4); 
+        t+=r4;
+        REQUIRE(t.size() == 4);
+        REQUIRE(equal(t["B"], r4));
+
+    }
 }

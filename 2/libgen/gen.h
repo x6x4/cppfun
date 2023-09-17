@@ -55,13 +55,16 @@ public:
 
     int state () noexcept {
         if (sz == 0)    return EMPTY; 
-        if (sz == cap)  return FULL;
+        if (sz >= cap)  return FULL;
         else            return PART;
     }
 
+    void inc_size () {sz++; }
+
     void resize () {
         if (state() == FULL) {
-            T* new_data = new T[cap*2];
+            cap*=2;
+            T* new_data = new T[cap];
             std::move (begin(), end(), new_data);
             delete[] data;
         }

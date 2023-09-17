@@ -67,6 +67,9 @@ Res operator+ (const Res &r1, const Res &r2) {
     return sum;
 }
 
+bool operator< (const Res& r1, const Res& r2) noexcept 
+        { return r1.get_name() < r2.get_name(); }
+
 std::weak_ordering operator<=> (const Res& r1, const Res& r2) noexcept {
     if (r1.get_name() < r2.get_name())
         return std::weak_ordering::less;
