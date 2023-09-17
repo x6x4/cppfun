@@ -1,82 +1,9 @@
 #pragma once
 
+#include "../libgen/gen.h"
 #include "../lib1/res.h"
-
-enum state {
-    EMPTY,
-    PART,
-    FULL
-};
-
-//  VECTOR
-
-template<typename T> 
-class Vector {
-
-public:
-
-    T* data = nullptr;
-    std::size_t cap = 0;
-    std::size_t sz  = 0; 
-
-//  CONSTRUCTORS
-
-    Vector () {};
-
-    //  copy
-
-    Vector (std::initializer_list<T> lst) 
-            : data(new T[lst.size()]), cap(lst.size()), sz(lst.size()) {
-        std::copy(lst.begin(), lst.end(), data);
-    };
-
-    Vector (const Vector &v) : data (new T[v.cap]), cap (v.cap), sz (v.sz) {
-        std::copy (v.begin(), v.end(), data);
-    };
-
-    //  move
-
-    Vector (Vector &&v) noexcept {
-        swap (v);
-        ~v;
-    }
-
-    void swap (Vector<T> &v2) {
-        std::swap (data, v2.data);
-        std::swap (cap, v2.cap);
-        std::swap (sz, v2.sz);
-    }
-
-//  DESTRUCTOR
-
-    ~Vector() { delete[] data; data = nullptr; cap = 0; sz = 0; }
-
-    int check () noexcept {
-        if (sz == 0)    return EMPTY; 
-        if (sz == cap)  return FULL;
-        else            return PART;
-    }
-
-    void resize () {
-        if (check() == FULL) {
-            T* new_data = new T[cap];
-            std::move (begin(), end(), new_data);
-            delete[] data;
-        }
-    }
-
-
-
-    T* begin () const { return data; }
-    T*   end () const { return data + this->sz; }
-
-
-
-//  DEVELOPERS-ONLY
-
-private:
-
-};
+#include <algorithm>
+#include <utility>
 
 
 //  COMPLEX CLASS
@@ -85,34 +12,102 @@ class Res_Table {
 
 public:
 
-    Vector<Res> vec;
+    Vector<Res> vec = {};
 
 //  CONSTRUCTORS
 
+    /**
+    * @brief       Default resource table constructor
+    * @return      Created resource table
+    */
     Res_Table () {};
-    Res_Table (std::initializer_list<Res> data) : vec(data) {};
 
-    //  copy
+    /**
+    * @brief       Initing resource table constructor
+    * @param       data   Initializer list of resources
+    * @return      Created resource table
+    */
+    Res_Table (const std::initializer_list<Res> &data) noexcept : vec(data) {};
 
-    Res_Table (const Res_Table &t) : vec (t.vec) {};
-    auto operator= (const Res_Table &t) {};
+    /**
+    * @brief       Copying resource table constructor
+    * @param       t   Table to copy from
+    * @return      Copy of t
+    */
+    Res_Table (const Res_Table &t) noexcept : vec (t.vec) {};
+    /**
+    * @brief       Copy assignment operator
+    * @param       t   Table to copy from
+    * @return      Copy of t
+    */
+    auto operator= (const Res_Table &t) noexcept {};
 
-    //  move
-
+    /**
+    * @brief       Moving resource table constructor
+    * @param       t   Table to move 
+    * @return      Copy of t
+    */
     Res_Table (Res_Table &&t) noexcept { 
-        swap (t); 
-        t.vec.~Vector<Res>(); 
+        swap (t);
+        t.~Res_Table();
     }
-
+    /**
+    * @brief       Move assignment operator
+    * @param       t   Table to move
+    * @return      Copy of t
+    */
     auto operator= (Res_Table &&t) noexcept {};
         
-    void swap (Res_Table &t) {
-        vec.Vector<Res>::swap(t.vec);
-    }
-
 //  DESTRUCTOR
 
+    /**
+    * @brief       Default resource table destructor
+    */
     ~Res_Table() {};
+
+//  GETTERS
+
+    /**
+    * @brief   Check table state
+    * @return  Table state as integer
+    */   
+    int state () noexcept { return vec.state(); }
+
+    /**
+    * @brief       Get current table size.
+    * @return      Amount of resources in table
+    */
+    std::size_t size() noexcept { return vec.size(); }
+    /**
+    * @brief       Get week profit for all resources.
+    * @return      Total week profit 
+    */
+    int get_profit () noexcept;
+
+    /**
+    * @brief       Find resource by name
+    * @param       name  Resource name
+    * @return      Resource ref
+    * @exception   std::runtime_error Name not found
+    */
+    Res &operator[] (std::string name);
+
+//  SETTERS
+
+    /**
+    * @brief       Set resource name
+    * @param       old_name  Old resource name
+    * @param       new_name  New resource name
+    */
+    void rename (std::string old_name, std::string new_name);
+
+    /**
+    * @brief       Increase turnout for all resources 
+                   by the specified number of times
+    * @param       n  Times 
+    * @return      Temporary value - copy of changed table
+    */
+    Res_Table operator* (int n) noexcept;
 
 //  IO
 
@@ -125,7 +120,7 @@ public:
         return is;
     }
 
-    friend std::ostream& operator<< (std::ostream& os, Res_Table &t) { 
+    friend std::ostream& operator<< (std::ostream& os, Res_Table &t) noexcept { 
         for (auto r : t.vec) {
             os << r << std::endl;
         }
@@ -137,31 +132,26 @@ public:
     //  add resource
     Res_Table &operator+= (Res r);
 
-    //  get resource by name
-    auto operator[] (std::string name);
-
-    //  set resource name
-    void set (std::string old_name, std::string new_name);
-
-    //  check table state
-    int check () noexcept;
-
     //  delete resource
     void del (Res r);
-
-    //  calculate total week profit for all resources
-    int get_profit ();
-
-    //  multiply turnover for all resources
-    Res_Table operator* (int n);
-
 
 //  DEVELOPERS-ONLY
 
 private:
 
-
-    //  methods
-    std::pair<bool, Res> find (std::string name) noexcept;
+    void swap (Res_Table &t) {
+        vec.Vector<Res>::swap(t.vec);
+    }
+    
+    /**
+    * @brief       Find resource by name
+    * @param       name  Resource name
+    * @return      Pair <is_found, resouce ref>
+    */
+    std::pair<bool, Res&> find (std::string name) noexcept {
+        auto r = std::lower_bound(vec.begin(), vec.end(), name, operator<=>);
+        std::pair<bool, Res&> p = std::make_pair(r != std::end(vec), r);
+        return p;
+    };
 };
 

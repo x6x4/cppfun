@@ -53,24 +53,24 @@ Res &Res::set_price  (int price)  {
 
 Res operator+ (const Res &r1, const Res &r2) {
 
-    if (r1.name != r2.name) {
+    if (r1.get_name() != r2.get_name()) {
         throw std::logic_error ("Can't join distinct resources.");
     }
 
     Res sum;
 
-    sum.name = r1.name;
-    sum.cons = r1.cons + r2.cons;
-    sum.prod = r1.prod + r2.prod;
-    sum.price = (r1.price < r2.price) ? r1.price : r2.price;
+    sum.set_name(r1.get_name());
+    sum.set_cons(r1.get_cons() + r2.get_cons());
+    sum.set_prod(r1.get_prod() + r2.get_prod());
+    sum.set_price((r1.get_price() < r2.get_price()) ? r1.get_price() : r2.get_price());
 
     return sum;
 }
 
 std::weak_ordering operator<=> (const Res& r1, const Res& r2) noexcept {
-    if (r1.name < r2.name)
+    if (r1.get_name() < r2.get_name())
         return std::weak_ordering::less;
-    else if (r1.name > r2.name)
+    else if (r1.get_name() > r2.get_name())
         return std::weak_ordering::greater;
     else 
         return std::weak_ordering::equivalent;
@@ -87,6 +87,8 @@ Res Res::operator* (int n) noexcept {
 }
 
 bool equal (const Res &r1, const Res &r2) {
-    return r1.name == r2.name && r1.cons == r2.cons 
-            && r1.prod == r2.prod && r1.price == r2.price;
+    return r1.get_name() == r2.get_name() 
+        && r1.get_cons() == r2.get_cons()
+        && r1.get_prod() == r2.get_prod() 
+        && r1.get_price() == r2.get_price();
 }

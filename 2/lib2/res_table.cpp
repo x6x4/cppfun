@@ -1,98 +1,10 @@
 #include "res_table.h"
+#include <algorithm>
 
 
 //  CLASS Res_Table
 
-
-/**
- * @brief       Add resource to table
- * @param       r  Resource 
- * @exception   std::runtime_error  Duplicate resource
- */
-Res_Table &Res_Table::operator+= (Res r) {
-
-    vec.resize();
-
-    auto p = find (r.name);
-    if (p.first)
-        throw std::runtime_error ("Duplicate resource");
-    else 
-        ;
-
-    return *this;
-}
-
-/**
- * @brief   Check table state
- * @return  Table state as integer
- */
-
-int Res_Table::check () noexcept {
-    return vec.check();
-}
-
-/**
- * @brief       Find resource by name
- * @param       name  Resource name
- * @return      Pair <is_found, matching place>
- */
-std::pair<bool, Res> Res_Table::find (std::string name) noexcept {
-    /*auto range = std::equal_range(vec.begin(), vec.end(), name);
-    
-    std::pair<bool, Res> p;
-    p.second = *range.first;
-    p.first = !(range.first == range.second);
-
-    return p;*/
-}
-
-/**
- * @brief       Find resource by name
- * @param       name  Resource name
- * @return      Resource ref
- * @exception   std::runtime_error Name not found
- */
-
-auto Res_Table::operator[](std::string name) {
-    auto p = find (name);
-    if (p.first)
-        return p.second;
-    else 
-        throw std::runtime_error ("Name not found");
-}
-
-/**
- * @brief       Set resource name
- * @param       old_name  Old resource name
- * @param       new_name  New resource name
- */
-
-void Res_Table::set (std::string old_name, std::string new_name) {
-    auto p = (*this)[old_name];
-    p.name = new_name;
-}
-
-/**
- * @brief       Delete resource from table
- * @param       r  Resource 
- * @exception   std::runtime_error  Empty table
- */
-
-void Res_Table::del (Res r) {
-
-    if (check() == EMPTY)
-        throw std::runtime_error ("Empty table");
-
-    auto p = (*this)[r.name];
-
-}
-
-
-/**
- * @brief       Get week profit for all resources.
- */
-
-int Res_Table::get_profit () {
+int Res_Table::get_profit () noexcept {
 
     std::size_t sum = 0;
 
@@ -103,16 +15,59 @@ int Res_Table::get_profit () {
     return sum;
 }
 
-/**
- * @brief       Increase turnout for all resources 
-                by the specified number of times
- * @param       n  Times 
- */
-Res_Table Res_Table::operator* (int n) {
+Res &Res_Table::operator[](std::string name) {
+    auto p = find (name);
+    if (p.first)
+        return p.second;
+    else 
+        throw std::runtime_error ("Name not found");
+}
 
-    for (auto r : this->vec) {
+void Res_Table::rename (std::string old_name, std::string new_name) {
+    Res &r = (*this)[old_name];
+    r.set_name(new_name);
+}
+
+Res_Table Res_Table::operator* (int n) noexcept {
+
+    for (Res & r : vec) {
         r = r * n;
     }
 
     return *this; 
+}
+
+/**
+ * @brief       Add resource to table
+ * @param       r  Resource 
+ * @return      Changed table
+ * @exception   std::runtime_error  Duplicate resource
+ */
+Res_Table &Res_Table::operator+= (Res r) {
+
+/*    vec.resize();
+
+    auto p = find (r.get_name());
+    if (p.first)
+        throw std::runtime_error ("Duplicate resource");
+    else {
+        ;
+    }*/
+
+    return *this;
+}
+
+/**
+ * @brief       Delete resource from table
+ * @param       r  Resource 
+ * @exception   std::runtime_error  Empty table
+ */
+
+void Res_Table::del (Res r) {
+
+/*    if (state() == EMPTY)
+        throw std::runtime_error ("Empty table");
+
+    auto p = (*this)[r.get_name()];*/
+
 }

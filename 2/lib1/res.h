@@ -9,17 +9,16 @@ class Res {
 
 public:
 
-    std::string name  = "(default)";
-    int cons  = 0;
-    int prod  = 0;
-    int price = 0;
-
 //  CONSTRUCTORS
-    
+
+    /**
+    * @brief       Default resource constructor
+    * @return      Created resource 
+    */
     Res () {}; 
 
     /**
-    * @brief       Initing Res constructor (all fields)
+    * @brief       Initing resource constructor (all fields)
     * @param       name   Resource name
     * @param       cons   Resource consumption
     * @param       prod   Resource production
@@ -136,6 +135,12 @@ public:
 //  DEVELOPERS-ONLY
 
 private:
+
+    std::string name  = "(default)";
+    int cons  = 0;
+    int prod  = 0;
+    int price = 0;
+
     void check_fields ();
 };
 
