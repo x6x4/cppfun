@@ -1,4 +1,3 @@
-#include <iostream>
 #define CATCH_CONFIG_MAIN
 
 #include <sstream>
@@ -13,7 +12,6 @@ TEST_CASE("Resource Table Constructors") {
     
     SECTION("DefaultConstructor") {
         Res_Table t;
-        REQUIRE_THROWS(t.vec[0]);
         REQUIRE(t.size() == 0);
     }
 
@@ -65,22 +63,21 @@ TEST_CASE("Resource Table Constructors") {
 }
 
 TEST_CASE("Resource table IO") {
-    /*SECTION("INPUT") {
-        Res input ("A", 5, 7, 10);
-        std::stringstream in("B 6 8 9");
+    SECTION("INPUT") {
+        Res r1 ("A", 5, 7, 10);
+        Res r2 ("B", 2, 6, 4);
+        Res r3 ("C", 4, 3, 8);
+        
+        Res_Table input;
+        std::stringstream in("A 5 7 10\nB 2 6 4\nC 4 3 8");
         in >> input;
 
-        REQUIRE(input.get_name() == "B");
-        REQUIRE(input.get_cons() == 6);
-        REQUIRE(input.get_prod() == 8);
-        REQUIRE(input.get_price() == 9);
+        REQUIRE(input.size()==3);
+        REQUIRE(equal(input["A"], r1));
+        REQUIRE(equal(input["B"], r2));
+        REQUIRE(equal(input["C"], r3));
+    }
 
-
-        Res input2 ("A", 5, 7, 10);
-        std::stringstream in2("B -6 8 9");
-        
-        REQUIRE_THROWS(in2 >> input);
-    }*/
     SECTION("OUTPUT") {
         Res r1 ("A", 5, 7, 10);
         Res r2 ("B", 2, 6, 4);
@@ -94,34 +91,25 @@ TEST_CASE("Resource table IO") {
     }
 }
 
-TEST_CASE("Resource Other") {
+TEST_CASE("Resource table Getters") {
 
-    SECTION("PROFIT") {
+    SECTION("CHECK") {
+        Res_Table empty;
+        REQUIRE(empty.state() == EMPTY);
+
         Res r1 ("A", 5, 7, 10);
         Res r2 ("B", 2, 6, 4);
-        Res r3 ("C", 4, 3, 8);
+        Res r3 ("D", 4, 3, 8);
         Res_Table t = {r1, r2, r3};
-        REQUIRE(t.get_profit() == 196);
+        REQUIRE(t.state() == FULL);
 
-        Res r4 ("A", 8, 1, 10);
-        Res r5 ("B", 2, 5, 3);
-        Res_Table t2 = {r4, r5};
-        REQUIRE(t2.get_profit() == -427);
-    }
-    
-    SECTION("MULTIPLY") {
-        Res r1 ("A", 5, 7, 10);
-        Res r2 ("B", 2, 6, 4);
-        Res r3 ("C", 4, 3, 8);
-        Res_Table t = {r1, r2, r3};
+        t.del("A");
+        REQUIRE(t.state() == PART);
 
-        t = t*7;
-        REQUIRE(t.vec[0].get_cons() == 35);
-        REQUIRE(t.vec[0].get_prod() == 49);
-        REQUIRE(t.vec[1].get_cons() == 14);
-        REQUIRE(t.vec[1].get_prod() == 42);
-        REQUIRE(t.vec[2].get_cons() == 28);
-        REQUIRE(t.vec[2].get_prod() == 21);
+        t.del("B");
+        REQUIRE(t.state() == PART);
+        t.del("D");
+        REQUIRE(t.state() == EMPTY);
     }
 
     SECTION("GET_BY_NAME") {
@@ -137,6 +125,22 @@ TEST_CASE("Resource Other") {
         REQUIRE_THROWS(t["C"]);
     }
 
+    SECTION("PROFIT") {
+        Res r1 ("A", 5, 7, 10);
+        Res r2 ("B", 2, 6, 4);
+        Res r3 ("C", 4, 3, 8);
+        Res_Table t = {r1, r2, r3};
+        REQUIRE(t.get_profit() == 196);
+
+        Res r4 ("A", 8, 1, 10);
+        Res r5 ("B", 2, 5, 3);
+        Res_Table t2 = {r4, r5};
+        REQUIRE(t2.get_profit() == -427);
+    }
+}
+
+TEST_CASE("Resource table Setters") {
+
     SECTION("RENAME") {
         Res r1 ("A", 5, 7, 10);
         Res r2 ("B", 2, 6, 4);
@@ -149,7 +153,37 @@ TEST_CASE("Resource Other") {
         REQUIRE_THROWS(t.rename("B", "D"));
     }
 
+    SECTION("MULTIPLY") {
+        Res r1 ("A", 5, 7, 10);
+        Res r2 ("B", 2, 6, 4);
+        Res r3 ("C", 4, 3, 8);
+        Res_Table t = {r1, r2, r3};
+
+        t = t*7;
+        REQUIRE(t.vec[0].get_cons() == 35);
+        REQUIRE(t.vec[0].get_prod() == 49);
+        REQUIRE(t.vec[1].get_cons() == 14);
+        REQUIRE(t.vec[1].get_prod() == 42);
+        REQUIRE(t.vec[2].get_cons() == 28);
+        REQUIRE(t.vec[2].get_prod() == 21);
+    }
+
+}
+
+TEST_CASE("Resource table Other") {
+    
     SECTION("ADD") {
+        Res_Table empty;
+        Res r ("R1", 8, 5, 4);
+        Res rr ("R2", 80, 50, 40);
+        empty+=r;
+        REQUIRE(empty.size() == 1);
+        REQUIRE(equal(empty["R1"], r));
+        empty+=rr;
+        REQUIRE(empty.size() == 2);
+        REQUIRE(equal(empty["R1"], r));
+        REQUIRE(equal(empty["R2"], rr));
+
         Res r1 ("A", 5, 7, 10);
         Res r2 ("C", 7, 1, 9);
         Res r3 ("D", 4, 3, 8);
@@ -157,12 +191,45 @@ TEST_CASE("Resource Other") {
 
         t+=r3;
         REQUIRE(t.size() == 3);
-        REQUIRE(equal(t["C"], r3));
+        REQUIRE(equal(t["A"], r1));
+        REQUIRE(equal(t["C"], r2));
+        REQUIRE(equal(t["D"], r3));
 
-        Res r4 ("B", 2, 6, 4); 
+        Res r4 {"C", 8, 3, 10};
+        Res r5 {"C", 15, 4, 9};
         t+=r4;
-        REQUIRE(t.size() == 4);
-        REQUIRE(equal(t["B"], r4));
+        REQUIRE(t.size() == 3);
+        REQUIRE(equal(t["C"], r5));
 
+        Res r6 ("B", 2, 6, 4); 
+        t+=r6;
+        REQUIRE(t.size() == 4);
+        REQUIRE(equal(t["A"], r1));
+        REQUIRE(equal(t["B"], r6));
+        REQUIRE(equal(t["C"], r5));
+        REQUIRE(equal(t["D"], r3));
+    }
+
+    SECTION("DELETE") {
+        Res_Table empty; 
+        REQUIRE_THROWS(empty.del("B"));  
+
+        Res r1 ("A", 5, 7, 10);
+        Res r2 ("C", 7, 1, 9);
+        Res r3 ("D", 4, 3, 8);
+        Res_Table t = {r1, r2, r3};     
+        REQUIRE_THROWS(t.del("B"));
+        t.del("C");
+        REQUIRE(t.size() == 2);
+        REQUIRE_THROWS(t["C"]);
+        REQUIRE(equal(t["A"], r1));
+        REQUIRE(equal(t["D"], r3));
+        t.del("D");
+        REQUIRE(t.size() == 1);
+        REQUIRE_THROWS(t["D"]);
+        REQUIRE(equal(t["A"], r1));
+        t.del("A");
+        REQUIRE(t.size() == 0);
+        REQUIRE_THROWS(t["A"]);
     }
 }

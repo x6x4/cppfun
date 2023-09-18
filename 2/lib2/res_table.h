@@ -3,6 +3,7 @@
 #include "../libgen/gen.h"
 #include "../lib1/res.h"
 #include <algorithm>
+#include <cstdlib>
 #include <utility>
 #include <compare>
 
@@ -112,15 +113,23 @@ public:
 
 //  IO
 
+    /**
+    * @brief       Input table
+    * @return      Input stream ref
+    */
     friend std::istream& operator>> (std::istream& is, Res_Table &t) { 
         Res r;
         while (is.good()) {
             is >> r;
-            //t += r;
+            t += r;
         }
         return is;
     }
 
+    /**
+    * @brief       Output table
+    * @return      Output stream ref
+    */
     friend std::ostream& operator<< (std::ostream& os, Res_Table &t) noexcept { 
         for (auto r : t.vec) {
             os << r << std::endl;
@@ -130,11 +139,21 @@ public:
 
 //  OTHER
 
-    //  add resource
+    /**
+    * @brief       Add resource to table. 
+                   IF DUPLICATE: adds new resource to current. 
+    * @param       r  Resource 
+    * @return      Changed table
+    */
     Res_Table &operator+= (Res r);
 
-    //  delete resource
-    void del (Res r);
+    /**
+    * @brief       Delete resource from table by name
+    * @param       name  Resource name
+    * @exception   std::runtime_error  Empty table
+    */
+    void del (std::string name);
+
 
 //  DEVELOPERS-ONLY
 
@@ -145,7 +164,7 @@ private:
     }
     
     /**
-    * @brief       Find resource by name
+    * @brief       Find matching resource position by name 
     * @param       name  Resource name
     * @return      Pair <is_found, resouce ref>
     */

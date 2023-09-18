@@ -5,6 +5,8 @@
 
 int main (void) {
 
+std::vector<int> a = {2,3,4};
+
     Res res_a {"A", 10, 20, 30};
     Res res_b {"B", 40};
     Res res_c {"A", 80, 90, 50};

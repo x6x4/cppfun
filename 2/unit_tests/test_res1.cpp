@@ -59,7 +59,7 @@ TEST_CASE("Resource Setters") {
 
 TEST_CASE("Resource IO") {
     SECTION("INPUT") {
-        Res input ("A", 5, 7, 10);
+        Res input;
         std::stringstream in("B 6 8 9");
         in >> input;
 
@@ -69,7 +69,7 @@ TEST_CASE("Resource IO") {
         REQUIRE(input.get_price() == 9);
 
 
-        Res input2 ("A", 5, 7, 10);
+        Res input2;
         std::stringstream in2("B -6 8 9");
         
         REQUIRE_THROWS(in2 >> input);
@@ -93,11 +93,16 @@ TEST_CASE("Resource Other") {
         REQUIRE(s.get_cons()  == 7);
         REQUIRE(s.get_prod()  == 13);
         REQUIRE(s.get_price() == 4);
-        
+        Res ss = r2 + r1;
+        REQUIRE(ss.get_name()  == "A");
+        REQUIRE(ss.get_cons()  == 7);
+        REQUIRE(ss.get_prod()  == 13);
+        REQUIRE(ss.get_price() == 4);
 
         Res r3 {"B", 7, 2, 5};
         Res s_inval;
         REQUIRE_THROWS(s_inval = r3 + r1);
+        REQUIRE_THROWS(s_inval = r1 + r3);
     }
     SECTION("COMPARE") {
         Res r1 ("A", 5, 7, 10);

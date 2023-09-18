@@ -36,39 +36,32 @@ Res_Table Res_Table::operator* (int n) noexcept {
     return *this; 
 }
 
-/**
- * @brief       Add resource to table
- * @param       r  Resource 
- * @return      Changed table
- * @exception   std::runtime_error  Duplicate resource
- */
+
 Res_Table &Res_Table::operator+= (Res r) {
-    
-    vec.inc_size();
+
     vec.resize();
 
     auto p = find (r.get_name());
     if (p.first)
         *p.second = *p.second + r;
     else {
-        std::move (p.second, vec.end() - 1, p.second + 1);
-        *p.second = r;
+        vec.inc_size();
+        if (p.second) {
+            std::shift_right (p.second, vec.end(), 1);
+            *p.second = r;
+        }
     }
 
     return *this;
 }
 
-/**
- * @brief       Delete resource from table
- * @param       r  Resource 
- * @exception   std::runtime_error  Empty table
- */
+void Res_Table::del (std::string name) {
 
-void Res_Table::del (Res r) {
+    if (state() == EMPTY)
+        throw std::logic_error ("Empty table");
 
-/*    if (state() == EMPTY)
-        throw std::runtime_error ("Empty table");
+    Res &victim = (*this)[name];
 
-    auto p = (*this)[r.get_name()];*/
-
+    std::shift_left (&victim, vec.end(), 1);
+    vec.dec_size();
 }

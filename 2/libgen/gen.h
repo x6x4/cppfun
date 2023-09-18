@@ -1,9 +1,7 @@
 #pragma once
 
 #include <algorithm>
-#include <initializer_list>
 #include <stdexcept>
-
 
 enum state {
     EMPTY,
@@ -55,18 +53,20 @@ public:
 
     int state () noexcept {
         if (sz == 0)    return EMPTY; 
-        if (sz >= cap)  return FULL;
+        if (sz == cap)  return FULL;
         else            return PART;
     }
 
     void inc_size () {sz++; }
+    void dec_size () {sz--; }
 
     void resize () {
         if (state() == FULL) {
             cap*=2;
             T* new_data = new T[cap];
-            std::move (begin(), end(), new_data);
-            delete[] data;
+            std::move(begin(), end(), new_data);
+            delete [] data;
+            data = new_data;
         }
     }
 
@@ -83,8 +83,8 @@ public:
 
 private:
 
-    std::size_t cap = 0;
+    std::size_t cap = 0x10;
     std::size_t sz = 0;
-    T* data = nullptr;
+    T* data = new T[cap];
 };
 

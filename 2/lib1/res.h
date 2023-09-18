@@ -107,6 +107,7 @@ public:
     /**
     * @brief       Input in format 
     <name> <consumption> <prodiction> <price>
+    * @return      Input stream ref
     * @exception   std::invalid argument  In cases of negative cons, prod or price.
     */
     friend std::istream& operator>> (std::istream& is, Res &r) { 
@@ -118,6 +119,7 @@ public:
     /**
     * @brief       Output in format 
     <name> <consumption> <prodiction> <price>
+    * @return      Output stream ref
     */
     friend std::ostream& operator<< (std::ostream& os, const Res &r) noexcept { 
         os << r.name << ' ' << r.cons << ' '<< r.prod << ' ' << r.price;
