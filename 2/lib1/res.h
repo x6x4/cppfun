@@ -1,7 +1,8 @@
 #pragma once
 
+#include "../libgen/gen.h"
 #include <iostream>
-
+#include <compare>
 
 //  SIMPLE CLASS
 
@@ -16,12 +17,6 @@ public:
     * @return      Created resource 
     */
     Res () {}; 
-
-    /**
-    * @brief       Initing resource constructor (name)
-    * @return      Created resource 
-    */
-    Res (std::string name) : name(name) {};
 
     /**
     * @brief       Initing resource constructor (all fields)
@@ -111,20 +106,18 @@ public:
     * @exception   std::invalid argument  In cases of negative cons, prod or price.
     */
     friend std::istream& operator>> (std::istream& is, Res &r) { 
-        is >> r.name >> r.cons >> r.prod >> r.price;
-        r.check_fields();
+        try {
+            is >> r.name >> r.cons >> r.prod >> r.price;
+        }
+        catch (...) {
+            throw;
+        }
+
+        r.check_fields(); 
+        
         return is;
     }
 
-    /**
-    * @brief       Output in format 
-    <name> <consumption> <prodiction> <price>
-    * @return      Output stream ref
-    */
-    friend std::ostream& operator<< (std::ostream& os, const Res &r) noexcept { 
-        os << r.name << ' ' << r.cons << ' '<< r.prod << ' ' << r.price;
-        return os;
-    }
 
 //  OTHER
 
@@ -132,7 +125,7 @@ public:
     * @brief       Calculate resource week profit
     * @return      Resource week profit
     */
-    int get_profit () noexcept;
+    int get_profit () const noexcept;
 
     /**
     * @brief       Increase turnover by the specified number of times
@@ -151,6 +144,17 @@ private:
 
     void check_fields ();
 };
+
+
+/**
+* @brief       Output in format 
+<name> <consumption> <prodiction> <price>
+* @return      Output stream ref
+*/
+std::ostream& operator<< (std::ostream& os, const Res &r) noexcept { 
+    os << r.get_name() << ' ' << r.get_cons() << ' '<< r.get_prod() << ' ' << r.get_price();
+    return os;
+} 
 
 /**
  * @brief       Join two same resources

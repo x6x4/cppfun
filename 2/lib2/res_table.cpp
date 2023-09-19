@@ -5,7 +5,7 @@
 
 //  CLASS Res_Table
 
-int Res_Table::get_profit () noexcept {
+int Res_Table::get_profit () const noexcept {
 
     std::size_t sum = 0;
 
@@ -17,6 +17,12 @@ int Res_Table::get_profit () noexcept {
 }
 
 Res &Res_Table::operator[](std::string name) {
+    auto p = find (name);
+    if (p.first) return *p.second;
+    else throw std::runtime_error ("Name not found");
+}
+
+const Res &Res_Table::operator[](std::string name) const {
     auto p = find (name);
     if (p.first) return *p.second;
     else throw std::runtime_error ("Name not found");

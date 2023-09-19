@@ -79,7 +79,7 @@ std::weak_ordering operator<=> (const Res& r1, const Res& r2) noexcept {
         return std::weak_ordering::equivalent;
 };
 
-int Res::get_profit () noexcept {
+int Res::get_profit () const noexcept {
     return (this->prod - this->cons)*this->price*7;
 }
 

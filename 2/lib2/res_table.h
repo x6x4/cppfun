@@ -73,18 +73,18 @@ public:
     * @brief   Check table state
     * @return  Table state as integer
     */   
-    int state () noexcept { return vec.state(); }
+    int state () const noexcept { return vec.state(); }
 
     /**
     * @brief       Get current table size.
     * @return      Amount of resources in table
     */
-    std::size_t size() noexcept { return vec.size(); }
+    std::size_t size() const noexcept { return vec.size(); }
     /**
     * @brief       Get week profit for all resources.
     * @return      Total week profit 
     */
-    int get_profit () noexcept;
+    int get_profit () const noexcept;
 
     /**
     * @brief       Find resource by name
@@ -93,6 +93,7 @@ public:
     * @exception   std::runtime_error Name not found
     */
     Res &operator[] (std::string name);
+    const Res &operator[] (std::string name) const;
 
 //  SETTERS
 
@@ -126,16 +127,6 @@ public:
         return is;
     }
 
-    /**
-    * @brief       Output table
-    * @return      Output stream ref
-    */
-    friend std::ostream& operator<< (std::ostream& os, Res_Table &t) noexcept { 
-        for (auto r : t.vec) {
-            os << r << std::endl;
-        }
-        return os;
-    }
 
 //  OTHER
 
@@ -168,10 +159,22 @@ private:
     * @param       name  Resource name
     * @return      Pair <is_found, resouce ref>
     */
-    std::pair<bool, Res*> find (std::string name) noexcept {
-        auto r = std::lower_bound(vec.begin(), vec.end(), name, operator<);
+    std::pair<bool, Res*> find (std::string name) const noexcept {
+        auto r = std::lower_bound(vec.begin(), vec.end(), Res(name, 0), operator<);
         std::pair<bool, Res*> p = {r != std::end(vec) && (r->get_name() == name), r};
         return p;
     };
 };
+
+
+/**
+* @brief       Output table
+* @return      Output stream ref
+*/
+std::ostream& operator<< (std::ostream& os, Res_Table &t) noexcept { 
+    for (auto r : t.vec) {
+        os << r << std::endl;
+    }
+    return os;
+}
 

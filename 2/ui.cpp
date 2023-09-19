@@ -5,23 +5,7 @@
 
 int main (void) {
 
-std::vector<int> a = {2,3,4};
-
-    Res res_a {"A", 10, 20, 30};
-    Res res_b {"B", 40};
-    Res res_c {"A", 80, 90, 50};
-
     try {
-
-    Res res_d = res_a + res_c;
-
-    std::cout << res_d << std::endl;
-    //std::cout << res_b << std::endl;
-
-    Res_Table t {res_a, res_b, res_c};
-    Res_Table t2 = t;
-
-    std::cout << t2 << std::endl;
 
     }
 

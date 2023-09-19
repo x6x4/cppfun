@@ -60,19 +60,20 @@ TEST_CASE("Resource Setters") {
 TEST_CASE("Resource IO") {
     SECTION("INPUT") {
         Res input;
+        Res r {"B", 6, 8, 9};
         std::stringstream in("B 6 8 9");
         in >> input;
 
-        REQUIRE(input.get_name() == "B");
-        REQUIRE(input.get_cons() == 6);
-        REQUIRE(input.get_prod() == 8);
-        REQUIRE(input.get_price() == 9);
-
+        REQUIRE(equal (input, r));
 
         Res input2;
         std::stringstream in2("B -6 8 9");
-        
-        REQUIRE_THROWS(in2 >> input);
+        REQUIRE_THROWS(in2 >> input2);
+
+        Res input3;
+        std::stringstream in3("brrrrrrrrr");
+        //std::cout << input3;
+        REQUIRE_THROWS(in3 >> input3);     
     }
     SECTION("OUTPUT") {
         Res output ("A", 5, 7, 10);
@@ -107,15 +108,11 @@ TEST_CASE("Resource Other") {
     SECTION("COMPARE") {
         Res r1 ("A", 5, 7, 10);
         Res r2 ("B", 2, 6, 4);
-
-        auto b = r1 <=> r2;
-        REQUIRE(b == std::weak_ordering::less);
-        auto b1 = r2 <=> r1;
-        REQUIRE(b1 == std::weak_ordering::greater);
+        REQUIRE((r1 <=> r2 < 0));
+        REQUIRE((r2 <=> r1 > 0));
 
         Res r3 {"B", 7, 2, 5};
-        auto b2 = r2 <=> r3;
-        REQUIRE(b2 == std::weak_ordering::equivalent);
+        REQUIRE((r2 <=> r3 == 0));
     }
     SECTION("PROFIT") {
         Res r1 ("A", 5, 7, 10);

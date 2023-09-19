@@ -9,6 +9,8 @@ enum state {
     FULL
 };
 
+void check_cin ();
+
 
 //  VECTOR
 
@@ -45,13 +47,19 @@ public:
 
     ~Vector() { delete[] data; data = nullptr; cap = 0; sz = 0; }
 
+    const T &operator[] (std::size_t i) const { 
+        if (data == nullptr)
+            throw std::runtime_error ("Access to uninitialized data");
+        return *(data + i); 
+    }
+
     T &operator[] (std::size_t i) { 
         if (data == nullptr)
             throw std::runtime_error ("Access to uninitialized data");
         return *(data + i); 
     }
 
-    int state () noexcept {
+    int state () const noexcept {
         if (sz == 0)    return EMPTY; 
         if (sz == cap)  return FULL;
         else            return PART;
@@ -75,8 +83,8 @@ public:
     T* begin () const noexcept { return data; }
     T*   end () const noexcept { return data + sz; }
 
-    std::size_t capacity() noexcept { return cap; }
-    std::size_t size()     noexcept { return sz;  }
+    std::size_t capacity() const noexcept { return cap; }
+    std::size_t size()     const noexcept { return sz;  }
 
 
 //  DEVELOPERS-ONLY

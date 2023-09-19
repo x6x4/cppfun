@@ -69,13 +69,18 @@ TEST_CASE("Resource table IO") {
         Res r3 ("C", 4, 3, 8);
         
         Res_Table input;
-        std::stringstream in("A 5 7 10\nB 2 6 4\nC 4 3 8");
+        std::stringstream in("C 4 3 8\nA 5 7 10\nB 2 6 4");
         in >> input;
 
         REQUIRE(input.size()==3);
         REQUIRE(equal(input["A"], r1));
         REQUIRE(equal(input["B"], r2));
         REQUIRE(equal(input["C"], r3));
+
+        Res_Table input2;
+        std::stringstream in2("brrrrrrrrr");
+        std::cout << input2;
+        REQUIRE_THROWS(in2 >> input2);  
     }
 
     SECTION("OUTPUT") {
