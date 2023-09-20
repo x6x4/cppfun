@@ -106,12 +106,14 @@ public:
     * @exception   std::invalid argument  In cases of negative cons, prod or price.
     */
     friend std::istream& operator>> (std::istream& is, Res &r) { 
-        try {
-            is >> r.name >> r.cons >> r.prod >> r.price;
-        }
-        catch (...) {
-            throw;
-        }
+        
+        is >> r.name;
+        check_is(is);
+        is >> r.cons;
+        check_is(is);
+        is >> r.prod;
+        check_is(is);
+        is >> r.price;
 
         r.check_fields(); 
         

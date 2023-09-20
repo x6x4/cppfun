@@ -45,9 +45,14 @@ Res_Table Res_Table::operator* (int n) noexcept {
 }
 
 std::ostream& operator<< (std::ostream& os, Res_Table &t) noexcept { 
-    for (auto r : t.vec) {
-        os << r << std::endl;
+    if (t.size() == 0) 
+        os << "Empty table";
+    else {
+        for (auto r : t.vec) {
+            os << r << std::endl;
+        }
     }
+    
     return os;
 }
 

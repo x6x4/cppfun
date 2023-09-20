@@ -180,7 +180,6 @@ TEST_CASE("Resource table IO") {
 
         Res_Table input2;
         std::stringstream in2("brrrrrrrrr");
-        std::cout << input2;
         REQUIRE_THROWS(in2 >> input2);  
     }
 
@@ -194,6 +193,11 @@ TEST_CASE("Resource table IO") {
         out << output;
 
         REQUIRE(out.str() == "A 5 7 10\nB 2 6 4\nC 4 3 8\n");
+
+        std::stringstream out2;
+        Res_Table a;
+        out2 << a;
+        REQUIRE(out2.str() == "Empty table");
     }
 }
 
@@ -229,6 +233,12 @@ TEST_CASE("Resource table Getters") {
         REQUIRE(equal(t["D"], r3));
         REQUIRE_THROWS(t["a"]);
         REQUIRE_THROWS(t["C"]);
+
+        const Res_Table tt = {r2, r3};
+        REQUIRE(equal(tt["B"], r2));
+        REQUIRE(equal(tt["D"], r3));
+        REQUIRE_THROWS(tt["a"]);
+        REQUIRE_THROWS(tt["C"]);
     }
 
     SECTION("PROFIT") {

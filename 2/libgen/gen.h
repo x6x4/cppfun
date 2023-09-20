@@ -1,9 +1,15 @@
 #pragma once
 
 #include <algorithm>
+#include <cstddef>
+#include <functional>
+#include <initializer_list>
 #include <iostream>
 #include <iterator>
+#include <ostream>
 #include <stdexcept>
+#include <utility>
+#include <vector>
 
 enum state {
     EMPTY,
@@ -11,7 +17,41 @@ enum state {
     FULL
 };
 
-void check_cin ();
+
+
+class Entry {
+public:
+    std::string name;
+
+    Entry(const std::string name);
+};
+
+class SubMenu {
+public:
+    std::string name = "";
+
+    SubMenu(std::string name) : name (name) {};
+
+    SubMenu(std::string name, std::initializer_list<std::string> s) :
+            name (name), entries(s) {};
+
+    std::vector<SubMenu> submenus = {};
+    std::vector<std::string> entries = {};
+
+    void dialog ();
+};
+
+std::ostream &operator<<(std::ostream &os, SubMenu s);
+
+class Menu {
+public:
+    std::vector<SubMenu> submenus;
+    
+};
+
+void dialog (Menu m);
+
+void check_is (const std::istream& is);
 
 //  VECTOR
 
@@ -107,7 +147,6 @@ public:
 
     std::size_t capacity() const noexcept { return cap; }
     std::size_t size()     const noexcept { return sz;  }
-    T*          get_data()     noexcept   { return data;}
 
 
 //  DEVELOPERS-ONLY

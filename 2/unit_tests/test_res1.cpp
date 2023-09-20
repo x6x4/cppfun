@@ -58,6 +58,7 @@ TEST_CASE("Resource Setters") {
 }
 
 TEST_CASE("Resource IO") {
+    
     SECTION("INPUT") {
         Res input;
         Res r {"B", 6, 8, 9};
@@ -72,9 +73,9 @@ TEST_CASE("Resource IO") {
 
         Res input3;
         std::stringstream in3("brrrrrrrrr");
-        //std::cout << input3;
-        REQUIRE_THROWS(in3 >> input3);     
+        REQUIRE_THROWS(in3 >> input3);      
     }
+
     SECTION("OUTPUT") {
         Res output ("A", 5, 7, 10);
         std::stringstream out;
