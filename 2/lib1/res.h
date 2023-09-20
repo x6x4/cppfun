@@ -151,10 +151,7 @@ private:
 <name> <consumption> <prodiction> <price>
 * @return      Output stream ref
 */
-std::ostream& operator<< (std::ostream& os, const Res &r) noexcept { 
-    os << r.get_name() << ' ' << r.get_cons() << ' '<< r.get_prod() << ' ' << r.get_price();
-    return os;
-} 
+std::ostream& operator<< (std::ostream& os, const Res &r) noexcept;
 
 /**
  * @brief       Join two same resources

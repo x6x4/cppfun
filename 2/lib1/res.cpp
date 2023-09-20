@@ -49,6 +49,11 @@ Res &Res::set_price  (int price)  {
     return *this;
 }
 
+std::ostream& operator<< (std::ostream& os, const Res &r) noexcept { 
+    os << r.get_name() << ' ' << r.get_cons() << ' '<< r.get_prod() << ' ' << r.get_price();
+    return os;
+} 
+
 //  Other
 
 Res operator+ (const Res &r1, const Res &r2) {

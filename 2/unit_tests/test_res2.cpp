@@ -1,3 +1,4 @@
+#include <utility>
 #define CATCH_CONFIG_MAIN
 
 #include <sstream>
@@ -32,7 +33,7 @@ TEST_CASE("Resource Table Constructors") {
         Res r2 ("B", 2, 6, 4);
         Res r3 ("C", 4, 3, 8);
         Res_Table t = {r1, r2, r3};
-        Res_Table t1 = t;
+        Res_Table t1 {t};
 
         REQUIRE(equal(t1.vec[0], r1));
         REQUIRE(equal(t1.vec[1], r2));
@@ -44,12 +45,76 @@ TEST_CASE("Resource Table Constructors") {
         REQUIRE(equal(t.vec[2], r3));
         REQUIRE(t.size() == 3);
     }
+
+    SECTION("Copy-assignment operator") {
+        Res r1 ("A", 5, 7, 10);
+        Res r2 ("B", 2, 6, 4);
+        Res r3 ("C", 4, 3, 8);
+        Res r4 ("D", 2, 8, 5);
+        Res_Table t = {r1, r2, r3};
+        Res_Table tt = {r1, r2, r3, r4};
+        Res_Table t2;
+
+        t2 = t;
+        REQUIRE(equal(t.vec[0], r1));
+        REQUIRE(equal(t.vec[1], r2));
+        REQUIRE(equal(t.vec[2], r3));
+        REQUIRE(t.size() == 3);
+
+        REQUIRE(equal(t2.vec[0], r1));
+        REQUIRE(equal(t2.vec[1], r2));
+        REQUIRE(equal(t2.vec[2], r3));
+        REQUIRE(t2.size() == 3);
+
+        REQUIRE_NOTHROW(t2 = t2);
+        
+        REQUIRE(equal(t2.vec[0], r1));
+        REQUIRE(equal(t2.vec[1], r2));
+        REQUIRE(equal(t2.vec[2], r3));
+        REQUIRE(t2.size() == 3); 
+
+        t2 = t;
+        REQUIRE(equal(t.vec[0], r1));
+        REQUIRE(equal(t.vec[1], r2));
+        REQUIRE(equal(t.vec[2], r3));
+        REQUIRE(t.size() == 3);
+
+        REQUIRE(equal(t2.vec[0], r1));
+        REQUIRE(equal(t2.vec[1], r2));
+        REQUIRE(equal(t2.vec[2], r3));
+        REQUIRE(t2.size() == 3);  
+
+        t = tt;
+        REQUIRE(equal(t.vec[0], r1));
+        REQUIRE(equal(t.vec[1], r2));
+        REQUIRE(equal(t.vec[2], r3));
+        REQUIRE(equal(t.vec[3], r4));
+        REQUIRE(t.size() == 4);
+
+        REQUIRE(equal(tt.vec[0], r1));
+        REQUIRE(equal(tt.vec[1], r2));
+        REQUIRE(equal(tt.vec[2], r3));
+        REQUIRE(equal(tt.vec[3], r4));
+        REQUIRE(tt.size() == 4);
+
+        tt = t2;
+        REQUIRE(equal(tt.vec[0], r1));
+        REQUIRE(equal(tt.vec[1], r2));
+        REQUIRE(equal(tt.vec[2], r3));
+        REQUIRE(tt.size() == 3);
+
+        REQUIRE(equal(t2.vec[0], r1));
+        REQUIRE(equal(t2.vec[1], r2));
+        REQUIRE(equal(t2.vec[2], r3));
+        REQUIRE(t2.size() == 3);      
+    }
     
     SECTION("MoveConstructor") {
         Res r1 ("A", 5, 7, 10);
         Res r2 ("B", 2, 6, 4);
         Res r3 ("C", 4, 3, 8);
         Res_Table t = {r1, r2, r3};
+        Res_Table tt {t};
         Res_Table t1 = std::move(t);
 
         REQUIRE(equal(t1.vec[0], r1));
@@ -57,8 +122,44 @@ TEST_CASE("Resource Table Constructors") {
         REQUIRE(equal(t1.vec[2], r3));
         REQUIRE(t1.size() == 3);
         
-        REQUIRE_THROWS(t.vec[0]);
         REQUIRE(t.size() == 0);
+    }
+
+    SECTION("Move-assignment operator") {
+        Res r1 ("A", 5, 7, 10);
+        Res r2 ("B", 2, 6, 4);
+        Res r3 ("C", 4, 3, 8);
+        Res_Table t = {r1, r2, r3};
+        Res_Table tt {t};
+
+        Res_Table t2 = {r1, r3};
+        //  tt 3, t2 2, t 3
+        //  2 -> 3
+
+        tt = std::move(t2);
+        //  tt 2, t2 0, t 3
+        REQUIRE(equal(tt.vec[0], r1));
+        REQUIRE(equal(tt.vec[1], r3));
+        REQUIRE(tt.size() == 2);
+        REQUIRE(t2.size() == 0);
+        //  3 -> 0
+
+        t2 = std::move(t);
+        //  tt 2, t2 3, t 0
+        REQUIRE(equal(t2.vec[0], r1));
+        REQUIRE(equal(t2.vec[1], r2));
+        REQUIRE(equal(t2.vec[2], r3));
+        REQUIRE(t2.size() == 3);
+        REQUIRE(t.size() == 0);
+        //  3 -> 2
+
+        tt = std::move(t2);
+        //  tt 3, t2 0, t 0
+        REQUIRE(equal(tt.vec[0], r1));
+        REQUIRE(equal(tt.vec[1], r2));
+        REQUIRE(equal(tt.vec[2], r3));
+        REQUIRE(tt.size() == 3);
+        REQUIRE(t2.size() == 0);   
     }
 }
 

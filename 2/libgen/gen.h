@@ -1,6 +1,8 @@
 #pragma once
 
 #include <algorithm>
+#include <iostream>
+#include <iterator>
 #include <stdexcept>
 
 enum state {
@@ -10,7 +12,6 @@ enum state {
 };
 
 void check_cin ();
-
 
 //  VECTOR
 
@@ -32,10 +33,32 @@ public:
         std::copy (v.begin(), v.end(), data);
     };
 
+    //  source: https://en.cppreference.com/w/cpp/language/copy_assignment
+    //  (non copy-and-swap idiom)
+    auto operator= (const Vector &v) noexcept {
+        // not a self-assignment
+        if (this != &v) {
+            // resource cannot be reused
+            if (sz != v.size()) {
+                delete [] data;
+                data = new T[v.size()];
+                sz = v.size();
+            }
+            std::copy(v.begin(), v.end(), data);
+        }
+    };
+
     Vector (Vector &&v) noexcept {
         swap (v);
-        ~v;
     }
+
+    Vector& operator= (Vector &&v) noexcept {
+        swap (v);
+        v.sz = 0;
+        v.cap = INIT_CAP;
+        
+        return *this;
+    };
 
     void swap (Vector<T> &v2) noexcept {
         std::swap (data, v2.data);
@@ -68,14 +91,13 @@ public:
     void inc_size () {sz++; }
     void dec_size () {sz--; }
 
-    void resize () {
-        if (state() == FULL) {
-            cap*=2;
-            T* new_data = new T[cap];
-            std::move(begin(), end(), new_data);
-            delete [] data;
-            data = new_data;
-        }
+    void resize (std::size_t n) {
+        if (n < sz) throw std::runtime_error ("Shrinking is not allowed.");
+        cap = n;
+        T* new_data = new T[cap];
+        std::move(begin(), end(), new_data);
+        delete [] data;
+        data = new_data;
     }
 
 //  GETTERS
@@ -85,13 +107,15 @@ public:
 
     std::size_t capacity() const noexcept { return cap; }
     std::size_t size()     const noexcept { return sz;  }
+    T*          get_data()     noexcept   { return data;}
 
 
 //  DEVELOPERS-ONLY
 
 private:
 
-    std::size_t cap = 0x10;
+    static const int INIT_CAP = 0x10;
+    std::size_t cap = INIT_CAP;
     std::size_t sz = 0;
     T* data = new T[cap];
 };

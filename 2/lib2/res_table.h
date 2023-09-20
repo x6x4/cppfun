@@ -36,13 +36,15 @@ public:
     * @param       t   Table to copy from
     * @return      Copy of t
     */
-    Res_Table (const Res_Table &t) noexcept : vec (t.vec) {};
+    explicit Res_Table (const Res_Table &t) noexcept : vec (t.vec) {};
     /**
     * @brief       Copy assignment operator
     * @param       t   Table to copy from
     * @return      Copy of t
     */
-    auto operator= (const Res_Table &t) noexcept {};
+    auto operator= (const Res_Table &t) noexcept {
+        vec = t.vec;
+    };
 
     /**
     * @brief       Moving resource table constructor
@@ -51,14 +53,17 @@ public:
     */
     Res_Table (Res_Table &&t) noexcept { 
         swap (t);
-        t.~Res_Table();
     }
     /**
     * @brief       Move assignment operator
     * @param       t   Table to move
-    * @return      Copy of t
+    * @return      Ref to itself
     */
-    auto operator= (Res_Table &&t) noexcept {};
+    //  source: https://en.cppreference.com/w/cpp/language/move_assignment
+    Res_Table& operator= (Res_Table &&t) noexcept {
+        vec = std::move(t.vec);
+        return *this;
+    };
         
 //  DESTRUCTOR
 
@@ -171,10 +176,5 @@ private:
 * @brief       Output table
 * @return      Output stream ref
 */
-std::ostream& operator<< (std::ostream& os, Res_Table &t) noexcept { 
-    for (auto r : t.vec) {
-        os << r << std::endl;
-    }
-    return os;
-}
+std::ostream& operator<< (std::ostream& os, Res_Table &t) noexcept; 
 

@@ -35,17 +35,25 @@ void Res_Table::rename (std::string old_name, std::string new_name) {
 
 Res_Table Res_Table::operator* (int n) noexcept {
 
-    for (Res & r : vec) {
+    Res_Table t {*this};
+
+    for (Res & r : t.vec) {
         r = r * n;
     }
 
-    return *this; 
+    return t; 
 }
 
+std::ostream& operator<< (std::ostream& os, Res_Table &t) noexcept { 
+    for (auto r : t.vec) {
+        os << r << std::endl;
+    }
+    return os;
+}
 
 Res_Table &Res_Table::operator+= (Res r) {
 
-    vec.resize();
+    if (state() == FULL) vec.resize(vec.capacity()*2);
 
     auto p = find (r.get_name());
     if (p.first)
