@@ -4,6 +4,7 @@
 #include "../lib1/res.h"
 #include <catch2/catch.hpp>
 
+using namespace MY_CLASSES;
 
 //  SIMPLE CLASS
 
@@ -86,6 +87,7 @@ TEST_CASE("Resource IO") {
 }
 
 TEST_CASE("Resource Other") {
+
     SECTION("JOIN") {
         Res r1 ("A", 5, 7, 10);
         Res r2 ("A", 2, 6, 4);
@@ -106,6 +108,7 @@ TEST_CASE("Resource Other") {
         REQUIRE_THROWS(s_inval = r3 + r1);
         REQUIRE_THROWS(s_inval = r1 + r3);
     }
+
     SECTION("COMPARE") {
         Res r1 ("A", 5, 7, 10);
         Res r2 ("B", 2, 6, 4);
@@ -115,6 +118,7 @@ TEST_CASE("Resource Other") {
         Res r3 {"B", 7, 2, 5};
         REQUIRE((r2 <=> r3 == 0));
     }
+
     SECTION("PROFIT") {
         Res r1 ("A", 5, 7, 10);
         REQUIRE(r1.get_profit() == 140);
@@ -122,12 +126,13 @@ TEST_CASE("Resource Other") {
         Res r2 ("B", 6, 2, 4);
         REQUIRE(r2.get_profit() == -112);
     }
+
     SECTION("MULTIPLY") {
         Res r1 ("A", 5, 7, 10);
         //  *=
-        r1 * 7;
-        REQUIRE(r1.get_cons() == 35);
-        REQUIRE(r1.get_prod() == 49);
+        Res r2 = r1 * 7;
+        REQUIRE(r2.get_cons() == 35);
+        REQUIRE(r2.get_prod() == 49);
     }
 }
 

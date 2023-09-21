@@ -2,25 +2,6 @@
 #include <iostream>
 #include "gen.h"
 
-void SubMenu::dialog () {
-
-    std::cout << *this;
-
-    
-
-}
-
-std::ostream &operator<<(std::ostream &os, SubMenu s) {
-
-    os << s.name << "\n";
-
-    for (auto e : s.submenus) {
-        os << e;
-    }
-    return os;
-}
-
-
 
 void check_is (const std::istream& is) {
 

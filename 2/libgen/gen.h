@@ -1,87 +1,52 @@
 #pragma once
 
 #include <algorithm>
-#include <cstddef>
-#include <functional>
 #include <initializer_list>
 #include <iostream>
-#include <iterator>
-#include <ostream>
 #include <stdexcept>
 #include <utility>
-#include <vector>
 
-enum state {
+
+enum State {
     EMPTY,
     PART,
     FULL
 };
 
-
-
-class Entry {
-public:
-    std::string name;
-
-    Entry(const std::string name);
-};
-
-class SubMenu {
-public:
-    std::string name = "";
-
-    SubMenu(std::string name) : name (name) {};
-
-    SubMenu(std::string name, std::initializer_list<std::string> s) :
-            name (name), entries(s) {};
-
-    std::vector<SubMenu> submenus = {};
-    std::vector<std::string> entries = {};
-
-    void dialog ();
-};
-
-std::ostream &operator<<(std::ostream &os, SubMenu s);
-
-class Menu {
-public:
-    std::vector<SubMenu> submenus;
-    
-};
-
-void dialog (Menu m);
-
 void check_is (const std::istream& is);
 
-//  VECTOR
 
-template<typename T> 
-class Vector {
+//  SET - ORDERED CONTAINER (KEY, COMPARE)
+
+template<typename T, bool compare (const T&, const T&)>
+class Set {
 
 public:
 
 //  CONSTRUCTORS
 
-    Vector () {};
+    Set () {};
 
-    Vector (std::initializer_list<T> lst) 
+    Set (std::initializer_list<T> lst) 
             : cap(lst.size()), sz(lst.size()), data(new T[lst.size()]) {
         std::copy(lst.begin(), lst.end(), data);
+        std::sort(begin(), end(), compare);
     };
 
-    Vector (const Vector &v) : cap (v.cap), sz (v.sz), data (new T[v.cap]) {
+    Set (const Set &v) : cap (v.cap), sz (v.sz), data (new T[v.cap]) {
         std::copy (v.begin(), v.end(), data);
     };
 
     //  source: https://en.cppreference.com/w/cpp/language/copy_assignment
     //  (non copy-and-swap idiom)
-    auto operator= (const Vector &v) noexcept {
+    auto operator= (const Set &v) noexcept {
         // not a self-assignment
         if (this != &v) {
             // resource cannot be reused
             if (sz != v.size()) {
-                //  if incorrect new 
+                //  in case of incorrect new 
                 T* new_data = new T[v.size()];
+
                 delete [] data;
                 data = new_data;
                 sz = v.size();
@@ -90,11 +55,11 @@ public:
         }
     };
 
-    Vector (Vector &&v) noexcept {
+    Set (Set &&v) noexcept {
         swap (v);
     }
 
-    Vector& operator= (Vector &&v) noexcept {
+    Set& operator= (Set &&v) noexcept {
         swap (v);
         v.sz = 0;
         v.cap = INIT_CAP;
@@ -103,7 +68,7 @@ public:
     };
 
 //  public?
-    void swap (Vector<T> &v2) noexcept {
+    void swap (Set<T,compare> &v2) noexcept {
         std::swap (data, v2.data);
         std::swap (cap, v2.cap);
         std::swap (sz, v2.sz);
@@ -111,23 +76,26 @@ public:
 
 //  DESTRUCTOR
 
-    ~Vector() { delete[] data; data = nullptr; cap = 0; sz = 0; }
+    ~Set() { delete[] data; data = nullptr; cap = 0; sz = 0; }
 
     const T &operator[] (std::size_t i) const { 
         if (data == nullptr)
             throw std::runtime_error ("Access to uninitialized data");
-        //  i < sz
+        if (i > sz - 1)
+            throw std::runtime_error ("Access beyond the bounds");
         return *(data + i); 
     }
 
     T &operator[] (std::size_t i) { 
         if (data == nullptr)
             throw std::runtime_error ("Access to uninitialized data");
+        if (i > sz - 1)
+            throw std::runtime_error ("Access beyond the bounds");
         return *(data + i); 
     }
 
     //  return enum 
-    int state () const noexcept {
+    State state () const noexcept {
         if (sz == 0)    return EMPTY; 
         if (sz == cap)  return FULL;
         else            return PART;
