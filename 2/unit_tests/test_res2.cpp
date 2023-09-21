@@ -115,7 +115,9 @@ TEST_CASE("Resource Table Constructors") {
         Res r3 ("C", 4, 3, 8);
         Res_Table t = {r1, r2, r3};
         Res_Table tt {t};
-        Res_Table t1 = std::move(t);
+
+        //  what was called
+        Res_Table t1 (std::move(t));
 
         REQUIRE(equal(t1.vec[0], r1));
         REQUIRE(equal(t1.vec[1], r2));

@@ -80,8 +80,10 @@ public:
         if (this != &v) {
             // resource cannot be reused
             if (sz != v.size()) {
+                //  if incorrect new 
+                T* new_data = new T[v.size()];
                 delete [] data;
-                data = new T[v.size()];
+                data = new_data;
                 sz = v.size();
             }
             std::copy(v.begin(), v.end(), data);
@@ -100,6 +102,7 @@ public:
         return *this;
     };
 
+//  public?
     void swap (Vector<T> &v2) noexcept {
         std::swap (data, v2.data);
         std::swap (cap, v2.cap);
@@ -113,6 +116,7 @@ public:
     const T &operator[] (std::size_t i) const { 
         if (data == nullptr)
             throw std::runtime_error ("Access to uninitialized data");
+        //  i < sz
         return *(data + i); 
     }
 
@@ -122,12 +126,16 @@ public:
         return *(data + i); 
     }
 
+    //  return enum 
     int state () const noexcept {
         if (sz == 0)    return EMPTY; 
         if (sz == cap)  return FULL;
         else            return PART;
     }
 
+    //  add to selected position 
+
+    //  incorrect add
     void inc_size () {sz++; }
     void dec_size () {sz--; }
 

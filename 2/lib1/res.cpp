@@ -26,6 +26,7 @@ Res::Res (std::string name, int price) : name(name), price(price) {
 
 //  Setters
 
+//  const std::string&
 Res &Res::set_name (std::string name) noexcept { this->name = name;   return *this;}
 
 Res &Res::set_cons  (int cons)  { 
@@ -73,7 +74,7 @@ Res operator+ (const Res &r1, const Res &r2) {
 }
 
 bool operator< (const Res& r1, const Res& r2) noexcept 
-        { return r1.get_name() < r2.get_name(); }
+        { return (r1 <=> r2 < 0); }
 
 std::weak_ordering operator<=> (const Res& r1, const Res& r2) noexcept {
     if (r1.get_name() < r2.get_name())
@@ -88,6 +89,7 @@ int Res::get_profit () const noexcept {
     return (this->prod - this->cons)*this->price*7;
 }
 
+//  *=
 Res Res::operator* (int n) noexcept {
     this->cons *= n;
     this->prod *= n;

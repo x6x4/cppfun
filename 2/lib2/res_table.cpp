@@ -56,6 +56,7 @@ std::ostream& operator<< (std::ostream& os, Res_Table &t) noexcept {
     return os;
 }
 
+//  arch problems
 Res_Table &Res_Table::operator+= (Res r) {
 
     if (state() == FULL) vec.resize(vec.capacity()*2);
@@ -73,6 +74,7 @@ Res_Table &Res_Table::operator+= (Res r) {
 
     return *this;
 }
+// const ref
 
 void Res_Table::del (std::string name) {
 
@@ -81,6 +83,7 @@ void Res_Table::del (std::string name) {
 
     Res &victim = (*this)[name];
 
+    // shift in vector
     std::shift_left (&victim, vec.end(), 1);
     vec.dec_size();
 }

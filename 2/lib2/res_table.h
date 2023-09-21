@@ -97,6 +97,7 @@ public:
     * @return      Resource ref
     * @exception   std::runtime_error Name not found
     */
+    //  const &std::string
     Res &operator[] (std::string name);
     const Res &operator[] (std::string name) const;
 
@@ -137,7 +138,7 @@ public:
 
     /**
     * @brief       Add resource to table. 
-                   IF DUPLICATE: adds new resource to current. 
+                   IF DUPLICATE: adds new resource to current.:  
     * @param       r  Resource 
     * @return      Changed table
     */
@@ -170,6 +171,8 @@ private:
         return p;
     };
 };
+
+// set or map
 
 
 /**

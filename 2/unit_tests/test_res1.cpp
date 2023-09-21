@@ -124,6 +124,7 @@ TEST_CASE("Resource Other") {
     }
     SECTION("MULTIPLY") {
         Res r1 ("A", 5, 7, 10);
+        //  *=
         r1 * 7;
         REQUIRE(r1.get_cons() == 35);
         REQUIRE(r1.get_prod() == 49);
