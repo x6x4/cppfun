@@ -1,5 +1,5 @@
-#include <utility>
 #define CATCH_CONFIG_MAIN
+
 
 #include <sstream>
 #include "../lib2/res_table.h"
@@ -23,9 +23,9 @@ TEST_CASE("Resource Table Constructors") {
         Res r3 ("C", 4, 3, 8);
         Res_Table t = {r3, r1, r2};
 
-        REQUIRE(equal(t.set[0], r1));
-        REQUIRE(equal(t.set[1], r2));
-        REQUIRE(equal(t.set[2], r3));
+        REQUIRE(equal(t["A"], r1));
+        REQUIRE(equal(t["B"], r2));
+        REQUIRE(equal(t["C"], r3));
         REQUIRE(t.size() == 3);
     }
     
@@ -36,14 +36,14 @@ TEST_CASE("Resource Table Constructors") {
         Res_Table t = {r2, r3, r1};
         Res_Table t1 {t};
 
-        REQUIRE(equal(t1.set[0], r1));
-        REQUIRE(equal(t1.set[1], r2));
-        REQUIRE(equal(t1.set[2], r3));
+        REQUIRE(equal(t1["A"], r1));
+        REQUIRE(equal(t1["B"], r2));
+        REQUIRE(equal(t1["C"], r3));
         REQUIRE(t1.size() == 3);
 
-        REQUIRE(equal(t.set[0], r1));
-        REQUIRE(equal(t.set[1], r2));
-        REQUIRE(equal(t.set[2], r3));
+        REQUIRE(equal(t["A"], r1));
+        REQUIRE(equal(t["B"], r2));
+        REQUIRE(equal(t["C"], r3));
         REQUIRE(t.size() == 3);
     }
 
@@ -56,57 +56,60 @@ TEST_CASE("Resource Table Constructors") {
         Res_Table tt = {r2, r4, r1, r3};
         Res_Table t2;
 
+        //  0 <- 3
         t2 = t;
-        REQUIRE(equal(t.set[0], r1));
-        REQUIRE(equal(t.set[1], r2));
-        REQUIRE(equal(t.set[2], r3));
+        REQUIRE(equal(t["A"], r1));
+        REQUIRE(equal(t["B"], r2));
+        REQUIRE(equal(t["C"], r3));
         REQUIRE(t.size() == 3);
 
-        REQUIRE(equal(t2.set[0], r1));
-        REQUIRE(equal(t2.set[1], r2));
-        REQUIRE(equal(t2.set[2], r3));
+        REQUIRE(equal(t2["A"], r1));
+        REQUIRE(equal(t2["B"], r2));
+        REQUIRE(equal(t2["C"], r3));
         REQUIRE(t2.size() == 3);
 
         REQUIRE_NOTHROW(t2 = t2);
-        
-        REQUIRE(equal(t2.set[0], r1));
-        REQUIRE(equal(t2.set[1], r2));
-        REQUIRE(equal(t2.set[2], r3));
+        REQUIRE(equal(t["A"], r1));
+        REQUIRE(equal(t["B"], r2));
+        REQUIRE(equal(t["C"], r3));
         REQUIRE(t2.size() == 3); 
 
+        //  3 <- 3
         t2 = t;
-        REQUIRE(equal(t.set[0], r1));
-        REQUIRE(equal(t.set[1], r2));
-        REQUIRE(equal(t.set[2], r3));
+        REQUIRE(equal(t["A"], r1));
+        REQUIRE(equal(t["B"], r2));
+        REQUIRE(equal(t["C"], r3));
         REQUIRE(t.size() == 3);
-
-        REQUIRE(equal(t2.set[0], r1));
-        REQUIRE(equal(t2.set[1], r2));
-        REQUIRE(equal(t2.set[2], r3));
+        
+        REQUIRE(equal(t2["A"], r1));
+        REQUIRE(equal(t2["B"], r2));
+        REQUIRE(equal(t2["C"], r3));
         REQUIRE(t2.size() == 3);  
 
+        //  3 <- 4
         t = tt;
-        REQUIRE(equal(t.set[0], r1));
-        REQUIRE(equal(t.set[1], r2));
-        REQUIRE(equal(t.set[2], r3));
-        REQUIRE(equal(t.set[3], r4));
+        REQUIRE(equal(t["A"], r1));
+        REQUIRE(equal(t["B"], r2));
+        REQUIRE(equal(t["C"], r3));
+        REQUIRE(equal(t["D"], r4));
         REQUIRE(t.size() == 4);
 
-        REQUIRE(equal(tt.set[0], r1));
-        REQUIRE(equal(tt.set[1], r2));
-        REQUIRE(equal(tt.set[2], r3));
-        REQUIRE(equal(tt.set[3], r4));
+        REQUIRE(equal(tt["A"], r1));
+        REQUIRE(equal(tt["B"], r2));
+        REQUIRE(equal(tt["C"], r3));
+        REQUIRE(equal(tt["D"], r4));
         REQUIRE(tt.size() == 4);
 
+        //  4 <- 3
         tt = t2;
-        REQUIRE(equal(tt.set[0], r1));
-        REQUIRE(equal(tt.set[1], r2));
-        REQUIRE(equal(tt.set[2], r3));
+        REQUIRE(equal(tt["A"], r1));
+        REQUIRE(equal(tt["B"], r2));
+        REQUIRE(equal(tt["C"], r3));
         REQUIRE(tt.size() == 3);
 
-        REQUIRE(equal(t2.set[0], r1));
-        REQUIRE(equal(t2.set[1], r2));
-        REQUIRE(equal(t2.set[2], r3));
+        REQUIRE(equal(t2["A"], r1));
+        REQUIRE(equal(t2["B"], r2));
+        REQUIRE(equal(t2["C"], r3));
         REQUIRE(t2.size() == 3);      
     }
     
@@ -119,9 +122,9 @@ TEST_CASE("Resource Table Constructors") {
         
         Res_Table t1 {std::move(t)};
 
-        REQUIRE(equal(t1.set[0], r1));
-        REQUIRE(equal(t1.set[1], r2));
-        REQUIRE(equal(t1.set[2], r3));
+        REQUIRE(equal(t1["A"], r1));
+        REQUIRE(equal(t1["B"], r2));
+        REQUIRE(equal(t1["C"], r3));
         REQUIRE(t1.size() == 3);
         
         REQUIRE(t.size() == 0);
@@ -140,26 +143,26 @@ TEST_CASE("Resource Table Constructors") {
 
         tt = std::move(t2);
         //  tt 2, t2 0, t 3
-        REQUIRE(equal(tt.set[0], r1));
-        REQUIRE(equal(tt.set[1], r3));
+        REQUIRE(equal(tt["A"], r1));
+        REQUIRE(equal(tt["C"], r3));
         REQUIRE(tt.size() == 2);
         REQUIRE(t2.size() == 0);
         //  3 -> 0
 
         t2 = std::move(t);
         //  tt 2, t2 3, t 0
-        REQUIRE(equal(t2.set[0], r1));
-        REQUIRE(equal(t2.set[1], r2));
-        REQUIRE(equal(t2.set[2], r3));
+        REQUIRE(equal(t2["A"], r1));
+        REQUIRE(equal(t2["B"], r2));
+        REQUIRE(equal(t2["C"], r3));
         REQUIRE(t2.size() == 3);
         REQUIRE(t.size() == 0);
         //  3 -> 2
 
         tt = std::move(t2);
         //  tt 3, t2 0, t 0
-        REQUIRE(equal(tt.set[0], r1));
-        REQUIRE(equal(tt.set[1], r2));
-        REQUIRE(equal(tt.set[2], r3));
+        REQUIRE(equal(tt["A"], r1));
+        REQUIRE(equal(tt["B"], r2));
+        REQUIRE(equal(tt["C"], r3));
         REQUIRE(tt.size() == 3);
         REQUIRE(t2.size() == 0);   
     }
@@ -278,12 +281,12 @@ TEST_CASE("Resource table Setters") {
         Res_Table t = {r1, r2, r3};
 
         t = t*7;
-        REQUIRE(t.set[0].get_cons() == 35);
-        REQUIRE(t.set[0].get_prod() == 49);
-        REQUIRE(t.set[1].get_cons() == 14);
-        REQUIRE(t.set[1].get_prod() == 42);
-        REQUIRE(t.set[2].get_cons() == 28);
-        REQUIRE(t.set[2].get_prod() == 21);
+        REQUIRE(t["A"].get_cons() == 35);
+        REQUIRE(t["A"].get_prod() == 49);
+        REQUIRE(t["B"].get_cons() == 14);
+        REQUIRE(t["B"].get_prod() == 42);
+        REQUIRE(t["C"].get_cons() == 28);
+        REQUIRE(t["C"].get_prod() == 21);
     }
 
 }

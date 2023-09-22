@@ -16,7 +16,7 @@ namespace MY_CLASSES {
 
     public:
 
-        Set<Res, operator<(const Res &r1, const Res &r2)> set = {};
+        Set <Res, operator<> set = {};
 
     //  CONSTRUCTORS
 
@@ -77,7 +77,7 @@ namespace MY_CLASSES {
 
         /**
         * @brief   Check table state
-        * @return  Table state enum
+        * @return  State enum
         */   
         State state () const noexcept { return set.state(); }
 
@@ -99,6 +99,12 @@ namespace MY_CLASSES {
         * @exception   std::runtime_error Name not found
         */
         Res &operator[] (const std::string &name);
+        /**
+        * @brief       Find resource by name
+        * @param       name  Resource name
+        * @return      Const resource ref
+        * @exception   std::runtime_error Name not found
+        */
         const Res &operator[] (const std::string &name) const;
 
     //  SETTERS
@@ -138,7 +144,7 @@ namespace MY_CLASSES {
 
         /**
         * @brief       Add resource to table. 
-                       IF DUPLICATE: adds new resource to current.:  
+                       IF DUPLICATE: adds new resource to current.  
         * @param       r  Resource 
         * @return      Changed table
         */
@@ -155,17 +161,6 @@ namespace MY_CLASSES {
     //  DEVELOPERS-ONLY
 
     private:
-        
-        /**
-        * @brief       Find matching resource position by name 
-        * @param       name  Resource name
-        * @return      Pair <is_found, resouce ref>
-        */
-        std::pair<bool, Res*> find (std::string name) const noexcept {
-            auto r = std::lower_bound(set.begin(), set.end(), Res(name, 0), operator<);
-            std::pair<bool, Res*> p = {r != std::end(set) && (r->get_name() == name), r};
-            return p;
-        };
 
     };
 

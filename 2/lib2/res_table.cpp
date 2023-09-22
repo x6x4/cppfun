@@ -10,23 +10,18 @@ namespace MY_CLASSES {
 
         std::size_t sum = 0;
 
-        for (auto r : this->set) {
+        for (auto r : set) 
             sum += r.get_profit();
-        }
 
         return sum;
     }
 
     Res &Res_Table::operator[](const std::string &name) {
-        auto p = find (name);
-        if (p.first) return *p.second;
-        else throw std::runtime_error ("Name not found");
+        return set[Res(name, 0)];
     }
 
     const Res &Res_Table::operator[](const std::string &name) const {
-        auto p = find (name);
-        if (p.first) return *p.second;
-        else throw std::runtime_error ("Name not found");
+        return set[Res(name, 0)];
     }
 
     void Res_Table::rename (const std::string &old_name, const std::string &new_name) {
@@ -38,9 +33,8 @@ namespace MY_CLASSES {
 
         Res_Table t {*this};
 
-        for (Res & r : t.set) {
+        for (Res & r : t.set) 
             r = r * n;
-        }
 
         return t; 
     }
@@ -57,35 +51,13 @@ namespace MY_CLASSES {
         return os;
     }
 
-    //  arch problems
     Res_Table &Res_Table::operator+= (Res r) {
-
-        if (state() == FULL) set.resize(set.capacity()*2);
-
-        auto p = find (r.get_name());
-        if (p.first)
-            *p.second = *p.second + r;
-        else {
-            set.inc_size();
-            if (p.second) {
-                std::shift_right (p.second, set.end(), 1);
-                *p.second = r;
-            }
-        }
-
+        set+=r;
         return *this;
     }
 
     void Res_Table::del (const std::string &name) {
-
-        if (state() == EMPTY)
-            throw std::logic_error ("Empty table");
-
-        Res &victim = (*this)[name];
-
-        // shift in vector
-        std::shift_left (&victim, set.end(), 1);
-        set.dec_size();
+        set.del(Res(name, 0));
     }
 
 }
