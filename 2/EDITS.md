@@ -7,7 +7,7 @@
 
 *Simple class:*                                                (DONE)
 
-  fix: * works as *=                                           (DONE)
+  fix: * works as *=                                           (DONE) 
 
 *Complex class:*
 
