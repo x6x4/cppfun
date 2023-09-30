@@ -318,17 +318,17 @@ TEST_CASE("Resource table Other") {
 
         Res r4 {"C", 8, 3, 10};
         Res r5 {"C", 15, 4, 9};
-        t+=r4;
-        REQUIRE(t.size() == 3);
-        REQUIRE(equal(t["C"], r5));
+        REQUIRE_THROWS(t+=r4);
+        //REQUIRE(t.size() == 3);
+        //REQUIRE(equal(t["C"], r5));
 
-        Res r6 ("B", 2, 6, 4); 
+        /*Res r6 ("B", 2, 6, 4); 
         t+=r6;
         REQUIRE(t.size() == 4);
         REQUIRE(equal(t["A"], r1));
         REQUIRE(equal(t["B"], r6));
         REQUIRE(equal(t["C"], r5));
-        REQUIRE(equal(t["D"], r3));
+        REQUIRE(equal(t["D"], r3));*/
     }
 
     SECTION("DELETE") {

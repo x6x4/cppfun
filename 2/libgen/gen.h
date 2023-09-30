@@ -30,33 +30,42 @@ namespace MY_CLASSES {
         Set () {};
 
         //  ordered from unordered
-        Set (std::initializer_list<T> lst) 
-                : cap(lst.size()), sz(lst.size()), data(new T[lst.size()]) {
-            std::copy(lst.begin(), lst.end(), data);
-            std::sort(begin(), end(), compare);
+        Set (std::initializer_list<T> lst) : cap(lst.size()), sz(lst.size()) {
+
+            T *buf = new T[lst.size()];
+
+            try {
+                std::copy(lst.begin(), lst.end(), buf);
+                std::sort(buf, buf+sz, compare);
+            }
+            catch (...) {
+                delete [] buf;
+            }
+
+            data = buf;
         };
 
         //  ordered from ordered
-        Set (const Set &v) : cap (v.cap), sz (v.sz), data (new T[v.cap]) {
-            std::copy (v.begin(), v.end(), data);
+        Set (const Set &v) : cap (v.cap), sz (v.sz) {
+
+            T *buf = new T[v.cap];
+
+            try {
+                std::copy (v.begin(), v.end(), buf);
+            }
+            catch (...) {
+                delete [] buf;
+            }
+
+            data = buf;
         };
 
-        //  source: https://en.cppreference.com/w/cpp/language/copy_assignment
-        //  (non copy-and-swap idiom)
-        auto operator= (const Set &v) noexcept {
-            // not a self-assignment
-            if (this != &v) {
-                // resource cannot be reused
-                if (sz != v.size()) {
-                    //  in case of incorrect new 
-                    T* new_data = new T[v.size()];
+        //  copy & swap idiom
+        Set& operator= (const Set &v) noexcept {
 
-                    delete [] data;
-                    data = new_data;
-                    sz = v.size();
-                }
-                std::copy(v.begin(), v.end(), data);
-            }
+            Set buf(v);
+            swap(buf);
+            return *this;
         };
 
         Set (Set &&v) noexcept {
@@ -64,17 +73,16 @@ namespace MY_CLASSES {
         }
 
         Set& operator= (Set &&v) noexcept {
-            swap (v);
-            v.sz = 0;
-            v.cap = INIT_CAP;
-            
+
+            Set buf(std::move(v));
+            swap(buf);
             return *this;
         };
 
 
     //  DESTRUCTOR
 
-        ~Set() { delete[] data; data = nullptr; cap = 0; sz = 0; }
+        ~Set() { if (data) delete[] data; }
 
 
     //  GETTERS
@@ -95,41 +103,31 @@ namespace MY_CLASSES {
             return *p.second;
         }
 
-        //  return enum 
-        State state () const noexcept {
-            if (sz == 0)    return EMPTY; 
-            if (sz == cap)  return FULL;
-            else            return PART;
-        }
-
 
     //  BASIC OPERATIONS
 
         //  add: join if s already exists
-        Set &operator+= (const T &s) {
+        Set &operator+= (T elm) {
 
-            if (state() == FULL) resize(capacity()*2);
-
-            auto p = find (s);
+            if (full()) cap ? resize(cap*2) : resize(2);
+            auto p = find (elm);
             if (p.first)
-                *p.second = *p.second + s;
+                throw std::runtime_error ("Element already exists");
             else {
                 sz++;
                 if (p.second) {
                     std::shift_right (p.second, end(), 1);
-                    *p.second = s;
+                    
+                    *p.second = std::move(elm);
                 }
             }   
 
             return *this;   
         }
 
-        void del (const T &s) {
+        void del (const T &elm) {
 
-            if (state() == EMPTY)
-                throw std::logic_error ("Empty");
-
-            T &victim = (*this)[s];
+            T &victim = (*this)[elm];
 
             std::shift_left (&victim, end(), 1);
             sz--;
@@ -140,19 +138,21 @@ namespace MY_CLASSES {
 
         T* begin () const noexcept { return data; }
         T*   end () const noexcept { return data + sz; }
+        const T* cbegin () const noexcept { return data; }
+        const T*   cend () const noexcept { return data + sz; }
 
         std::size_t capacity() const noexcept { return cap; }
         std::size_t size()     const noexcept { return sz;  }
-
+        bool empty()    const noexcept { return !sz; }
+        bool full()     const noexcept { return sz == cap;  }
 
     //  DEVELOPERS-ONLY
 
     private:
 
-        static const int INIT_CAP = 0x10;
-        std::size_t cap = INIT_CAP;
+        std::size_t cap = 0;
         std::size_t sz = 0;
-        T* data = new T[cap];
+        T* data = nullptr;
 
         void swap (Set<T,compare> &v2) noexcept {
             std::swap (data, v2.data);
@@ -163,6 +163,8 @@ namespace MY_CLASSES {
         //  return pair <is_found, ptr to pos>
         std::pair<bool, T*> find (const T& item) const noexcept {
 
+            if (!data) return std::make_pair(0, nullptr);
+
             T* ptr = std::lower_bound(begin(), end(), item, compare);
             std::pair<bool, T*> p = {ptr != end() && compare(item, *ptr) == 0, ptr};
 
@@ -171,13 +173,17 @@ namespace MY_CLASSES {
 
         void resize (std::size_t n) {
 
-            if (n < sz) throw std::runtime_error ("Shrinking is not allowed.");
             cap = n;
-            T* new_data = new T[cap];
+            T* buf = new T[cap];
+            try {
+                std::move(begin(), end(), buf);
+            }
+            catch (...) {
+                delete [] buf;
+            }
 
-            std::move(begin(), end(), new_data);
             delete [] data;
-            data = new_data;
+            data = buf;
         }
 
     };

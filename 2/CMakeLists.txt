@@ -8,10 +8,10 @@ set (CMAKE_CXX_STANDARD 20)
 set (COV_FLAGS "-O0 -coverage ")
 
 #  debug config 
-#set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ggdb -Wno-unused-parameter -std=c++20 -Wall -Wextra -Wpedantic")
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ggdb -Wno-unused-parameter -std=c++20 -Wall -Wextra -Wpedantic")
 
 #  coverage config
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COV_FLAGS} -std=c++20 -Wall -Wextra -Wpedantic")
+#set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COV_FLAGS} -std=c++20 -Wall -Wextra -Wpedantic")
 
 
 #  libs 

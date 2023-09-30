@@ -79,7 +79,11 @@ namespace MY_CLASSES {
         * @brief   Check table state
         * @return  State enum
         */   
-        State state () const noexcept { return set.state(); }
+        State state () const noexcept { 
+            if (set.empty()) return EMPTY; 
+            if (set.full()) return FULL;
+            return PART;
+        }
 
         /**
         * @brief       Get current table size.

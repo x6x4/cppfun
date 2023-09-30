@@ -25,3 +25,11 @@
 
 
 NOTE: pleeeeaase, write comments on private fields/classes 
+
+
+New edits:
+
+  Express assignment operator through constructor (not conversely)
+  Try-catch for possible memory exceptions
+  Add cbegin/cend
+  Use T instead of T& for dual use - both for lvalues (copy) and rvalues (move)

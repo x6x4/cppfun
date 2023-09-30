@@ -1,6 +1,7 @@
 #pragma once
 
 #include "vec.h"
+#include <array>
 #include <cstddef>
 #include <iostream>
 #include <stdexcept>
@@ -10,7 +11,9 @@
 
 
 class Command;
+using prog_t = std::vector<Command>;
 class ProgramMemory;
+
 
 class ControlUnit;
 
@@ -18,18 +21,19 @@ class Operator;
 using exectime_t = std::size_t; 
 using instr_set = std::vector<std::pair<Operator, exectime_t>>;
 class ExecUnit;
+using EU_vec = std::vector<std::pair<bool,ExecUnit>>;
 
 class DataCell;
 class DataMemory;
 
 using num_t = std::size_t;
-using reg = std::pair<num_t, DataCell>;
+using reg = std::pair<num_t, >;
 class RegBlock;
 
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *  The main device, contains all other devices. 
- *  It can execute program, transfering control to control unit.
+ *  It can execute program, transferring control to control unit.
  *  Its configuration can be changed. 
  *  
  *  Program memory:  |cmd1|cmd2|cmd3|cmd4|...|
@@ -40,20 +44,28 @@ class RegBlock;
  *  Data memory: |||||||||||||||||||||||||
  *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
+
+
 class CPU {
 friend ControlUnit;
 
-    
+    CPU(const CPU& cpu) = delete;
+    CPU(CPU&& cpu) = delete;
 
-//  no pointers
+    std::size_t bitness;
     ProgramMemory &pm;
     ControlUnit &cu;
-    std::vector<std::pair<bool,ExecUnit>> EUs;
+    EU_vec EUs;
     RegBlock &gp;
     DataMemory &dm;
 
+public:
+
+    CPU(ProgramMemory &pm, EU_vec eu, RegBlock &gp, DataMemory &dm);
+
     void run ();
-//    CPU &edit_config(); 
+    CPU &edit_config(); 
 };
 
 
@@ -65,8 +77,10 @@ friend ControlUnit;
 class ProgramMemory {
 friend ControlUnit;
 
-    std::vector<Command> prog;
-    reg *PC;
+    ProgramMemory(prog_t prog, DataMemory& dm);
+
+    prog_t prog;
+    reg &PC;
 
 public:
     const Command &get_cur_cmd () const;
@@ -97,7 +111,7 @@ class RegBlock {
 class ControlUnit : CPU {
 friend CPU;
     
-    void run();
+    void operator()();
     const Command &fetch() const;
     //  changes exec units state
     void assign(const Command &cmd);
