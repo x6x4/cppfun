@@ -73,12 +73,3 @@ void ExecUnit::exec(const Command &cmd) const {
     
 }
 
-void check_id (std::string name) {
-    if (name.size() > 8)
-        throw std::logic_error ("ID can't be more than 8 symbols");
-    
-    for (char c : name) {
-        if (!std::isalpha(c))
-            throw std::logic_error ("ID can only contain latin letters");
-    }
-}

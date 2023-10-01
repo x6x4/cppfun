@@ -1,6 +1,6 @@
 #pragma once
 
-#include "vec.h"
+#include "mem/mem.h"
 #include <array>
 #include <cstddef>
 #include <iostream>
@@ -10,9 +10,6 @@
 #include <vector>
 
 
-class Command;
-using prog_t = std::vector<Command>;
-class ProgramMemory;
 
 
 class ControlUnit;
@@ -69,22 +66,7 @@ public:
 };
 
 
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- *  Code section with infinite capacity. 
- *  Stores special-purpose program counter register.  
- *
- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-class ProgramMemory {
-friend ControlUnit;
 
-    ProgramMemory(prog_t prog, DataMemory& dm);
-
-    prog_t prog;
-    reg &PC;
-
-public:
-    const Command &get_cur_cmd () const;
-};
 
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -136,42 +118,12 @@ friend ControlUnit;
 
 
 
-void check_id (std::string name);
-
-class ID {
-    std::string id;
-    
-public:
-    void operator=(std::string name) {
-        check_id (name);
-        id = name;
-    } 
-};
-
-class Operand {
-
-};
-
-class Operator {
-    ID label;
-
-public:
-
-    void operator() () const;
-};
 
 
-class Command {
 
-    Operand op1;
-    Operator *op;
-    ID label;
 
-public:
 
-    Operator *get_op() const { return op; }
 
-};
 
 class UnaryCommand : public Command {
 
