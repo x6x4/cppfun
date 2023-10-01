@@ -3,8 +3,10 @@
 #include <cstddef>
 #include <fstream>
 #include <stdexcept>
+#include <sys/types.h>
 #include <vector>
 #include <sstream>
+
 
 
 void check_id (std::string name);
@@ -28,19 +30,23 @@ public:
     }
 };
 
+using addr_t = u_int8_t;
 
 class Operand {
 
     int value;    
-    std::string cmd;
+    std::string label;
+    addr_t addr;
+    
 
 public:
 
-    std::string &get_name () { return cmd; }
+    void set_addr (addr_t a) { addr = a; }
+    std::string &get_name () { return label; }
     int get_val () { return value; }
 
     Operand& operator= (std::string name) {
-        cmd = name;
+        label = name;
         return *this;
     }
 
@@ -71,10 +77,12 @@ public:
 
 
 
+
 class Command {
 
 public:
     ID label;
+    addr_t addr;
     Operator oper;
     Operand op1;
     Operand op2;
@@ -82,46 +90,16 @@ public:
 public:
 
     //Operator *get_op() const { return op; }
-    
-
 };
-
-
-Command make_cmd (std::string command);
-Command make_data (std::string command);
 
 std::ostream &operator<<(std::ostream &os, Command &cmd);
 
 
 
-//  PROGRAM MEMORY
 
-class Command;
-using prog_t = std::vector<Command>;
-class ProgramMemory;
 
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- *  Code section with infinite capacity. 
- *  Stores special-purpose program counter register.  
- *
- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-class ProgramMemory {
 
-    
-    //reg &PC;
 
-public:
-
-    prog_t prog = {};
-    
-    const Command &get_cur_cmd () const;
-
-    
-};
-
-std::ostream &operator<<(std::ostream &os, ProgramMemory &pm);
-
-void load_program (const char *s, ProgramMemory &pm);
 
 
 

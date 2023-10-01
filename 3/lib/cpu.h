@@ -156,21 +156,7 @@ public:
     int operator* () { return data;}
 };
 
-class DataMemory {
-    
-    std::size_t sz = 0x10;
-    std::unordered_set<DataCell> mem;
 
-    int operator[] (std::string name) {
-        auto item = mem.find({name,0});
-
-        if (item != std::end(mem)) return *item._M_cur->_M_v();
-        else {
-            mem.insert({name, 0});
-            return 0;
-        }
-    }
-};
 
 
 

@@ -1,7 +1,22 @@
 
-#include "prog.h"
+#include "../mem/mem.h"
+#include <cctype>
+#include <cstddef>
 #include <iostream>
+#include <iterator>
+#include <stdexcept>
 #include <string>
+#include <utility>
+#include <vector>
+
+
+std::size_t line_num = 0;
+
+std::runtime_error CE (const char *error) {
+    std::stringstream ss;
+    ss << "CE on line " << line_num << ": " << error << std::endl;
+    return std::runtime_error(ss.str());
+}
 
 
 void check_id (std::string name) {
@@ -16,12 +31,8 @@ void check_id (std::string name) {
 
 
 std::ostream &operator<<(std::ostream &os, Command &cmd) {
-    if (cmd.label.get_id().length()) os << cmd.label.get_id() << ": ";
-    if (cmd.oper.get_name().length()) os << cmd.oper.get_name() << " ";
-    if (cmd.op1.get_name().length()) os << cmd.op1.get_name() << " ";
-    else os << cmd.op1.get_val() << " ";
-    os << cmd.op2.get_name();
-    return os; 
+
+    return os;
 }
 
 std::ostream &operator<<(std::ostream &os, ProgramMemory &pm) {
@@ -33,32 +44,65 @@ std::ostream &operator<<(std::ostream &os, ProgramMemory &pm) {
 
 
 
-void load_program (const char *filename, ProgramMemory &pm) {
+void parser(std::ifstream &is, Memory &m, Data_labels &dl);
+Command make_instr (std::string command, Data_labels &dl);
+void make_data (std::string command, Memory &m);
+
+void preproc(std::ifstream &is, Memory &m, Data_labels &dl);
+
+void compile (const char *filename, Memory &m) {
 
     std::ifstream is (filename);
-    std::string command;
     
+    Data_labels dl;
+
     if (is.is_open()) {
 
-        while (std::getline(is, command)) {
-            if (!command.compare("")) continue;
-            if (!command.compare(".data")) break;
-            pm.prog.push_back(make_cmd(command));
-        }
-        while (std::getline(is, command)) {
-            pm.prog.push_back(make_data(command));
-        }
+        parser(is, m, dl);
+        preproc(is, m, dl);
+    }
+    else {
+        throw std::runtime_error ("Wrong file\n");
     }
 
 }
 
-Command make_cmd (std::string command) {
+void parser(std::ifstream &is, Memory &m, Data_labels &l) {
+
+    ///  .TEXT SECTION  ///
+
+    std::string command;
+
+    while (std::getline(is, command)) {
+        line_num++;
+        
+        if (!command.compare("")) continue;    //  empty line
+        if (command[0] == '#') continue;    //  comment
+        if (!command.compare(".data")) break;  //  end of .text section
+        m.pm.prog.push_back(make_instr(command, l));
+    }
+
+    ///  .DATA SECTION  ///
+
+    std::string directive;
+
+    while (std::getline(is, directive)) {
+        make_data(directive, m);
+    }
+}
+
+Command make_instr (std::string command, Data_labels &l) {
+
+    l.cur_cmd++;
     
     Command cmd;
 
     std::istringstream iss(command);
     std::vector<std::string> tokens;
     std::string token;
+
+
+    ///  TOKENIZATION  ///
 
     while (iss >> token) {
         tokens.push_back(token);
@@ -66,30 +110,54 @@ Command make_cmd (std::string command) {
 
     std::size_t cur_pos = 0;
 
-    if (tokens[0].back() == ':') {
+    ///  PARSE LABEL & OPER  ///
+
+    if (tokens[0].back() == ':') {  
+        if (tokens.size() == 1) {
+            throw CE("empty label");
+        }
+        cmd.label = tokens[0].substr(0, tokens[0].length() - 1);  //  shrink trailing ':'
         
-        //  shrink trailing ':'
-        cmd.label = tokens[0].substr(0, tokens[0].length() - 1);
-
-        //  operator is 2nd token    
-        cmd.oper = tokens[1];
-
+        if (tokens.size() == 2)
+            throw CE("expected operator");
+        cmd.oper = tokens[1];  //  2nd token is operator  
         cur_pos = 2;
     }
 
-    //  operator is 1st token  
-    else { cmd.oper = tokens[0]; cur_pos = 1; }
+    ///  PARSE NO LABEL & OPER  ///
 
-    if (tokens[cur_pos][0] == 'r' || tokens[cur_pos-1][0] == 'j') {
-        //  operand 1 is 3rd/2nd token 
-        cmd.op1 = tokens[cur_pos++];
+    else { 
+        cmd.oper = tokens[0];  //  1st token is operator
+        cur_pos = 1; 
     }
-    else throw std::runtime_error ("CE: first operand must be a register\n");
 
+    if (tokens.size() == 1) {
+        throw CE("missing operand");
+    }
+
+    ///  PARSE OPERAND1  ///
+
+    if (tokens[cur_pos][0] == 'r') {  //  register
+        cmd.op1 = tokens[cur_pos];
+    } 
+    else if (!std::isdigit(tokens[cur_pos][0]) //  1st operand can't be imm
+        && cur_pos == tokens.size()-1) {  //  code label is always 1st and last operand
+        cmd.op1 = tokens[cur_pos];
+    }
+    else throw CE("first operand must be a register");
+    
+    cur_pos++;
+
+    ///  PARSE OPERAND2  ///
 
     if (cur_pos != tokens.size()) {
-        //  operand 2 is 4th/3rd token 
-        cmd.op2 = tokens[cur_pos];
+        if (tokens[cur_pos][0] == 'r'  //  register
+            || std::isdigit(tokens[cur_pos][0])) {  // imm operand
+            cmd.op2 = tokens[cur_pos];
+        } 
+        else {  //  data label is always 2nd operand
+            l.has_data.push_back({l.cur_cmd, tokens[cur_pos]}); 
+        }
     }
 
     //std::cout << cmd << std::endl;
@@ -97,15 +165,24 @@ Command make_cmd (std::string command) {
     return cmd;
 }
 
-Command make_data (std::string command) {
+void make_data (std::string directive, Memory &m) {
     
-    Command cmd;
+    ID label; int val;
+    std::istringstream iss(directive);
 
-    std::istringstream iss(command);
-    std::vector<std::string> tokens;
-    std::string token;
+    iss >> label >> val;
+    label = label.get_id().substr(0, label.get_id().length() - 1);
 
-    iss >> cmd.label >> cmd.op1;
-    cmd.label = cmd.label.get_id().substr(0, cmd.label.get_id().length() - 1);
-    return cmd;
+    m.dm += {label.get_id(), val};
+}
+
+void preproc(std::ifstream &is, Memory &m, Data_labels &l) {
+
+    for (const auto& cmd : l.has_data) {
+        
+        auto pair = m.dm[cmd.second];
+        //  data label is always 2nd operand
+        if (pair.first) m.pm.prog[cmd.first].op2.set_addr(pair.second);
+        else throw std::runtime_error ("Undefined label \"" + cmd.second + "\"\n");
+    }
 }

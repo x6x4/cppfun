@@ -1,14 +1,23 @@
-#include "lib/prog/prog.h"
+#include "lib/mem/mem.h"
+#include <cstring>
 #include <iostream>
 #include <stdexcept>
 
-int main () {
-    ProgramMemory pm;
-    
+
+
+int main (int argc, char **argv) {
+
+    const char *src = argv[1];
+
+    if (!src) {
+        std::cout << "This is QASM compiler. Usage: qasm <prog_name>" << std::endl;
+        return 0;
+    }
+
+    Memory m;
 
     try {
-        load_program ("prog1.asm", pm);
-        std::cout << pm;
+        compile (src, m);
     }
 
     catch (std::logic_error &e) {
