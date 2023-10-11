@@ -5,26 +5,56 @@
 #include <vector>
 
 
-//  PROGRAM MEMORY
 
-using prog_t = std::vector<Command>;
-class ProgramMemory;
+//  PROGRAM MEMORY
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *  Text section with infinite capacity. 
  *  Stores special-purpose program counter register.  
  *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+using prog_t = std::vector<Command*>;
+
+class Op_J;
+
 class ProgramMemory {
-    
-    //reg &PC;
-    addr_t pc;
+
+friend Op_J;
+
+    std::size_t pc;
+    bool zf;
+
+    void set_pc (std::size_t _pc) { pc = _pc; };
+    void set_zf (bool _zf)        { zf = _zf; };
+
+    std::size_t get_pc ()         { return pc; };
+    bool get_zf ()                { return zf; };
+
+    void swap (ProgramMemory &other) {
+        std::swap(this->pc, other.pc);
+        std::swap(this->zf, other.zf);
+        std::swap(this->prog, other.prog);
+    }
 
 public:
 
     prog_t prog = {};
+
+    //  CTORS
+
+    ProgramMemory () {};
+
+    ProgramMemory(prog_t program) { prog = program; } 
+
+    ProgramMemory(ProgramMemory &_pm) { prog = _pm.prog; }
+
+    ProgramMemory operator= (ProgramMemory &_pm) {
+        ProgramMemory pm (_pm);
+        swap(pm);
+        return *this;
+    }
     
-    const Command &get_cur_cmd () const;
+    const Command &get_cur_cmd () const { return *prog[pc]; };
 };
 
 std::ostream &operator<<(std::ostream &os, ProgramMemory &pm);

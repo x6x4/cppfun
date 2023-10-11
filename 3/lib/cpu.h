@@ -136,7 +136,7 @@ class BinaryCommand : public Command {
 
 
 
-class Op_Jump : Operator {
+class Op_Cond : Operator {
     void operator() () const { };
 };
 
