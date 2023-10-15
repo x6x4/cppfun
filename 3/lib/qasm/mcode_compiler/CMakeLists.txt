@@ -1,6 +1,4 @@
 
-SET(LIB_NAME "mem")
+SET(LIB_NAME "mcode_compiler")
 
 add_library (${LIB_NAME} ${LIB_NAME}.cpp ${LIB_NAME}.h)
-
-target_link_libraries(mem cmd_base)

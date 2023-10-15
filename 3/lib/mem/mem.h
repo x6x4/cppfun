@@ -1,5 +1,5 @@
 #pragma once
-#include "../prog/prog.h"
+#include "../qasm/cmd_base/cmd_base.h"
 #include <stdexcept>
 #include <utility>
 #include <vector>
@@ -13,7 +13,6 @@
  *  Stores special-purpose program counter register.  
  *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-using prog_t = std::vector<Command*>;
 
 class Op_J;
 
@@ -38,13 +37,13 @@ friend Op_J;
 
 public:
 
-    prog_t prog = {};
+    mprog prog = {};
 
     //  CTORS
 
     ProgramMemory () {};
 
-    ProgramMemory(prog_t program) { prog = program; } 
+    ProgramMemory(mprog program) { prog = program; } 
 
     ProgramMemory(ProgramMemory &_pm) { prog = _pm.prog; }
 
@@ -105,3 +104,15 @@ public:
 };
 
 void compile (const char *filename, Memory &m);
+
+class DataCell {
+
+    ID name;
+    int data;
+
+public:
+    DataCell (std::string name, int data) : data(data) {
+        this->name = name;
+    };   
+    int operator* () { return data;}
+};

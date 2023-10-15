@@ -12,8 +12,9 @@ set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ggdb -Wno-unused-parameter -std=c++20 
 
 #  libs 
 
-add_subdirectory(lib/prog)
-add_subdirectory(lib/mem)
+add_subdirectory(lib)
+add_subdirectory(instr_set)
+target_link_libraries(instr_set mem)
 
 #  testing
 
@@ -23,6 +24,6 @@ add_subdirectory(lib/mem)
 
 add_executable(main main.cpp)
 
-target_link_libraries(main mem)
+target_link_libraries(main instr_set cpu)
 
 

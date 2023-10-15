@@ -4,9 +4,8 @@
 
 
 std::ostream &operator<<(std::ostream &os, ProgramMemory &pm) {
-    for (auto cmd : pm.prog) {
-        os << *cmd << '\n';
-    }
+
+    print_mprog(os, pm.prog);
     
     return os;
 }

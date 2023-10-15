@@ -1,7 +1,6 @@
 #pragma once
-#include "../mem/mem.h"
-#include "prog.h"
-
+#include "../lib/mem/mem.h"
+#include <cstddef>
 
 
 //  OPERATORS
@@ -21,9 +20,6 @@ void operator() (std::size_t code_lbl, ProgramMemory &pm) const {
 };
 
 public:
-
-    Op_Jmp() { Operator::mnem = "jmp"; }
-
     
 };
 
@@ -36,9 +32,6 @@ void operator() (std::size_t code_lbl, ProgramMemory &pm) const {
 
 public:
 
-    Op_Je() { Operator::mnem = "je"; }
-
-
 };
 
 class Op_Jne : public Op_J {
@@ -50,23 +43,6 @@ void operator() (std::size_t code_lbl, ProgramMemory &pm) const {
 
 public:
 
-    Op_Jne() { Operator::mnem = "jne"; }
-
-
-};
-
-
-//  UNARY OPERATORS
-
-class Op_Inc : public Operator {
-
-    void operator() (Operand &opd1) const {
-        opd1.set(opd1.val() + 1);
-    };
-
-public:
-
-    Op_Inc() { Operator::mnem = "je"; }
 };
 
 class Op_Neg : public Operator {
@@ -77,20 +53,6 @@ class Op_Neg : public Operator {
 
 public:
 
-    Op_Neg() { Operator::mnem = "neg"; }
-};
-
-//  BINARY OPERATORS
-
-class Op_Mov : public Operator {
-
-    void operator() (Operand &opd1, Operand &opd2) const {
-        opd1.set(opd2.val());
-    };
-
-public:
-
-    Op_Mov() { Operator::mnem = "mov"; }
 };
 
 class Op_Cmp : public Op_J {
@@ -100,10 +62,8 @@ void operator() (Operand &opd1, Operand &opd2, ProgramMemory &pm) const {
 };
 
 public:
-    Op_Cmp() { Operator::mnem = "cmp"; }
 
 };
-
 
 
 /*class Op_Data : Operator{
@@ -115,7 +75,27 @@ public:
 
 
 
+//  UNARY OPERATORS
 
-//using mnemonic = std::string;
-//std::vector<std::pair<Operator, mnemonic>> instr_set;
+void Oper_Increment (Operand &opd1);
+
+class Oper_Inc : public UnaryOperator {
+
+public:
+    Oper_Inc() : UnaryOperator("inc") { oper = Oper_Increment; }
+};
+
+
+
+//  BINARY OPERATORS
+
+void Oper_Movement (Operand &opd1, Operand &opd2);
+
+class Oper_Mov : public BinaryOperator {
+
+public:
+    Oper_Mov() : BinaryOperator("mov") { oper = Oper_Movement;}
+};
+
+
 
