@@ -6,6 +6,8 @@
 
 class MCode {
 
+~MCode () = default;
+
 public:
 
     mprog prog = {};
@@ -16,6 +18,6 @@ public:
 
 std::ostream &operator<<(std::ostream &os, const MCode &mc);
 
-MCode &to_mcode (InstrSet &iset, const char *filename);
-MCode &compile (InstrSet &iset, std::ifstream &is);
-mprog &parser(InstrSet &iset, std::ifstream &is);
+MCode *to_mcode (InstrSet &iset, const char *filename);
+MCode *compile (InstrSet &iset, std::ifstream &is);
+mprog *parser(InstrSet &iset, std::ifstream &is);

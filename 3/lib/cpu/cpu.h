@@ -20,9 +20,10 @@ class CPU;
  *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
+class Mem_Register;
 
 class RegBlock {
-friend Register;
+friend Mem_Register;
 
     std::vector<int> regs;
 

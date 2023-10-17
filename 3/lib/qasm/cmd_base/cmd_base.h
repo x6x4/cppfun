@@ -67,7 +67,8 @@ protected:
 
     int value = 0;
 
-    virtual void print (std::ostream &os) const = 0;
+    ~Operand () = default;
+    virtual void print (std::ostream &os) const {};
     
 public:
 
@@ -75,21 +76,20 @@ public:
     Operand(int val) : value(val) {};
     int val() const { return value; }
     void set(int _val) { value = _val; }
-    virtual void load (CPU& cpu) const = 0;
 
     friend std::ostream &operator<<(std::ostream &os, const Operand &opd);
 };
 
 class Register : public Operand {
     
-    std::size_t num = 0;
+~Register () = default;
 
 protected:
+    std::size_t num = 0;
     void print (std::ostream &os) const override;
 
 public:
     Register(std::size_t number) : num(number) {};
-    void load(CPU &cpu) const override;
 };
 
 
@@ -103,7 +103,15 @@ protected:
     Mnemonic mnem;
 
 public:
+    Operator () {};
+    
     Operator(Mnemonic _mnem) { mnem = _mnem; }
+
+    /*Operator &operator= (Operator &init) {
+        Operator &op (init);
+        return op;
+    }*/
+
     const std::string &mnemonics () const { return mnem; }
 };
 
@@ -115,9 +123,17 @@ protected:
     void (*oper)(Operand &opd1);
 
 public:
+    UnaryOperator() {};
+    UnaryOperator(const UnaryOperator &copy) = default;
+    UnaryOperator(UnaryOperator &copy) = default;
+    UnaryOperator &operator= (UnaryOperator &copy) = default;
+    UnaryOperator(UnaryOperator &&move) = default;
+    UnaryOperator &operator= (UnaryOperator &&move) = default;
+
+    UnaryOperator(Mnemonic _mnem) : Operator(_mnem ) {}
 
     void operator() (Operand &opd1) { oper(opd1); }
-    UnaryOperator(Mnemonic _mnem) : Operator(_mnem ) {}
+    bool operator== (const UnaryOperator&) const;
 };
 
 class BinaryOperator : public Operator {
@@ -126,9 +142,20 @@ protected:
     void (*oper)(Operand &opd1, Operand &opd2);
 
 public:
-    void operator() (Operand &opd1, Operand &opd2) { oper(opd1, opd2); }
+
+    BinaryOperator () {};
+    BinaryOperator(BinaryOperator &copy) = default;
+    BinaryOperator(const BinaryOperator &copy) = default;
+    BinaryOperator &operator= (BinaryOperator &copy) = default;
+    BinaryOperator(BinaryOperator &&move) = default;
+    BinaryOperator &operator= (BinaryOperator &&move) = default;
+
     BinaryOperator(Mnemonic _mnem) : Operator(_mnem ) {}
+    
+    void operator() (Operand &opd1, Operand &opd2) { oper(opd1, opd2); }
+    bool operator== (const BinaryOperator&) const;
 };   
+
 
 //  INSTRUCTION SET  //
 
@@ -136,7 +163,7 @@ namespace std {
 
     template<> struct hash<UnaryOperator>
     {
-        std::size_t operator()(const UnaryOperator &oper) const noexcept
+        std::size_t operator()(const UnaryOperator& oper) const noexcept
         {
             std::size_t hash = std::hash<Mnemonic>()(oper.mnemonics());
             return hash;
@@ -145,7 +172,7 @@ namespace std {
 
     template<> struct hash<BinaryOperator>
     {
-        std::size_t operator()(const BinaryOperator &oper) const noexcept
+        std::size_t operator()(const BinaryOperator& oper) const noexcept
         {
             std::size_t hash = std::hash<Mnemonic>()(oper.mnemonics());
             return hash;
@@ -168,8 +195,7 @@ public:
     BinaryOperator &FindBinOper (Mnemonic str);
 };
 
-bool operator== (const UnaryOperator &op1, const UnaryOperator &op2);
-bool operator== (const BinaryOperator &op1, const BinaryOperator &op2);
+
 
 
 //  BASE CLASS - COMMAND  //
@@ -204,6 +230,9 @@ class UnaryCommand : public Command {
     UnaryOperator unoper;
 
 protected:
+
+    ~UnaryCommand () = default;
+
     void print (std::ostream &os) const override;
 
     void load (CPU &cpu) override;
@@ -240,6 +269,9 @@ class BinaryCommand : public Command {
     BinaryOperator binoper;
 
 protected:
+
+    ~BinaryCommand () = default;
+
     void print (std::ostream &os) const override;
 
     void load (CPU &cpu) override;

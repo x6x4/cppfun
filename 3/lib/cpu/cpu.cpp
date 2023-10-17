@@ -13,10 +13,6 @@ void CPU::check_existence () {
     CPU_exists = 1;
 }
 
-void Register::load(CPU &cpu) const {
-    cpu.get_regblock().regs[num] = value;
-}
-
 //  class CPU
 
 /*CPU::CPU(EU_vec _eu, RegBlock &_gp, Memory &_m)

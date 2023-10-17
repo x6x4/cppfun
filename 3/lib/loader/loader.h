@@ -3,3 +3,9 @@
 
 
 
+class Mem_Register : public Register {
+    void load(CPU &cpu) const;
+};
+
+
+

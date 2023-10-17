@@ -1,7 +1,9 @@
 
 #include "mcode_compiler.h"
+#include <cstddef>
 #include <exception>
 #include <iostream>
+#include <memory>
 #include <sstream>
 #include <stdexcept>
 
@@ -11,7 +13,7 @@ std::ostream &operator<<(std::ostream &os, const MCode &mc) {
     return os;
 }
 
-MCode &to_mcode (InstrSet &iset, const char *filename) {
+MCode *to_mcode (InstrSet &iset, const char *filename) {
 
     try {
         std::ifstream is (filename);
@@ -29,13 +31,13 @@ MCode &to_mcode (InstrSet &iset, const char *filename) {
     }
 } 
 
-MCode &compile (InstrSet &iset, std::ifstream &is) {
+MCode *compile (InstrSet &iset, std::ifstream &is) {
 
     try {
-        mprog prog = parser(iset, is);
+        mprog *prog = parser(iset, is);
 
-        MCode *code = new MCode(prog);
-        return *code;
+        MCode *code = new MCode(*prog);
+        return code;
     }
         
     catch (std::runtime_error &e) {
@@ -46,11 +48,12 @@ MCode &compile (InstrSet &iset, std::ifstream &is) {
     }
 }
 
-Command &parse_cmd(InstrSet &iset, std::string &cmd, std::size_t line_num);
+Command *parse_cmd(InstrSet &iset, std::string &cmd, std::size_t line_num);
 
 std::logic_error CE (const char *error, std::size_t line_num);
 
-mprog &parser(InstrSet &iset, std::ifstream &is) {
+
+mprog *parser(InstrSet &iset, std::ifstream &is) {
 
     ///  .TEXT SECTION  ///
 
@@ -62,18 +65,18 @@ mprog &parser(InstrSet &iset, std::ifstream &is) {
 
         mprog *prog = new mprog;
 
-        while (std::getline(is, command)) {
+        while (std::getline(is, command)) {  //  line-by-line parsing
             line_num++;
             
             if (!command.compare("")) continue;    //  empty line
             if (command[0] == '#') continue;       //  comment
             if (!command.compare(".data")) break;  //  end of .text section
             
-            Command &cur_cmd = parse_cmd(iset, command, line_num);
-            prog->push_back(&cur_cmd);
+            Command *cur_cmd = parse_cmd(iset, command, line_num);
+            prog->push_back(cur_cmd);
         }
 
-        return *prog;
+        return prog;
     }
 
     catch (std::runtime_error &e) {
@@ -86,27 +89,31 @@ mprog &parser(InstrSet &iset, std::ifstream &is) {
 
 
 
-Command &parse_cmd(InstrSet &iset, std::string &cmd_str, std::size_t line_num) {
+Command *parse_cmd(InstrSet &iset, std::string &cmd_str, std::size_t line_num) {
 
-    std::istringstream iss(cmd_str);
+    std::istringstream tok_stream(cmd_str);
     std::vector<std::string> tokens;
-    std::string token;
+    std::string cur_token;
+
     std::string label = "";
 
-
     ///  TOKENIZATION  ///
-    ///  Ucmd has 2 significant tokens, Bcmd - 3.
+    
+    while (tok_stream >> cur_token) tokens.push_back(cur_token);
+    std::size_t num_tok = tokens.size();
 
-    while (iss >> token) {
-        tokens.push_back(token);
-    }
+    ///  Ucmd has max 3 tokens, Bcmd - 4.
+    if (num_tok > 4) throw CE("Too many tokens", line_num);
+
+
+    ///  PARSING  ///
 
     std::size_t cur_tok_num = 0;
 
-    ///  PARSE LABEL  ///
+    //   PARSE LABEL
 
     if (tokens[0].back() == ':') {  
-        if (tokens.size() == 1) {
+        if (num_tok == 1) {
             throw CE("empty command", line_num);
         }
         label = tokens[0].substr(0, tokens[0].length() - 1);  //  shrink trailing ':'
@@ -114,53 +121,77 @@ Command &parse_cmd(InstrSet &iset, std::string &cmd_str, std::size_t line_num) {
         cur_tok_num++;
     }
 
-    ///  PARSE SIGNIFICANT PART  ///
+    //   PARSE SIGNIFICANT PART
 
-    std::size_t num_sign_tok = tokens.size()-cur_tok_num;
+    std::size_t num_sign_tok = num_tok-cur_tok_num;
 
     if (num_sign_tok == 1) throw CE("expected operand", line_num);
 
-    if (num_sign_tok == 2) {  //  parse Ucmd 
-        
-        UnaryOperator &uoper = iset.FindUnOper(tokens[cur_tok_num]);  //  2nd token is operator  
-        cur_tok_num++;
+    //  1st significant token is operator  
 
-        if (tokens[cur_tok_num][0] == 'r')  {  //  register
-            std::string reg_num (tokens[cur_tok_num].substr(1));
-            Operand &opd1 = *(new Register(std::stoi(reg_num)));
+    UnaryOperator uoper;
+    BinaryOperator binoper;
 
-            UnaryCommand *ucmd = new UnaryCommand(label, uoper, opd1);
-            return *ucmd;
-        } else {
-            throw CE("invalid operand", line_num);
-        }
+    if (num_sign_tok == 2) {         //  parse Uoper
 
-    } else if (num_sign_tok == 3) {  //  parse Bcmd
+        uoper = iset.FindUnOper(tokens[cur_tok_num]); 
 
-        BinaryOperator boper = iset.FindBinOper(tokens[1]);  //  2nd token is operator  
-        cur_tok_num++;
-        throw CE("binary command", line_num);
+    } else if (num_sign_tok == 3) {  //  parse Boper
 
-    } else {
-        throw CE("invalid number of tokens", line_num);
+        binoper = iset.FindBinOper(tokens[cur_tok_num]); 
     }
 
-    ///  PARSE OPERAND1  ///
+    cur_tok_num++;
 
-/*    if (tokens[cur_pos][0] == 'r') {  //  register
-        cmd_str.op1 = tokens[cur_pos];
-    } 
+    //  parse 1st opd
+
+    Operand *opd1;
+
+    if (tokens[cur_tok_num][0] == 'r')  {  //  register
+        std::string reg_num (tokens[cur_tok_num].substr(1));
+        opd1 = new Register(std::stoi(reg_num));
+
+    } else {
+        throw CE("invalid 1st operand", line_num);
+    }
+
+    cur_tok_num++;
+
+    if (cur_tok_num == num_tok) {
+        UnaryCommand *ucmd = new UnaryCommand(label, uoper, *opd1);
+        return ucmd;
+    }
+
+    //  parse 2nd opd
+
+    Operand* opd2;
+
+    if (tokens[cur_tok_num][0] == 'r')  {  //  register
+        std::string reg_num (tokens[cur_tok_num].substr(1));
+        opd2 = new Register(std::stoi(reg_num));
+
+    } else {
+        throw CE("invalid 2nd operand", line_num);
+    }
+
+    cur_tok_num++;
+
+    if (cur_tok_num == num_tok) {
+        BinaryCommand *bincmd = new BinaryCommand(label, binoper, *opd1, *opd2);
+        return bincmd;
+    }
+
+    throw CE("Wrong command", line_num);
+ 
+/* 
     else if (!std::isdigit(tokens[cur_pos][0]) //  1st operand can't be imm
         && cur_pos == tokens.size()-1) {  //  code label is always 1st and last operand
         cmd_str.op1 = tokens[cur_pos];
     }
     else throw CE("first operand must be a register");
     
-    cur_pos++;*/
+    cur_pos++;
 
-    ///  PARSE OPERAND2  ///
-
-    /*if (cur_pos != tokens.size()) {
         if (tokens[cur_pos][0] == 'r'  //  register
             || std::isdigit(tokens[cur_pos][0])) {  // imm operand
             cmd_str.op2 = tokens[cur_pos];
@@ -169,8 +200,6 @@ Command &parse_cmd(InstrSet &iset, std::string &cmd_str, std::size_t line_num) {
             l.has_data.push_back({l.cur_cmd, tokens[cur_pos]}); 
         }
     }*/
-
-    //std::cout << cmd << std::endl;
 }
 
 std::logic_error CE (const char *error, std::size_t line_num) {

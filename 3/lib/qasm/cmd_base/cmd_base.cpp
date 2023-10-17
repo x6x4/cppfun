@@ -27,12 +27,13 @@ std::ostream &operator<<(std::ostream &os, const Operator &op) {
     return os;
 }
 
-bool operator== (const UnaryOperator &op1, const UnaryOperator &op2) {
-    return op1.mnemonics() == op2.mnemonics();
+bool UnaryOperator::operator== (const UnaryOperator &other) const {
+    return mnemonics() == other.mnemonics();
 }
 
-bool operator== (const BinaryOperator &op1, const BinaryOperator &op2) {
-    return op1.mnemonics() == op2.mnemonics();
+bool BinaryOperator::operator== (const BinaryOperator &other) const {
+    return mnemonics() == other.mnemonics();
+    return 0;
 }
 
 //  INSTR SET  //
@@ -48,7 +49,7 @@ UnaryOperator &InstrSet::FindUnOper (Mnemonic str) {
 BinaryOperator &InstrSet::FindBinOper (Mnemonic str) {
     auto boper = bset.find(BinaryOperator(str));
     if (boper == bset.end())
-        throw std::logic_error("Unary operator not found");
+        throw std::logic_error("Binary operator not found");
     else 
         return boper._M_cur->_M_v();
 };
@@ -66,6 +67,7 @@ void Register::print (std::ostream &os) const {
     os << "r" << num; //<< " " << val();
 }
 
+
 //  COMMAND  //
 
 std::ostream &operator<<(std::ostream &os, Command &cmd) {
@@ -82,7 +84,7 @@ void print_mprog (std::ostream &os, const mprog& prog) {
 //  UNARY COMMAND
 
 void UnaryCommand::load (CPU &cpu) {
-    opd1.load(cpu);
+    //opd1.load(cpu);
 }
 
 void UnaryCommand::exec (CPU &cpu) {
@@ -97,8 +99,8 @@ void UnaryCommand::print(std::ostream &os) const {
 //  BINARY COMMAND
 
 void BinaryCommand::load (CPU &cpu) {
-    opd1.load(cpu);
-    opd2.load(cpu);
+    //opd1.load(cpu);
+    //opd2.load(cpu);
 }
 
 void BinaryCommand::exec (CPU &cpu) {
