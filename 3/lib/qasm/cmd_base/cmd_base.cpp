@@ -75,11 +75,7 @@ std::ostream &operator<<(std::ostream &os, Command &cmd) {
     return os;
 }
 
-void print_mprog (std::ostream &os, const mprog& prog) {
-    for (auto cmd : prog) {
-        os << *cmd << '\n';
-    }
-}
+
 
 //  UNARY COMMAND
 
@@ -89,11 +85,11 @@ void UnaryCommand::load (CPU &cpu) {
 
 void UnaryCommand::exec (CPU &cpu) {
     load(cpu);
-    unoper(opd1);
+    unoper(*opd1);
 }
 
 void UnaryCommand::print(std::ostream &os) const {
-    os << label() << " " << unoper.mnemonics() << " " << opd1;
+    os << label() << " " << unoper.mnemonics() << " " << *opd1;
 }
 
 //  BINARY COMMAND
@@ -105,9 +101,9 @@ void BinaryCommand::load (CPU &cpu) {
 
 void BinaryCommand::exec (CPU &cpu) {
     load(cpu);
-    binoper(opd1, opd2);
+    binoper(*opd1, *opd2);
 }
 
 void BinaryCommand::print(std::ostream &os) const {
-    os << label() << " " << binoper.mnemonics() << " " << opd1 << " " << opd2;
+    os << label() << " " << binoper.mnemonics() << " " << *opd1 << " " << *opd2;
 }

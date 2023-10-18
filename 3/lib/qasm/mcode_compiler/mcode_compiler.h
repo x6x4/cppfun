@@ -6,18 +6,28 @@
 
 class MCode {
 
-~MCode () = default;
+    std::vector<Command*> cmds;
 
 public:
 
-    mprog prog = {};
+    ~MCode () { for (auto cmd : cmds) delete cmd; };
 
     MCode () = default;
-    MCode(mprog _prog) { prog = _prog; }
+    MCode (MCode&) = default;
+    MCode (MCode&&) = default;
+    MCode& operator= (MCode&) = default;
+    MCode& operator= (MCode&&) = default;
+
+    void add_cmd (Command *cmd) {
+        cmds.push_back(cmd);
+    }
+
+    void print_mcode (std::ostream &os) const {
+        for (auto cmd : cmds) os << *cmd << '\n';
+    }
 };
+
 
 std::ostream &operator<<(std::ostream &os, const MCode &mc);
 
-MCode *to_mcode (InstrSet &iset, const char *filename);
-MCode *compile (InstrSet &iset, std::ifstream &is);
-mprog *parser(InstrSet &iset, std::ifstream &is);
+MCode file_to_mcode (InstrSet &iset, const char *filename);

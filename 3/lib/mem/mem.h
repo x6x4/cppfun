@@ -32,20 +32,18 @@ friend Op_J;
     void swap (ProgramMemory &other) {
         std::swap(this->pc, other.pc);
         std::swap(this->zf, other.zf);
-        std::swap(this->prog, other.prog);
+        //std::swap(this->prog, other.prog);
     }
 
 public:
-
-    mprog prog = {};
 
     //  CTORS
 
     ProgramMemory () {};
 
-    ProgramMemory(mprog program) { prog = program; } 
+    //ProgramMemory(mprog program) { prog = program; } 
 
-    ProgramMemory(ProgramMemory &_pm) { prog = _pm.prog; }
+    //ProgramMemory(ProgramMemory &_pm) { prog = _pm.prog; }
 
     ProgramMemory operator= (ProgramMemory &_pm) {
         ProgramMemory pm (_pm);
@@ -53,7 +51,7 @@ public:
         return *this;
     }
     
-    const Command &get_cur_cmd () const { return *prog[pc]; };
+    //const Command &get_cur_cmd () const { return *prog[pc]; };
 };
 
 std::ostream &operator<<(std::ostream &os, ProgramMemory &pm);

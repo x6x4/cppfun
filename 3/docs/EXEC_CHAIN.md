@@ -1,12 +1,12 @@
 
 <h1>CPU MODEL</h1>
 
-User program
+User program + Instruction set
     |
-Mcode compiler
+Mcode compiler  *DONE*
     |
 Loader --------> Program Memory
-                    Data Memory
+                    Data Memory  //  not implemented yet
                  Register Block
                         |
                    Control unit 

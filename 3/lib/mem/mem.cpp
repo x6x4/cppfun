@@ -5,7 +5,7 @@
 
 std::ostream &operator<<(std::ostream &os, ProgramMemory &pm) {
 
-    print_mprog(os, pm.prog);
+    //print_mprog(os, pm.prog);
     
     return os;
 }

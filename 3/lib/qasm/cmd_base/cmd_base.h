@@ -67,10 +67,11 @@ protected:
 
     int value = 0;
 
-    ~Operand () = default;
     virtual void print (std::ostream &os) const {};
     
 public:
+
+    virtual ~Operand () = default;
 
     Operand () {};
     Operand(int val) : value(val) {};
@@ -81,14 +82,15 @@ public:
 };
 
 class Register : public Operand {
-    
-~Register () = default;
 
 protected:
     std::size_t num = 0;
+
     void print (std::ostream &os) const override;
 
 public:
+    ~Register () override = default;
+
     Register(std::size_t number) : num(number) {};
 };
 
@@ -106,11 +108,6 @@ public:
     Operator () {};
     
     Operator(Mnemonic _mnem) { mnem = _mnem; }
-
-    /*Operator &operator= (Operator &init) {
-        Operator &op (init);
-        return op;
-    }*/
 
     const std::string &mnemonics () const { return mnem; }
 };
@@ -196,16 +193,16 @@ public:
 };
 
 
-
-
 //  BASE CLASS - COMMAND  //
 
 class Command {
 
 protected:
     ID lbl = "";
-
+    
 public:
+    virtual ~Command() {};
+
     virtual void print (std::ostream &os) const = 0;
 
 public:
@@ -218,20 +215,17 @@ public:
     friend std::ostream &operator<<(std::ostream &os, Command &cmd);
 };
 
-using mprog = std::vector<Command*>;
-void print_mprog (std::ostream &os, const mprog& prog);
-
 
 //  DERIVED FROM COMMAND
 
 class UnaryCommand : public Command {
 
-    Operand &opd1;
+    Operand *opd1;
     UnaryOperator unoper;
 
 protected:
 
-    ~UnaryCommand () = default;
+    ~UnaryCommand () override { delete opd1; }
 
     void print (std::ostream &os) const override;
 
@@ -247,7 +241,7 @@ public:
     * @param       _opd1  1st operand
     * @return      Created command
     */
-    UnaryCommand(std::string _lbl, UnaryOperator _oper, Operand &_opd1) : opd1(_opd1), unoper(_oper) {
+    UnaryCommand(ID _lbl, UnaryOperator _oper, Operand *_opd1) : opd1(_opd1), unoper(_oper) {
         Command::lbl = _lbl;
     }
 
@@ -257,20 +251,20 @@ public:
     * @param       _opd1  1st operand
     * @return      Created command
     */
-    UnaryCommand(UnaryOperator _oper, Operand &_opd1) : opd1(_opd1), unoper(_oper) {}
+    UnaryCommand(UnaryOperator _oper, Operand *_opd1) : opd1(_opd1), unoper(_oper) {}
 
 };
 
 
 class BinaryCommand : public Command {
     
-    Operand &opd1;
-    Operand &opd2;
+    Operand *opd1;
+    Operand *opd2;
     BinaryOperator binoper;
 
 protected:
 
-    ~BinaryCommand () = default;
+    ~BinaryCommand () override { delete opd1; delete opd2; }
 
     void print (std::ostream &os) const override;
 
@@ -287,7 +281,7 @@ public:
     * @param       _opd2  2nd operand
     * @return      Created command
     */
-    BinaryCommand(std::string _lbl, BinaryOperator _oper, Operand &_opd1, Operand &_opd2)
+    BinaryCommand(ID _lbl, BinaryOperator _oper, Operand *_opd1, Operand *_opd2)
         : opd1(_opd1), opd2(_opd2), binoper(_oper)  {
         Command::lbl = _lbl;
     }
@@ -299,7 +293,7 @@ public:
     * @param       _opd2  2nd operand
     * @return      Created command
     */
-    BinaryCommand(BinaryOperator _oper, Operand &_opd1, Operand &_opd2) 
+    BinaryCommand(BinaryOperator _oper, Operand *_opd1, Operand *_opd2) 
         : opd1(_opd1), opd2(_opd2), binoper(_oper)  {}
 
 };

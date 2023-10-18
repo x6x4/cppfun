@@ -52,7 +52,7 @@ void ControlUnit::operator() (CPU &cpu) {
 }
 
 const Command &ControlUnit::fetch (CPU &cpu) const {
-    return cpu.m.pm.get_cur_cmd();
+    //return cpu.m.pm.get_cur_cmd();
 }
 
 enum {
