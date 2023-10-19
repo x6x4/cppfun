@@ -8,8 +8,20 @@
 #include <vector>
 
 
-
+///   fwd
 class CPU;
+class ExecUnit;
+
+using exectime_t = std::size_t; 
+using instr_set = std::vector<std::pair<Operator, exectime_t>>;
+
+enum class State {
+    FREE, 
+    BUSY
+};
+
+using ExecUnits = std::vector<std::pair<State,ExecUnit>>;
+using num_t = std::size_t;
 
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -20,7 +32,9 @@ class CPU;
  *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-class Mem_Register;
+class Mem_Register : public Register {
+    void load(CPU &cpu) const;
+};
 
 class RegBlock {
 friend Mem_Register;
@@ -32,50 +46,31 @@ friend Mem_Register;
 
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- * Implement read-fetch-execute cycle. 
- * It fetches next instruction from program memory 
- * and then assigns it to free execution unit.
- *
- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-class ControlUnit {
-friend CPU;
-    
-    void operator()(CPU &cpu);
-    const Command &fetch(CPU &cpu) const;
-    //  changes exec units state
-    void assign(CPU &cpu, const Command &cmd);
-
-};
-
-using exectime_t = std::size_t; 
-using instr_set = std::vector<std::pair<Operator, exectime_t>>;
-
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * Execute command and blocks its operands. 
  *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 class ExecUnit {
 
-friend ControlUnit;
+friend CPU;
+
+    State eu_state;
 
     instr_set set;
-    void exec (const Command &cmd) const;
-    
+
+    void exec (const Command &cmd, CPU &cpu) const;
 };
-
-
-using EU_vec = std::vector<std::pair<bool,ExecUnit>>;
-
-using num_t = std::size_t;
 
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *  The main device, contains all other devices. 
- *  It can execute program, transferring control to control unit.
+ *  
+ *  It implements fetch-decode-execute cycle: 
+ *  fetches next instruction from program memory 
+ *  and then assigns it to free execution unit.
  *  Its configuration can be changed. 
  *  
- *  Program memory:  |cmd1|cmd2|cmd3|cmd4|...|
- *  Control unit:    | cmd | -> EU
+ *  Program memory:  |cmd1|cmd2|cmd3|cmd4|...|   
+ *  | cmd | -> EU
  *  Execution units: | cmd3 | | cmd1 | | free | | cmd2 |
  *  
  *  General-purpose register block:  |reg1|reg2|reg3|reg4|...|
@@ -83,64 +78,28 @@ using num_t = std::size_t;
  *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-
 class CPU {
-friend ControlUnit;
 
-    std::size_t bitness;
-    
-    ControlUnit cu;
-    EU_vec EUs;
+    std::size_t bitness = 16;
+
+    ExecUnits EUs = {std::make_pair(State::FREE, ExecUnit())};
     RegBlock gp;
-    Memory m;
+    Memory mem;
 
     InstrSet iset;
 
     static bool CPU_exists;
     void check_existence(); 
 
+    void assign(const Command &cmd);
+    RegBlock &get_regblock () { return gp; }
+
 public:
 
     CPU(InstrSet& _iset) : iset (_iset) { check_existence(); }
-    /*CPU(EU_vec eu, RegBlock &gp, Memory &m);*/
     
-    RegBlock &get_regblock () { return gp; }
-
     void exec (const MCode &mc);
+    
     CPU &edit_config(); 
 };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    
 

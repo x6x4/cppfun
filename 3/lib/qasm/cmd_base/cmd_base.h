@@ -3,11 +3,23 @@
  */
 
 #pragma once
+#include <cstddef>
 #include <cstring>
 #include <fstream>
+#include <memory>
 #include <stdexcept>
 #include <unordered_set>
 #include <vector>
+
+///  fwd
+using addr_t = std::size_t;
+class UnaryOperator;
+class BinaryOperator;
+using unary_instr_set = std::unordered_set<UnaryOperator>;
+using binary_instr_set = std::unordered_set<BinaryOperator>;
+class CPU;
+using Mnemonic = std::string;
+class ExecUnit;
 
 
 //  ID  //
@@ -22,6 +34,7 @@ void check_id (std::string str);
 class ID {
 
     std::string id;
+    addr_t addr;
     
 public:
 
@@ -36,7 +49,9 @@ public:
         id = str;
     }
 
+    
     const std::string &get_id () const { return id; }
+    void set_addr (addr_t _addr) { addr = _addr; }
 
     ID &operator=(std::string str) {
         ID buf(str);
@@ -59,7 +74,6 @@ std::ostream &operator<<(std::ostream &os, const ID &id);
 
 //  BASE CLASS - OPERAND  //
 
-class CPU;
 
 class Operand {
 
@@ -68,6 +82,7 @@ protected:
     int value = 0;
 
     virtual void print (std::ostream &os) const {};
+    virtual void load (CPU &cpu) const {};
     
 public:
 
@@ -87,6 +102,7 @@ protected:
     std::size_t num = 0;
 
     void print (std::ostream &os) const override;
+    void load (CPU &cpu) const override;
 
 public:
     ~Register () override = default;
@@ -97,7 +113,6 @@ public:
 
 //  BASE CLASS - OPERATOR  //
 
-using Mnemonic = std::string;
 
 class Operator {
 
@@ -177,10 +192,6 @@ namespace std {
     };
 }
 
-using unary_instr_set = std::unordered_set<UnaryOperator>;
-using binary_instr_set = std::unordered_set<BinaryOperator>;
-
-
 class InstrSet {
     unary_instr_set uset;
     binary_instr_set bset;
@@ -197,11 +208,12 @@ public:
 
 class Command {
 
+friend ExecUnit;
+
 protected:
     ID lbl = "";
     
 public:
-    virtual ~Command() {};
 
     virtual void print (std::ostream &os) const = 0;
 
@@ -210,7 +222,7 @@ public:
     const ID &label() const      { return lbl;  }
 
     virtual void load (CPU &cpu) = 0;
-    virtual void exec (CPU &cpu) = 0;
+    virtual void exec (CPU &cpu) const = 0;
     
     friend std::ostream &operator<<(std::ostream &os, Command &cmd);
 };
@@ -220,17 +232,15 @@ public:
 
 class UnaryCommand : public Command {
 
-    Operand *opd1;
+    std::shared_ptr<Operand> opd1;
     UnaryOperator unoper;
 
 protected:
 
-    ~UnaryCommand () override { delete opd1; }
-
     void print (std::ostream &os) const override;
 
     void load (CPU &cpu) override;
-    void exec (CPU &cpu) override;
+    void exec (CPU &cpu) const override;
 
 public:
 
@@ -241,7 +251,7 @@ public:
     * @param       _opd1  1st operand
     * @return      Created command
     */
-    UnaryCommand(ID _lbl, UnaryOperator _oper, Operand *_opd1) : opd1(_opd1), unoper(_oper) {
+    UnaryCommand(ID _lbl, UnaryOperator _oper, std::shared_ptr<Operand> _opd1) : opd1(_opd1), unoper(_oper) {
         Command::lbl = _lbl;
     }
 
@@ -251,25 +261,23 @@ public:
     * @param       _opd1  1st operand
     * @return      Created command
     */
-    UnaryCommand(UnaryOperator _oper, Operand *_opd1) : opd1(_opd1), unoper(_oper) {}
+    UnaryCommand(UnaryOperator _oper, std::shared_ptr<Operand> _opd1) : opd1(_opd1), unoper(_oper) {}
 
 };
 
 
 class BinaryCommand : public Command {
     
-    Operand *opd1;
-    Operand *opd2;
+    std::shared_ptr<Operand> opd1;
+    std::shared_ptr<Operand> opd2;
     BinaryOperator binoper;
 
 protected:
 
-    ~BinaryCommand () override { delete opd1; delete opd2; }
-
     void print (std::ostream &os) const override;
 
     void load (CPU &cpu) override;
-    void exec (CPU &cpu) override;
+    void exec (CPU &cpu) const override;
 
 public:
 
@@ -281,7 +289,7 @@ public:
     * @param       _opd2  2nd operand
     * @return      Created command
     */
-    BinaryCommand(ID _lbl, BinaryOperator _oper, Operand *_opd1, Operand *_opd2)
+    BinaryCommand(ID _lbl, BinaryOperator _oper, std::shared_ptr<Operand> _opd1, std::shared_ptr<Operand> _opd2)
         : opd1(_opd1), opd2(_opd2), binoper(_oper)  {
         Command::lbl = _lbl;
     }
@@ -293,7 +301,7 @@ public:
     * @param       _opd2  2nd operand
     * @return      Created command
     */
-    BinaryCommand(BinaryOperator _oper, Operand *_opd1, Operand *_opd2) 
+    BinaryCommand(BinaryOperator _oper, std::shared_ptr<Operand>_opd1, std::shared_ptr<Operand> _opd2) 
         : opd1(_opd1), opd2(_opd2), binoper(_oper)  {}
 
 };

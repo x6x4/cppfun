@@ -1,9 +1,17 @@
 #pragma once
-#include "../qasm/cmd_base/cmd_base.h"
+#include "../qasm/mcode_compiler/mcode_compiler.h"
+#include <cstddef>
+#include <memory>
 #include <stdexcept>
 #include <utility>
 #include <vector>
 
+///  fwd
+class Op_J;
+
+///  aliases
+using pc_reg = std::size_t;
+using flag_reg = bool;
 
 
 //  PROGRAM MEMORY
@@ -14,20 +22,29 @@
  *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-class Op_J;
 
 class ProgramMemory {
 
 friend Op_J;
+friend CPU;
 
-    std::size_t pc;
-    bool zf;
+    MCode text;
+    pc_reg pc = 0;
+    flag_reg zf = 0;
 
-    void set_pc (std::size_t _pc) { pc = _pc; };
-    void set_zf (bool _zf)        { zf = _zf; };
+///  GENERAL 
 
-    std::size_t get_pc ()         { return pc; };
-    bool get_zf ()                { return zf; };
+    void load (const MCode &mcode) { text = mcode; }
+
+///  GET & SET
+
+    pc_reg get_pc ()   { return pc; };
+    flag_reg get_zf () { return zf; };
+
+    void set_pc (pc_reg _pc)   { pc = _pc; };
+    void set_zf (flag_reg _zf) { zf = _zf; };
+
+///  OTHER
 
     void swap (ProgramMemory &other) {
         std::swap(this->pc, other.pc);
@@ -37,21 +54,16 @@ friend Op_J;
 
 public:
 
+    ~ProgramMemory() = default;
+
     //  CTORS
 
-    ProgramMemory () {};
+    ProgramMemory () = default;
+    ProgramMemory (ProgramMemory&&) = default;
 
-    //ProgramMemory(mprog program) { prog = program; } 
-
-    //ProgramMemory(ProgramMemory &_pm) { prog = _pm.prog; }
-
-    ProgramMemory operator= (ProgramMemory &_pm) {
-        ProgramMemory pm (_pm);
-        swap(pm);
-        return *this;
-    }
+    ProgramMemory &operator= (ProgramMemory &&_pm) = default;
     
-    //const Command &get_cur_cmd () const { return *prog[pc]; };
+    const Command &fetch () { return *text[pc]; pc++; }
 };
 
 std::ostream &operator<<(std::ostream &os, ProgramMemory &pm);
@@ -93,6 +105,8 @@ class Memory {
 public:
     ProgramMemory pm;
     DataMemory dm;
+
+    Memory () {};
 };
 
 class Data_labels {

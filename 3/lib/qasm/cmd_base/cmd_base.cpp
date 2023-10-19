@@ -80,7 +80,7 @@ std::ostream &operator<<(std::ostream &os, Command &cmd) {
 //  UNARY COMMAND
 
 void UnaryCommand::load (CPU &cpu) {
-    //opd1.load(cpu);
+    opd1.load(cpu);
 }
 
 void UnaryCommand::exec (CPU &cpu) {

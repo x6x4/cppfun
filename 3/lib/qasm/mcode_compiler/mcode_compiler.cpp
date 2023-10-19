@@ -8,7 +8,7 @@
 #include <stdexcept>
 
 MCode parser(InstrSet &iset, std::ifstream &is);
-Command *parse_cmd(InstrSet &iset, std::string &cmd);
+std::shared_ptr<Command> parse_cmd(InstrSet &iset, std::string &cmd, std::size_t line_num);
 std::logic_error CE (const char *error, std::size_t line_num);
 
 
@@ -43,7 +43,7 @@ MCode parser(InstrSet &iset, std::ifstream &is) {
     ///  .TEXT SECTION  ///
 
     std::size_t line_num = 0;
-    Command *cur_cmd;
+    std::shared_ptr<Command> cur_cmd;
 
     try {
 
@@ -58,7 +58,7 @@ MCode parser(InstrSet &iset, std::ifstream &is) {
             if (command[0] == '#') continue;       //  comment
             if (!command.compare(".data")) break;  //  end of .text section
             
-            cur_cmd = parse_cmd(iset, command);
+            cur_cmd = parse_cmd(iset, command, line_num);
             prog.add_cmd(cur_cmd);
         }
 
@@ -74,7 +74,7 @@ MCode parser(InstrSet &iset, std::ifstream &is) {
 }
 
 
-Command *parse_cmd(InstrSet &iset, std::string &cmd_str) {
+std::shared_ptr<Command> parse_cmd(InstrSet &iset, std::string &cmd_str, std::size_t line_num) {
 
     std::istringstream tok_stream(cmd_str);
     std::vector<std::string> tokens;
@@ -101,7 +101,8 @@ Command *parse_cmd(InstrSet &iset, std::string &cmd_str) {
         if (num_tok == 1) {
             throw std::logic_error("empty command");
         }
-        label = tokens[0].substr(0, tokens[0].length() - 1);  //  shrink trailing ':'
+        //label = tokens[0].substr(0, tokens[0].length() - 1);  //  shrink trailing ':'
+        label.set_addr(line_num);
 
         cur_tok_num++;
     }
@@ -131,11 +132,11 @@ Command *parse_cmd(InstrSet &iset, std::string &cmd_str) {
 
     //  parse 1st opd
 
-    Operand *opd1;
+    std::shared_ptr<Operand> opd1;
 
     if (tokens[cur_tok_num][0] == 'r')  {  //  register
         std::string reg_num (tokens[cur_tok_num].substr(1));
-        opd1 = new Register(std::stoi(reg_num));
+        opd1 = std::make_shared<Operand>(Register(std::stoi(reg_num)));
 
     } else {
         throw std::logic_error("invalid 1st operand");
@@ -144,27 +145,26 @@ Command *parse_cmd(InstrSet &iset, std::string &cmd_str) {
     cur_tok_num++;
 
     if (cur_tok_num == num_tok) {
-        UnaryCommand *ucmd = new UnaryCommand(label, uoper, opd1);
+        std::shared_ptr<UnaryCommand> ucmd = std::make_shared<UnaryCommand>(UnaryCommand(label, uoper, opd1));
         return ucmd;
     }
 
     //  parse 2nd opd
 
-    Operand* opd2;
+    std::shared_ptr<Operand> opd2;
 
     if (tokens[cur_tok_num][0] == 'r')  {  //  register
         std::string reg_num (tokens[cur_tok_num].substr(1));
-        opd2 = new Register(std::stoi(reg_num));
+        opd2 = std::make_shared<Operand>(Register(std::stoi(reg_num)));
 
     } else {
-        delete opd1;
         throw std::logic_error("invalid 2nd operand");
     }
 
     cur_tok_num++;
 
     if (cur_tok_num == num_tok) {
-        BinaryCommand *bincmd = new BinaryCommand(label, binoper, opd1, opd2);
+        std::shared_ptr<BinaryCommand> bincmd = std::make_shared<BinaryCommand>(label, binoper, opd1, opd2);
         return bincmd;
     }
 

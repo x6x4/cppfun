@@ -6,6 +6,26 @@ code1:  mov r6 data1
         cmp r5 r8
         jne loop*/
 
+        //  class CPU
+
+/*CPU::CPU(EU_vec _eu, RegBlock &_gp, Memory &_m)
+    : EUs(_eu), gp(_gp), m(_m) {
+        
+        std::ofstream os ("CPU.conf");
+        std::string conf = "Program Memory:\nControl Unit:\nExecution Units:\nRegisters:\nData Memory:\n";
+        
+        if (os.is_open()) os << conf;
+        if (os.bad()) throw std::runtime_error ("Error creating proc.conf");
+        //  export config
+
+        CPU &CPU::edit_config () {
+    system("vim CPU.conf");
+    //  import config
+    return *this;
+}
+};   */
+
+
 
 class Singleton {
 
@@ -23,7 +43,7 @@ public:
 
 Singleton *Singleton::ptr = nullptr;
 
-
+/*
 void f() {
     int a = 0xABCD;
     int addr = 0xFFFF;
@@ -51,7 +71,7 @@ public:
 };
 
 
-/*
+
 
 void DataLabel::print (std::ostream &os) const {
     os << "0x" << static_cast<int>(label) << " " << val();

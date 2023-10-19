@@ -5,39 +5,29 @@
 #include <cstring>
 #include <functional>
 #include <iostream>
+#include <memory>
 #include <stdexcept>
 
 
 int main (int argc, char **argv) {
 
-    MCode mcode;
-    
     try {
 
         CPU cpu (iset);
-        //CPU cpu1;
         
-        mcode = file_to_mcode(iset, argv[1]);
+        const MCode& mcode = file_to_mcode(iset, argv[1]);
+
+        cpu.exec(mcode);
 
         std::cout << mcode;
-        // << mcode;
-
-        //mcode.~MCode();
-        //delete mcode;
-
-        //cpu.exec(mcode);
     }
 
     catch (std::logic_error &e) {
         std::cout << e.what() << std::endl;
-        mcode.~MCode();
-        //delete mcode;
     }
 
     catch (std::runtime_error &e) {
         std::cout << e.what() << std::endl;
-        mcode.~MCode();
-        //delete mcode;
     }
     
 }

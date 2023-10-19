@@ -2,7 +2,7 @@
 This project implements custom CPU architecture and its assembler.
 
 Some limitations:
-    - identifiers consist of up to 8 latin letters 
+    - labels consist of up to 8 latin letters 
 
 Assembler features:
     - detailed compilation errors
@@ -20,7 +20,7 @@ result --> opd1
 _Command list:_
 
 *Unary:*
-    inc 
+    inc (+)
 
     jmp
     je
@@ -30,7 +30,7 @@ _Command list:_
 
 *Binary:*
     cmp
-    mov
+    mov (+)
 
 
 
