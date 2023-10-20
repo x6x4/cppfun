@@ -63,11 +63,6 @@ std::ostream &operator<<(std::ostream &os, const Operand &opd) {
     return os;
 }
 
-void Register::print (std::ostream &os) const {
-    os << "r" << num; //<< " " << val();
-}
-
-
 //  COMMAND  //
 
 std::ostream &operator<<(std::ostream &os, Command &cmd) {
@@ -75,34 +70,13 @@ std::ostream &operator<<(std::ostream &os, Command &cmd) {
     return os;
 }
 
-
-
 //  UNARY COMMAND
-
-void UnaryCommand::load (CPU &cpu) {
-    opd1.load(cpu);
-}
-
-void UnaryCommand::exec (CPU &cpu) {
-    load(cpu);
-    unoper(*opd1);
-}
 
 void UnaryCommand::print(std::ostream &os) const {
     os << label() << " " << unoper.mnemonics() << " " << *opd1;
 }
 
 //  BINARY COMMAND
-
-void BinaryCommand::load (CPU &cpu) {
-    //opd1.load(cpu);
-    //opd2.load(cpu);
-}
-
-void BinaryCommand::exec (CPU &cpu) {
-    load(cpu);
-    binoper(*opd1, *opd2);
-}
 
 void BinaryCommand::print(std::ostream &os) const {
     os << label() << " " << binoper.mnemonics() << " " << *opd1 << " " << *opd2;

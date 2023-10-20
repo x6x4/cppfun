@@ -2,6 +2,7 @@
 
 #include "../qasm/mcode_compiler/mcode_compiler.h"
 #include "../mem/mem.h"
+#include <algorithm>
 #include <cstddef>
 #include <stdexcept>
 #include <utility>
@@ -24,26 +25,55 @@ using ExecUnits = std::vector<std::pair<State,ExecUnit>>;
 using num_t = std::size_t;
 
 
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- *  Contains general-purpose registers. 
+
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
+ *  Small and fast memory cell inside CPU. 
+ *
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
+class Register : public Operand {
+
+protected:
+    std::size_t num = 0;
+
+    void print (std::ostream &os) const override;
+    void load (CPU &cpu) const override;
+
+public:
+    Register *clone () const override { return new Register(*this); }
+    ~Register () override = default;
+
+    Register(std::size_t number) : num(number) {};
+};
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
+ *  Contains 16 general-purpose registers. 
  *  Registers can be: 
  *      accessed through number;
  *      blocked.
  *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-class Mem_Register : public Register {
-    void load(CPU &cpu) const;
-};
 
 class RegBlock {
-friend Mem_Register;
+friend Register;
 
-    std::vector<int> regs;
+    std::vector<int> regs = std::vector<int>(16);
 
     int operator[] (std::size_t num) const;
+
+    void load_reg (std::size_t num, int val) { regs[num] = val; }
+
+public:
+
+    void print (std::ostream &os) const { 
+        for (std::size_t i = 0; i < regs.size(); i++) 
+            if (regs[i]) os << 'r' << i << '(' << regs[i] << ')' << ' '; 
+    }
 };
 
+std::ostream &operator<<(std::ostream &os, RegBlock &rb);
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * Execute command and blocks its operands. 
@@ -59,7 +89,6 @@ friend CPU;
 
     void exec (const Command &cmd, CPU &cpu) const;
 };
-
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *  The main device, contains all other devices. 
@@ -79,12 +108,15 @@ friend CPU;
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 class CPU {
+friend Register;
+friend ExecUnit;
 
     std::size_t bitness = 16;
 
     ExecUnits EUs = {std::make_pair(State::FREE, ExecUnit())};
-    RegBlock gp;
+    RegBlock gp_rb;
     Memory mem;
+    Cache cache;
 
     InstrSet iset;
 
@@ -92,14 +124,16 @@ class CPU {
     void check_existence(); 
 
     void assign(const Command &cmd);
-    RegBlock &get_regblock () { return gp; }
+    void load_from_cache ();
 
 public:
 
     CPU(InstrSet& _iset) : iset (_iset) { check_existence(); }
     
     void exec (const MCode &mc);
-    
+
+    void print_regblock (std::ostream &os) { os << gp_rb; os << '\n'; }
+
     CPU &edit_config(); 
 };
 

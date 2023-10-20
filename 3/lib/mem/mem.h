@@ -14,6 +14,7 @@ using pc_reg = std::size_t;
 using flag_reg = bool;
 
 
+
 //  PROGRAM MEMORY
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -63,7 +64,8 @@ public:
 
     ProgramMemory &operator= (ProgramMemory &&_pm) = default;
     
-    const Command &fetch () { return *text[pc]; pc++; }
+    bool is_over () { return pc == text.num_lines(); }
+    const Command &fetch () { return *text[pc++]; }
 };
 
 std::ostream &operator<<(std::ostream &os, ProgramMemory &pm);

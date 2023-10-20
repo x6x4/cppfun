@@ -5,12 +5,22 @@
 #include <iostream>
 #include <stdexcept>
 
+//  REG  //
 
-
-void Mem_Register::load(CPU &cpu) const {
-    cpu.get_regblock().regs[num] = value;
+void Register::load(CPU &cpu) const {
+    cpu.gp_rb.load_reg(num, value);
 }
 
+void Register::print (std::ostream &os) const {
+    os << "r" << num << '(' << val() << ')';
+}
+
+std::ostream &operator<<(std::ostream &os, RegBlock &rb) {
+    rb.print(os);
+    return os;
+}
+
+//  CPU  //
 
 bool CPU::CPU_exists = 0;
 
@@ -21,10 +31,11 @@ void CPU::check_existence () {
 
 void CPU::exec (const MCode& mc) {
     mem.pm.load(mc);
-    const Command &cur_cmd = mem.pm.fetch();
-    assign(cur_cmd);
+    while (!mem.pm.is_over()) {
+        const Command &cur_cmd = mem.pm.fetch();
+        assign(cur_cmd);
+    }
 }
-
 
 void CPU::assign(const Command &cmd) {
     for (std::size_t i = 0; i < EUs.size(); i++) {
@@ -32,7 +43,8 @@ void CPU::assign(const Command &cmd) {
         if (eu.first == State::FREE) {
             EUs[i].first = State::BUSY;
             std::cout << "Command assigned to EU " << i << std::endl;
-            EUs[i].second.exec(cmd);
+            EUs[i].second.exec(cmd, *this);
+            EUs[i].first = State::FREE;
             return;
         }
     }
@@ -40,7 +52,18 @@ void CPU::assign(const Command &cmd) {
     std::cout << "Command can't be assigned now, wait please" << std::endl;
 }
 
+//  EXEC UNIT  //
+
 void ExecUnit::exec(const Command &cmd, CPU &cpu) const {
-    cmd.exec(cpu);
+    cmd.exec(cpu.cache);
+    cpu.load_from_cache();
+    cpu.print_regblock(std::cout);
 }
 
+//  LOAD FROM CACHE  //
+
+void CPU::load_from_cache () {
+    if (cache.opd1) cache.opd1->load(*this);
+    if (cache.opd2) cache.opd2->load(*this);
+    cache.clear();
+}

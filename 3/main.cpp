@@ -18,6 +18,7 @@ int main (int argc, char **argv) {
         const MCode& mcode = file_to_mcode(iset, argv[1]);
 
         cpu.exec(mcode);
+        //cpu.print_regblock(std::cout);
 
         std::cout << mcode;
     }

@@ -1,5 +1,6 @@
 
 #include "mcode_compiler.h"
+#include "../../cpu/cpu.h"
 #include <cstddef>
 #include <exception>
 #include <iostream>
@@ -8,7 +9,7 @@
 #include <stdexcept>
 
 MCode parser(InstrSet &iset, std::ifstream &is);
-std::shared_ptr<Command> parse_cmd(InstrSet &iset, std::string &cmd, std::size_t line_num);
+Command* parse_cmd(InstrSet &iset, std::string &cmd, std::size_t line_num);
 std::logic_error CE (const char *error, std::size_t line_num);
 
 
@@ -43,7 +44,7 @@ MCode parser(InstrSet &iset, std::ifstream &is) {
     ///  .TEXT SECTION  ///
 
     std::size_t line_num = 0;
-    std::shared_ptr<Command> cur_cmd;
+    Command* cur_cmd;
 
     try {
 
@@ -74,7 +75,7 @@ MCode parser(InstrSet &iset, std::ifstream &is) {
 }
 
 
-std::shared_ptr<Command> parse_cmd(InstrSet &iset, std::string &cmd_str, std::size_t line_num) {
+Command* parse_cmd(InstrSet &iset, std::string &cmd_str, std::size_t line_num) {
 
     std::istringstream tok_stream(cmd_str);
     std::vector<std::string> tokens;
@@ -132,11 +133,11 @@ std::shared_ptr<Command> parse_cmd(InstrSet &iset, std::string &cmd_str, std::si
 
     //  parse 1st opd
 
-    std::shared_ptr<Operand> opd1;
+    Operand* opd1;
 
     if (tokens[cur_tok_num][0] == 'r')  {  //  register
         std::string reg_num (tokens[cur_tok_num].substr(1));
-        opd1 = std::make_shared<Operand>(Register(std::stoi(reg_num)));
+        opd1 = new Register(std::stoi(reg_num));
 
     } else {
         throw std::logic_error("invalid 1st operand");
@@ -145,17 +146,17 @@ std::shared_ptr<Command> parse_cmd(InstrSet &iset, std::string &cmd_str, std::si
     cur_tok_num++;
 
     if (cur_tok_num == num_tok) {
-        std::shared_ptr<UnaryCommand> ucmd = std::make_shared<UnaryCommand>(UnaryCommand(label, uoper, opd1));
+        UnaryCommand* ucmd = new UnaryCommand(label, uoper, opd1);
         return ucmd;
     }
 
     //  parse 2nd opd
 
-    std::shared_ptr<Operand> opd2;
+    Operand* opd2;
 
     if (tokens[cur_tok_num][0] == 'r')  {  //  register
         std::string reg_num (tokens[cur_tok_num].substr(1));
-        opd2 = std::make_shared<Operand>(Register(std::stoi(reg_num)));
+        opd2 = new Register(std::stoi(reg_num));
 
     } else {
         throw std::logic_error("invalid 2nd operand");
@@ -164,7 +165,7 @@ std::shared_ptr<Command> parse_cmd(InstrSet &iset, std::string &cmd_str, std::si
     cur_tok_num++;
 
     if (cur_tok_num == num_tok) {
-        std::shared_ptr<BinaryCommand> bincmd = std::make_shared<BinaryCommand>(label, binoper, opd1, opd2);
+        BinaryCommand* bincmd = new BinaryCommand(label, binoper, opd1, opd2);
         return bincmd;
     }
 

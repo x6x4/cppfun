@@ -3,6 +3,7 @@ This project implements custom CPU architecture and its assembler.
 
 Some limitations:
     - labels consist of up to 8 latin letters 
+    - 16 general-purpose registers
 
 Assembler features:
     - detailed compilation errors
