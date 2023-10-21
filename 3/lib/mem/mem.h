@@ -7,11 +7,9 @@
 #include <vector>
 
 ///  fwd
-class Op_J;
+class SPRegister;
 
 ///  aliases
-using pc_reg = std::size_t;
-using flag_reg = bool;
 
 
 
@@ -26,12 +24,13 @@ using flag_reg = bool;
 
 class ProgramMemory {
 
-friend Op_J;
+friend SPRegister;
 friend CPU;
 
     MCode text;
-    pc_reg pc = 0;
-    flag_reg zf = 0;
+    std::vector<std::size_t> sp_regs = std::vector<std::size_t>(2);
+    std::size_t pc_num = 0;
+    std::size_t zf_num = 1;
 
 ///  GENERAL 
 
@@ -39,19 +38,14 @@ friend CPU;
 
 ///  GET & SET
 
-    pc_reg get_pc ()   { return pc; };
-    flag_reg get_zf () { return zf; };
+    std::size_t get_pc ()   { return sp_regs[pc_num]; }
+    bool get_zf () { return sp_regs[zf_num]; }
 
-    void set_pc (pc_reg _pc)   { pc = _pc; };
-    void set_zf (flag_reg _zf) { zf = _zf; };
+    void set_pc (std::size_t _pc)   { sp_regs[pc_num] = _pc; };
+    void set_zf (bool _zf) { sp_regs[zf_num] = _zf; };
 
 ///  OTHER
 
-    void swap (ProgramMemory &other) {
-        std::swap(this->pc, other.pc);
-        std::swap(this->zf, other.zf);
-        //std::swap(this->prog, other.prog);
-    }
 
 public:
 
@@ -64,8 +58,8 @@ public:
 
     ProgramMemory &operator= (ProgramMemory &&_pm) = default;
     
-    bool is_over () { return pc == text.num_lines(); }
-    const Command &fetch () { return *text[pc++]; }
+    bool is_over () { return sp_regs[pc_num] == text.num_lines(); }
+    const Command &fetch () { return *text[sp_regs[pc_num]++]; }
 };
 
 std::ostream &operator<<(std::ostream &os, ProgramMemory &pm);

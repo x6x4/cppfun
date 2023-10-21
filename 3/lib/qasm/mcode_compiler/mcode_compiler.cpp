@@ -3,13 +3,15 @@
 #include "../../cpu/cpu.h"
 #include <cstddef>
 #include <exception>
+#include <functional>
 #include <iostream>
 #include <memory>
 #include <sstream>
 #include <stdexcept>
+#include <unordered_map>
 
 MCode parser(InstrSet &iset, std::ifstream &is);
-Command* parse_cmd(InstrSet &iset, std::string &cmd, std::size_t line_num);
+Command* parse_cmd(InstrSet &iset, std::string &cmd, std::size_t line_num, std::unordered_set<ID> &label_table);
 std::logic_error CE (const char *error, std::size_t line_num);
 
 
@@ -46,6 +48,8 @@ MCode parser(InstrSet &iset, std::ifstream &is) {
     std::size_t line_num = 0;
     Command* cur_cmd;
 
+    std::unordered_set<ID> label_table;
+
     try {
 
         std::string command;
@@ -53,13 +57,13 @@ MCode parser(InstrSet &iset, std::ifstream &is) {
         MCode prog = MCode();
 
         while (std::getline(is, command)) {  //  line-by-line parsing
-            line_num++;
             
             if (!command.compare("")) continue;    //  empty line
             if (command[0] == '#') continue;       //  comment
             if (!command.compare(".data")) break;  //  end of .text section
             
-            cur_cmd = parse_cmd(iset, command, line_num);
+            line_num++;
+            cur_cmd = parse_cmd(iset, command, line_num, label_table);
             prog.add_cmd(cur_cmd);
         }
 
@@ -74,8 +78,15 @@ MCode parser(InstrSet &iset, std::ifstream &is) {
     }
 }
 
+const ID& FindCodeLabel (std::unordered_set<ID> &label_table, const ID &id) {
+    auto code_label = label_table.find(id);
+    if (code_label == label_table.end())
+        throw std::logic_error("Unknown code label");
+    else 
+        return code_label._M_cur->_M_v();
+}
 
-Command* parse_cmd(InstrSet &iset, std::string &cmd_str, std::size_t line_num) {
+Command* parse_cmd(InstrSet &iset, std::string &cmd_str, std::size_t line_num, std::unordered_set<ID> &label_table) {
 
     std::istringstream tok_stream(cmd_str);
     std::vector<std::string> tokens;
@@ -90,7 +101,7 @@ Command* parse_cmd(InstrSet &iset, std::string &cmd_str, std::size_t line_num) {
 
     ///  Ucmd has max 3 tokens, Bcmd - 4.
     if (num_tok > 4) throw std::logic_error("Too many tokens");
-
+    if (num_tok < 2) throw std::logic_error("Incomplete command");
 
     ///  PARSING  ///
 
@@ -98,22 +109,16 @@ Command* parse_cmd(InstrSet &iset, std::string &cmd_str, std::size_t line_num) {
 
     //   PARSE LABEL
 
-    if (tokens[0].back() == ':') {  
-        if (num_tok == 1) {
-            throw std::logic_error("empty command");
-        }
-        //label = tokens[0].substr(0, tokens[0].length() - 1);  //  shrink trailing ':'
-        label.set_addr(line_num);
-
-        cur_tok_num++;
+    label.set_addr(line_num);
+    if (tokens[0].back() == ':') { 
+        cur_tok_num++; label = tokens[0].substr(0, tokens[0].length() - 1);  //  shrink trailing ':'
+        label_table.insert(label);
     }
 
     //   PARSE SIGNIFICANT PART
 
     std::size_t num_sign_tok = num_tok-cur_tok_num;
     if (num_sign_tok > 3) throw std::logic_error("Too many significant tokens");
-
-    if (num_sign_tok == 1) throw std::logic_error("expected operand");
 
     //  1st significant token is operator  
 
@@ -135,12 +140,13 @@ Command* parse_cmd(InstrSet &iset, std::string &cmd_str, std::size_t line_num) {
 
     Operand* opd1;
 
-    if (tokens[cur_tok_num][0] == 'r')  {  //  register
-        std::string reg_num (tokens[cur_tok_num].substr(1));
-        opd1 = new Register(std::stoi(reg_num));
+    if (tokens[cur_tok_num][0] == '%')  {  //  register
+        std::string reg_num (tokens[cur_tok_num].substr(2));
+        opd1 = new GPRegister(std::stoi(reg_num));
 
     } else {
-        throw std::logic_error("invalid 1st operand");
+        ID code_label = FindCodeLabel(label_table, tokens[cur_tok_num]);
+        opd1 = new SPRegister(code_label.get_addr());
     }
 
     cur_tok_num++;
@@ -156,7 +162,7 @@ Command* parse_cmd(InstrSet &iset, std::string &cmd_str, std::size_t line_num) {
 
     if (tokens[cur_tok_num][0] == 'r')  {  //  register
         std::string reg_num (tokens[cur_tok_num].substr(1));
-        opd2 = new Register(std::stoi(reg_num));
+        opd2 = new GPRegister(std::stoi(reg_num));
 
     } else {
         throw std::logic_error("invalid 2nd operand");

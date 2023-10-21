@@ -27,25 +27,45 @@ using num_t = std::size_t;
 
 
 
+
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
  *  Small and fast memory cell inside CPU. 
  *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-class Register : public Operand {
+class GPRegister : public Operand {
 
 protected:
     std::size_t num = 0;
 
     void print (std::ostream &os) const override;
-    void load (CPU &cpu) const override;
+    void load_to (CPU &cpu) const override;
+    void load_from (CPU &cpu) override;
 
 public:
-    Register *clone () const override { return new Register(*this); }
-    ~Register () override = default;
+    GPRegister() {};
+    GPRegister *clone () const override { return new GPRegister(*this); }
+    ~GPRegister () override = default;
 
-    Register(std::size_t number) : num(number) {};
+    GPRegister(std::size_t number) : num(number) {};
 };
+
+class SPRegister : public GPRegister {
+
+protected:
+
+    void print (std::ostream &os) const override;
+    void load_to (CPU &cpu) const override;
+    void load_from (CPU &cpu) override;
+
+public:
+    SPRegister *clone () const override { return new SPRegister(*this); }
+    SPRegister () {};
+    SPRegister (std::size_t _val) { value = _val; };
+    void set_num (std::size_t _num) { num = _num; }
+    ~SPRegister () override = default;
+};
+
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
  *  Contains 16 general-purpose registers. 
@@ -57,11 +77,11 @@ public:
 
 
 class RegBlock {
-friend Register;
+friend GPRegister;
 
     std::vector<int> regs = std::vector<int>(16);
 
-    int operator[] (std::size_t num) const;
+    int operator[] (std::size_t num) const { return regs[num]; }
 
     void load_reg (std::size_t num, int val) { regs[num] = val; }
 
@@ -108,7 +128,8 @@ friend CPU;
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 class CPU {
-friend Register;
+friend SPRegister;
+friend GPRegister;
 friend ExecUnit;
 
     std::size_t bitness = 16;

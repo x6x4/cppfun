@@ -3,9 +3,8 @@
 #include <stdexcept>
 
 
-std::ostream &operator<<(std::ostream &os, ProgramMemory &pm) {
 
-    //print_mprog(os, pm.prog);
+std::ostream &operator<<(std::ostream &os, ProgramMemory &pm) {
     
     return os;
 }

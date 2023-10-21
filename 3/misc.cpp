@@ -25,6 +25,7 @@ code1:  mov r6 data1
 }
 };   */
 
+//
 
 
 class Singleton {

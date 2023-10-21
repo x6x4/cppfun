@@ -54,7 +54,8 @@ BinaryOperator &InstrSet::FindBinOper (Mnemonic str) {
         return boper._M_cur->_M_v();
 };
 
-InstrSet::InstrSet(unary_instr_set& _uset, binary_instr_set& _bset) : uset(_uset), bset(_bset) {}; 
+InstrSet::InstrSet(unary_instr_set& _uset, binary_instr_set& _bset) 
+: uset(_uset), bset(_bset) {}; 
 
 //  OPERAND  //
 
@@ -73,11 +74,11 @@ std::ostream &operator<<(std::ostream &os, Command &cmd) {
 //  UNARY COMMAND
 
 void UnaryCommand::print(std::ostream &os) const {
-    os << label() << " " << unoper.mnemonics() << " " << *opd1;
+    os << label().get_addr() << " " << unoper.mnemonics() << " " << *opd1;
 }
 
 //  BINARY COMMAND
 
 void BinaryCommand::print(std::ostream &os) const {
-    os << label() << " " << binoper.mnemonics() << " " << *opd1 << " " << *opd2;
+    os << label().get_addr() << " " << binoper.mnemonics() << " " << *opd1 << " " << *opd2;
 }

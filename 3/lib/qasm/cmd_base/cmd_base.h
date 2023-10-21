@@ -54,6 +54,8 @@ public:
 
     
     const std::string &get_id () const { return id; }
+    
+    addr_t get_addr () const { return addr; }
     void set_addr (addr_t _addr) { addr = _addr; }
 
     ID &operator=(std::string str) {
@@ -70,6 +72,8 @@ public:
         is >> id.id;
         return is;
     }
+
+    bool operator== (const ID& id) const { return id.get_id() == get_id();}
 };
 
 std::ostream &operator<<(std::ostream &os, const ID &id);
@@ -77,19 +81,22 @@ std::ostream &operator<<(std::ostream &os, const ID &id);
 
 //  BASE CLASS - OPERAND  //
 
+class Cache;
 
 class Operand {
 
 friend UnaryCommand;
 friend BinaryCommand;
 friend CPU;
+friend Cache;
 
 protected:
 
     int value = 0;
 
     virtual void print (std::ostream &os) const {};
-    virtual void load (CPU &cpu) const = 0;
+    virtual void load_to (CPU &cpu) const = 0;
+    virtual void load_from (CPU &cpu) = 0;
     
 public:
 
@@ -105,6 +112,7 @@ public:
     friend std::ostream &operator<<(std::ostream &os, const Operand &opd);
 };
 
+
 class Cache {
 friend UnaryCommand;
 friend BinaryCommand;
@@ -115,11 +123,13 @@ friend CPU;
 
 public:
 
-    void load_opd1 (Operand &_opd1) {
+    void load_opd1 (Operand &_opd1, CPU &cpu) {
         opd1 = _opd1.clone();
+        opd1->load_from(cpu);
     };
-    void load_opd2 (Operand &_opd2) {
+    void load_opd2 (Operand &_opd2, CPU &cpu) {
         opd2 = _opd2.clone();
+        opd2->load_from(cpu);
     };
 
     void clear () {
@@ -191,6 +201,15 @@ public:
 
 namespace std {
 
+    template<> struct hash<ID>
+    {
+        std::size_t operator()(const ID& id) const noexcept
+        {
+            std::size_t hash = std::hash<std::string>()(id.get_id());
+            return hash;
+        }
+    };   
+
     template<> struct hash<UnaryOperator>
     {
         std::size_t operator()(const UnaryOperator& oper) const noexcept
@@ -231,8 +250,8 @@ friend ExecUnit;
 protected:
     ID lbl = "";
 
-    virtual void load (Cache &cache) const = 0;
-    virtual void exec (Cache &cache) const = 0;
+    virtual void load (Cache &cache, CPU &cpu) const = 0;
+    virtual void exec (Cache &cache, CPU &cpu) const = 0;
     
 public:
     virtual ~Command() = default;
@@ -257,13 +276,13 @@ class UnaryCommand : public Command {
     ~UnaryCommand() override { delete opd1; }
 
 protected:
-    void load (Cache &cache) const override { cache.load_opd1(*opd1); }
-    void exec (Cache &cache) const override { load(cache); unoper(*cache.opd1); }
+    void load (Cache &cache, CPU &cpu) const override { cache.load_opd1(*opd1, cpu); }
+    void exec (Cache &cache, CPU &cpu) const override { load(cache, cpu); unoper(*cache.opd1); }
     void print (std::ostream &os) const override;
 
 public:
 
-    UnaryCommand* clone () const override { return new UnaryCommand(this->lbl, this->unoper, this->opd1->clone()); }
+    UnaryCommand* clone () const override { return new UnaryCommand(lbl, unoper, opd1->clone()); }
 
     /**
     * @brief       Initing unary command constructor (all fields)
@@ -295,13 +314,13 @@ class BinaryCommand : public Command {
     ~BinaryCommand() override { delete opd1; delete opd2; }
 
 protected:
-    void load (Cache &cache) const override { cache.load_opd1(*opd1); cache.load_opd2(*opd2); }
-    void exec (Cache &cache) const override { load(cache); binoper(*cache.opd1, *cache.opd2); }
+    void load (Cache &cache, CPU &cpu) const override { cache.load_opd1(*opd1, cpu); cache.load_opd2(*opd2, cpu); }
+    void exec (Cache &cache, CPU &cpu) const override { load(cache, cpu); binoper(*cache.opd1, *cache.opd2); }
     void print (std::ostream &os) const override;
 
 public:
 
-    BinaryCommand* clone () const override { return new BinaryCommand(*this); }
+    BinaryCommand* clone () const override { return new BinaryCommand(lbl, binoper, opd1->clone(), opd2->clone()); }
 
     /**
     * @brief       Initing binary command constructor (all fields)
@@ -327,5 +346,4 @@ public:
         : opd1(_opd1), opd2(_opd2), binoper(_oper)  {}
 
 };
-
 

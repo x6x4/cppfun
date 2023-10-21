@@ -7,12 +7,26 @@
 
 //  REG  //
 
-void Register::load(CPU &cpu) const {
+void SPRegister::load_to(CPU &cpu) const {
+    cpu.mem.pm.sp_regs[num] = value;
+}
+
+void SPRegister::load_from(CPU &cpu) {}
+
+void SPRegister::print (std::ostream &os) const {
+    os << '(' << val() << ')';
+}
+
+void GPRegister::load_to(CPU &cpu) const {
     cpu.gp_rb.load_reg(num, value);
 }
 
-void Register::print (std::ostream &os) const {
-    os << "r" << num << '(' << val() << ')';
+void GPRegister::load_from(CPU &cpu) {
+    value = cpu.gp_rb[num];
+}
+
+void GPRegister::print (std::ostream &os) const {
+    os << "%r" << num << '(' << val() << ')';
 }
 
 std::ostream &operator<<(std::ostream &os, RegBlock &rb) {
@@ -55,7 +69,7 @@ void CPU::assign(const Command &cmd) {
 //  EXEC UNIT  //
 
 void ExecUnit::exec(const Command &cmd, CPU &cpu) const {
-    cmd.exec(cpu.cache);
+    cmd.exec(cpu.cache, cpu);
     cpu.load_from_cache();
     cpu.print_regblock(std::cout);
 }
@@ -63,7 +77,7 @@ void ExecUnit::exec(const Command &cmd, CPU &cpu) const {
 //  LOAD FROM CACHE  //
 
 void CPU::load_from_cache () {
-    if (cache.opd1) cache.opd1->load(*this);
-    if (cache.opd2) cache.opd2->load(*this);
+    if (cache.opd1) cache.opd1->load_to(*this);
+    if (cache.opd2) cache.opd2->load_to(*this);
     cache.clear();
 }
