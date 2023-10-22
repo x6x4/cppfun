@@ -1,16 +1,6 @@
 #pragma once
-#include "../qasm/mcode_compiler/mcode_compiler.h"
-#include <cstddef>
-#include <memory>
-#include <stdexcept>
-#include <utility>
-#include <vector>
 
-///  fwd
-class SPRegister;
-
-///  aliases
-
+#include "fwd_mem.h"
 
 
 //  PROGRAM MEMORY
@@ -21,7 +11,6 @@ class SPRegister;
  *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-
 class ProgramMemory {
 
 friend SPRegister;
@@ -29,40 +18,24 @@ friend CPU;
 
     MCode text;
     std::vector<std::size_t> sp_regs = std::vector<std::size_t>(2);
-    std::size_t pc_num = 0;
-    std::size_t zf_num = 1;
+    std::size_t pc_num = 0, zf_num = 1;
 
-///  GENERAL 
-
-    void load (const MCode &mcode) { text = mcode; }
-
-///  GET & SET
-
-    std::size_t get_pc ()   { return sp_regs[pc_num]; }
-    bool get_zf () { return sp_regs[zf_num]; }
-
-    void set_pc (std::size_t _pc)   { sp_regs[pc_num] = _pc; };
-    void set_zf (bool _zf) { sp_regs[zf_num] = _zf; };
-
-///  OTHER
-
+    void load (const MCode &mcode);
+    void set_spreg (std::size_t num, std::size_t val);
 
 public:
 
-    ~ProgramMemory() = default;
-
-    //  CTORS
-
+    ~ProgramMemory() = default; 
     ProgramMemory () = default;
     ProgramMemory (ProgramMemory&&) = default;
-
     ProgramMemory &operator= (ProgramMemory &&_pm) = default;
     
-    bool is_over () { return sp_regs[pc_num] == text.num_lines(); }
-    const Command &fetch () { return *text[sp_regs[pc_num]++]; }
-};
+    bool is_over ();
+    const Command &fetch ();
+    void print_regblock(std::ostream &os) const;
 
-std::ostream &operator<<(std::ostream &os, ProgramMemory &pm);
+    friend std::ostream &operator<<(std::ostream &os, ProgramMemory &pm);
+};
 
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -70,12 +43,15 @@ std::ostream &operator<<(std::ostream &os, ProgramMemory &pm);
  *  Stores integer data sequantially.  
  *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
 class DataMemory {
     
-    std::size_t sz = 0x10;
-    std::vector<std::pair<std::string, int>> mem;
+    std::size_t sz = 0;
+    std::vector<std::pair<std::string, int>> mem = std::vector<std::pair<std::string, int>>(sz);
 
 public:
+
+    DataMemory (std::size_t _sz) : sz (_sz) {};
 
     std::pair <bool, std::size_t> operator[] (std::string name) {
 
@@ -96,22 +72,11 @@ public:
     }
 };
 
-
-class Memory {
-public:
-    ProgramMemory pm;
-    DataMemory dm;
-
-    Memory () {};
-};
-
 class Data_labels {
 public:
     std::size_t cur_cmd = 0;
     std::vector<std::pair<std::size_t, std::string>> has_data;
 };
-
-void compile (const char *filename, Memory &m);
 
 class DataCell {
 
@@ -123,4 +88,13 @@ public:
         this->name = name;
     };   
     int operator* () { return data;}
+};
+
+
+class Memory {
+public:
+    ProgramMemory pm;
+    DataMemory dm;
+
+    Memory (std::size_t sz) : dm(sz) { };
 };

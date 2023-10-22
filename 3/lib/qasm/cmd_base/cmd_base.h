@@ -33,8 +33,7 @@ public:
         check_id (str);
         id = str;
     }
-
-    
+ 
     const std::string &get_id () const { return id; }
     
     addr_t get_addr () const { return addr; }
@@ -63,8 +62,6 @@ std::ostream &operator<<(std::ostream &os, const ID &id);
 
 //  BASE CLASS - OPERAND  //
 
-class Cache;
-
 class Operand {
 
 friend UnaryCommand;
@@ -82,11 +79,10 @@ protected:
     
 public:
 
+    Operand () {};
+    virtual ~Operand () = default;
     virtual std::unique_ptr<Operand> clone () const = 0;
 
-    virtual ~Operand () = default;
-
-    Operand () {};
     Operand(int val) : value(val) {};
     int val() const { return value; }
     void set(int _val) { value = _val; }
@@ -94,6 +90,8 @@ public:
     friend std::ostream &operator<<(std::ostream &os, const Operand &opd);
 };
 
+
+//  CACHE  //
 
 class Cache {
 friend UnaryCommand;
@@ -105,24 +103,14 @@ friend CPU;
 
 public:
 
-    void load_opd1 (Operand &_opd1, CPU &cpu) {
-        opd1 = _opd1.clone();
-        opd1->load_from(cpu);
-    };
-    void load_opd2 (Operand &_opd2, CPU &cpu) {
-        opd2 = _opd2.clone();
-        opd2->load_from(cpu);
-    };
+    void load_opd1 (Operand &_opd1, CPU &cpu);
+    void load_opd2 (Operand &_opd2, CPU &cpu);
 
-    void clear () {
-        opd1 = nullptr;
-        opd2 = nullptr;
-    }
+    void clear ();
 };
 
 
 //  BASE CLASS - OPERATOR  //
-
 
 class Operator {
 
@@ -132,13 +120,13 @@ protected:
 
 public:
     Operator () {};
-    
     Operator(Mnemonic _mnem) { mnem = _mnem; }
 
     const std::string &mnemonics () const { return mnem; }
 };
 
 std::ostream &operator<<(std::ostream &os, const Operator &op);
+
 
 class UnaryOperator : public Operator {
 
@@ -259,13 +247,13 @@ class UnaryCommand : public Command {
     ~UnaryCommand() override {}
 
 protected:
-    void load (Cache &cache, CPU &cpu) const override { cache.load_opd1(*opd1, cpu); }
-    void exec (Cache &cache, CPU &cpu) const override { load(cache, cpu); unoper(*cache.opd1); }
+    void load (Cache &cache, CPU &cpu) const override;
+    void exec (Cache &cache, CPU &cpu) const override;
     void print (std::ostream &os) const override;
 
 public:
 
-    UnaryCommand* clone () const override { return new UnaryCommand(lbl, unoper, opd1->clone()); }
+    UnaryCommand* clone () const override;
 
     /**
     * @brief       Initing unary command constructor (all fields)
@@ -274,10 +262,7 @@ public:
     * @param       _opd1  1st operand
     * @return      Created command
     */
-    UnaryCommand(ID _lbl, UnaryOperator _oper, std::unique_ptr<Operand> _opd1) 
-    : opd1(std::move(_opd1)), unoper(_oper) {
-        Command::lbl = _lbl;
-    }
+    UnaryCommand(ID _lbl, UnaryOperator _oper, std::unique_ptr<Operand> _opd1);
 
     /**
     * @brief       Initing unary command constructor
@@ -285,7 +270,7 @@ public:
     * @param       _opd1  1st operand
     * @return      Created command
     */
-    UnaryCommand(UnaryOperator _oper, std::unique_ptr<Operand> _opd1) : opd1(std::move(_opd1)), unoper(_oper) {}
+    UnaryCommand(UnaryOperator _oper, std::unique_ptr<Operand> _opd1);
 
 };
 
@@ -298,13 +283,13 @@ class BinaryCommand : public Command {
     ~BinaryCommand() override {}
 
 protected:
-    void load (Cache &cache, CPU &cpu) const override { cache.load_opd1(*opd1, cpu); cache.load_opd2(*opd2, cpu); }
-    void exec (Cache &cache, CPU &cpu) const override { load(cache, cpu); binoper(*cache.opd1, *cache.opd2); }
+    void load (Cache &cache, CPU &cpu) const override;
+    void exec (Cache &cache, CPU &cpu) const override;
     void print (std::ostream &os) const override;
 
 public:
 
-    BinaryCommand* clone () const override { return new BinaryCommand(lbl, binoper, opd1->clone(), opd2->clone()); }
+    BinaryCommand* clone () const override;
 
     /**
     * @brief       Initing binary command constructor (all fields)
@@ -314,10 +299,7 @@ public:
     * @param       _opd2  2nd operand
     * @return      Created command
     */
-    BinaryCommand(ID _lbl, BinaryOperator _oper, std::unique_ptr<Operand> _opd1, std::unique_ptr<Operand> _opd2)
-        : opd1(std::move(_opd1)), opd2(std::move(_opd2)), binoper(_oper)  {
-        Command::lbl = _lbl;
-    }
+    BinaryCommand(ID _lbl, BinaryOperator _oper, std::unique_ptr<Operand> _opd1, std::unique_ptr<Operand> _opd2);
 
     /**
     * @brief       Initing binary command constructor
@@ -326,8 +308,7 @@ public:
     * @param       _opd2  2nd operand
     * @return      Created command
     */
-    BinaryCommand(BinaryOperator _oper, std::unique_ptr<Operand> _opd1, std::unique_ptr<Operand> _opd2) 
-        : opd1(std::move(_opd1)), opd2(std::move(_opd2)), binoper(_oper)  {}
+    BinaryCommand(BinaryOperator _oper, std::unique_ptr<Operand> _opd1, std::unique_ptr<Operand> _opd2);
 
 };
 

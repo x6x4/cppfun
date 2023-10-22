@@ -9,6 +9,7 @@
 #include <vector>
 
 
+class Cache;
 class UnaryCommand;
 class BinaryCommand;
 using addr_t = std::size_t;

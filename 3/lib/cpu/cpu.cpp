@@ -1,32 +1,43 @@
 
 #include "cpu.h"
-#include <cstddef>
-#include <fstream>
-#include <iostream>
 #include <stdexcept>
+
 
 //  REG  //
 
-void SPRegister::load_to(CPU &cpu) const {
-    cpu.mem.pm.sp_regs[num] = value;
-}
+//  gp
+
+void GPRegister::print (std::ostream &os) const { os << "%r" << num << '(' << val() << ')'; }
+
+void GPRegister::load_to(CPU &cpu) const { cpu.gp_rb.load_reg(num, value); }
+
+void GPRegister::load_from(CPU &cpu) { value = cpu.gp_rb[num]; }
+
+std::unique_ptr<Operand> GPRegister::clone () const { return std::make_unique<GPRegister>(*this); }
+
+//  sp
+
+void SPRegister::print (std::ostream &os) const { os << '(' << val() << ')'; }
+
+void SPRegister::load_to(CPU &cpu) const { cpu.mem.pm.set_spreg(num, value); }
 
 void SPRegister::load_from(CPU &cpu) {}
 
-void SPRegister::print (std::ostream &os) const {
-    os << '(' << val() << ')';
+std::unique_ptr<Operand> SPRegister::clone () const { return std::make_unique<SPRegister>(*this); }
+
+//  rb
+
+int RegBlock::operator[] (std::size_t num) const { 
+    if (num < regs.size()) return regs[num]; 
+    throw std::logic_error("Wrong register number");
 }
 
-void GPRegister::load_to(CPU &cpu) const {
-    cpu.gp_rb.load_reg(num, value);
-}
+void RegBlock::load_reg (std::size_t num, int val) { regs[num] = val; };
 
-void GPRegister::load_from(CPU &cpu) {
-    value = cpu.gp_rb[num];
-}
-
-void GPRegister::print (std::ostream &os) const {
-    os << "%r" << num << '(' << val() << ')';
+void RegBlock::print (std::ostream &os) const { 
+    for (std::size_t i = 0; i < regs.size(); i++) 
+        if (regs[i]) os << 'r' << i << '(' << regs[i] << ')' << ' '; 
+    os << '\n';
 }
 
 std::ostream &operator<<(std::ostream &os, RegBlock &rb) {
@@ -72,6 +83,7 @@ void ExecUnit::exec(const Command &cmd, CPU &cpu) const {
     cmd.exec(cpu.cache, cpu);
     cpu.load_from_cache();
     cpu.print_regblock(std::cout);
+    cpu.mem.pm.print_regblock(std::cout);
 }
 
 //  LOAD FROM CACHE  //

@@ -40,18 +40,6 @@ extern binary_instr_set bset;
 extern InstrSet iset;
 
 
-//  OPERATORS
-
-
-
-
-/*class Op_Data : Operator{
-
-    void operator() (ID lbl, int data, DataMemory& dm) {
-        dm+={lbl.get_id(), data};
-    }
-};*/
-
 
 
 

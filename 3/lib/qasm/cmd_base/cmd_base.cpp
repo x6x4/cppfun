@@ -20,6 +20,30 @@ std::ostream &operator<<(std::ostream &os, const ID &id) {
     return os;
 }
 
+//  OPERAND  //
+
+std::ostream &operator<<(std::ostream &os, const Operand &opd) {
+    opd.print(os);
+    return os;
+}
+
+//  CACHE  //
+
+void Cache::load_opd1 (Operand &_opd1, CPU &cpu) {
+    opd1 = _opd1.clone();
+    opd1->load_from(cpu);
+};
+void Cache::load_opd2 (Operand &_opd2, CPU &cpu) {
+    opd2 = _opd2.clone();
+    opd2->load_from(cpu);
+};
+
+void Cache::clear () {
+    opd1 = nullptr;
+    opd2 = nullptr;
+}
+
+
 //  OPERATOR  //
 
 std::ostream &operator<<(std::ostream &os, const Operator &op) {
@@ -57,12 +81,6 @@ BinaryOperator &InstrSet::FindBinOper (Mnemonic str) {
 InstrSet::InstrSet(unary_instr_set& _uset, binary_instr_set& _bset) 
 : uset(_uset), bset(_bset) {}; 
 
-//  OPERAND  //
-
-std::ostream &operator<<(std::ostream &os, const Operand &opd) {
-    opd.print(os);
-    return os;
-}
 
 //  COMMAND  //
 
@@ -73,12 +91,42 @@ std::ostream &operator<<(std::ostream &os, Command &cmd) {
 
 //  UNARY COMMAND
 
+void UnaryCommand::load (Cache &cache, CPU &cpu) const{ cache.load_opd1(*opd1, cpu); }
+
+void UnaryCommand::exec (Cache &cache, CPU &cpu) const{ load(cache, cpu); unoper(*cache.opd1); }
+
 void UnaryCommand::print(std::ostream &os) const {
     os << label().get_addr() << " " << unoper.mnemonics() << " " << *opd1;
 }
 
+UnaryCommand* UnaryCommand::clone () const{ return new UnaryCommand(lbl, unoper, opd1->clone()); }
+
+UnaryCommand::UnaryCommand(ID _lbl, UnaryOperator _oper, std::unique_ptr<Operand> _opd1) 
+: opd1(std::move(_opd1)), unoper(_oper) {
+    Command::lbl = _lbl;
+}
+
+UnaryCommand::UnaryCommand(UnaryOperator _oper, std::unique_ptr<Operand> _opd1) 
+: opd1(std::move(_opd1)), unoper(_oper) {}
+
 //  BINARY COMMAND
+
+void BinaryCommand::load (Cache &cache, CPU &cpu) const 
+{ cache.load_opd1(*opd1, cpu); cache.load_opd2(*opd2, cpu); }
+
+void BinaryCommand::exec (Cache &cache, CPU &cpu) const  
+{ load(cache, cpu); binoper(*cache.opd1, *cache.opd2); }
 
 void BinaryCommand::print(std::ostream &os) const {
     os << label().get_addr() << " " << binoper.mnemonics() << " " << *opd1 << " " << *opd2;
 }
+
+BinaryCommand* BinaryCommand::clone () const{ return new BinaryCommand(lbl, binoper, opd1->clone(), opd2->clone()); }
+
+BinaryCommand::BinaryCommand(ID _lbl, BinaryOperator _oper, std::unique_ptr<Operand> _opd1, std::unique_ptr<Operand> _opd2)
+    : opd1(std::move(_opd1)), opd2(std::move(_opd2)), binoper(_oper)  {
+    Command::lbl = _lbl;
+}
+
+BinaryCommand::BinaryCommand(BinaryOperator _oper, std::unique_ptr<Operand> _opd1, std::unique_ptr<Operand> _opd2) 
+    : opd1(std::move(_opd1)), opd2(std::move(_opd2)), binoper(_oper)  {}

@@ -1,10 +1,6 @@
 #pragma once
-#include "../cmd_base/cmd_base.h"
-#include <cstddef>
-#include <fstream>
-#include <memory>
-#include <stdexcept>
-#include <vector>
+
+#include "fwd_mcode_compiler.h"
 
 
 class MCode {
@@ -13,36 +9,20 @@ class MCode {
 
 public:
 
-    ~MCode () {
-        for (auto cmd : cmds) { delete cmd; cmd = nullptr; }
-        cmds.clear();
-    }
-
+    ~MCode ();
+    
     MCode () = default;
     MCode (MCode&) = default;
     MCode (const MCode&) = default;
     MCode (MCode&&) = default;
-    MCode &operator= (const MCode& _mc) {
-        this->cmds = _mc.cmds;
-        for (std::size_t i = 0; i < _mc.cmds.size(); i++) 
-            this->cmds[i] = _mc.cmds[i]->clone();
-
-        return *this;
-    }
+    MCode &operator= (const MCode& _mc);
     MCode& operator= (MCode&&) = default;
 
-    std::size_t num_lines () { return cmds.size() ;}
+    std::size_t num_lines ();
+    Command* operator[] (std::size_t num) const;
 
-    auto operator[] (std::size_t num) const { 
-        if (num < cmds.size()) return cmds[num]; 
-        throw std::logic_error("Access out of bounds");
-    }
-
-    void add_cmd (Command* cmd) { cmds.push_back(cmd); }
-
-    void print_mcode (std::ostream &os) const {
-        for (auto cmd : cmds) os << *cmd << '\n';
-    }
+    void add_cmd (Command* cmd);
+    void print_mcode (std::ostream &os) const;
 };
 
 

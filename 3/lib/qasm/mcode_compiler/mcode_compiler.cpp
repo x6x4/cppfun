@@ -1,19 +1,35 @@
 
 #include "mcode_compiler.h"
 #include "../../cpu/cpu.h"
-#include <cstddef>
-#include <exception>
-#include <functional>
-#include <iostream>
-#include <memory>
-#include <sstream>
-#include <stdexcept>
-#include <unordered_map>
 
-MCode parser(InstrSet &iset, std::ifstream &is);
-Command* parse_cmd(InstrSet &iset, std::string &cmd, std::size_t line_num, std::unordered_set<ID> &label_table);
-std::logic_error CE (const char *error, std::size_t line_num);
 
+//  MCode
+
+MCode::~MCode () {
+    for (auto cmd : cmds) { delete cmd; cmd = nullptr; }
+    cmds.clear();
+}
+
+MCode &MCode::operator= (const MCode& _mc) {
+    this->cmds = _mc.cmds;
+    for (std::size_t i = 0; i < _mc.cmds.size(); i++) 
+        this->cmds[i] = _mc.cmds[i]->clone();
+
+    return *this;
+}
+
+std::size_t MCode::num_lines () { return cmds.size(); }
+
+Command *MCode::operator[] (std::size_t num) const { 
+    if (num < cmds.size()) return cmds[num]; 
+    throw std::logic_error("Access out of bounds");
+}
+
+void MCode::add_cmd (Command* cmd) { cmds.push_back(cmd); };
+
+void MCode::print_mcode (std::ostream &os) const {
+    for (auto cmd : cmds) os << *cmd << '\n';
+}
 
 std::ostream &operator<<(std::ostream &os, const MCode &mc) {
     mc.print_mcode(os);
@@ -22,6 +38,11 @@ std::ostream &operator<<(std::ostream &os, const MCode &mc) {
 
 
 //  PARSING
+
+MCode parser(InstrSet &iset, std::ifstream &is);
+Command* parse_cmd(InstrSet &iset, std::string &cmd, std::size_t line_num, std::unordered_set<ID> &label_table);
+std::logic_error CE (const char *error, std::size_t line_num);
+
 
 MCode file_to_mcode (InstrSet &iset, const char *filename) {
 
