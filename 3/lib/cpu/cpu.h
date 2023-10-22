@@ -4,6 +4,7 @@
 #include "../mem/mem.h"
 #include <algorithm>
 #include <cstddef>
+#include <memory>
 #include <stdexcept>
 #include <utility>
 #include <vector>
@@ -44,7 +45,7 @@ protected:
 
 public:
     GPRegister() {};
-    GPRegister *clone () const override { return new GPRegister(*this); }
+    std::unique_ptr<Operand> clone () const override { return std::make_unique<GPRegister>(*this); }
     ~GPRegister () override = default;
 
     GPRegister(std::size_t number) : num(number) {};
@@ -59,7 +60,7 @@ protected:
     void load_from (CPU &cpu) override;
 
 public:
-    SPRegister *clone () const override { return new SPRegister(*this); }
+    std::unique_ptr<Operand> clone () const override { return std::make_unique<SPRegister>(*this); }
     SPRegister () {};
     SPRegister (std::size_t _val) { value = _val; };
     void set_num (std::size_t _num) { num = _num; }

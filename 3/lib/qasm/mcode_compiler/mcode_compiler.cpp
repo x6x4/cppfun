@@ -62,8 +62,8 @@ MCode parser(InstrSet &iset, std::ifstream &is) {
             if (command[0] == '#') continue;       //  comment
             if (!command.compare(".data")) break;  //  end of .text section
             
-            line_num++;
             cur_cmd = parse_cmd(iset, command, line_num, label_table);
+            line_num++;
             prog.add_cmd(cur_cmd);
         }
 
@@ -138,31 +138,31 @@ Command* parse_cmd(InstrSet &iset, std::string &cmd_str, std::size_t line_num, s
 
     //  parse 1st opd
 
-    Operand* opd1;
+    std::unique_ptr<Operand> opd1;
 
     if (tokens[cur_tok_num][0] == '%')  {  //  register
         std::string reg_num (tokens[cur_tok_num].substr(2));
-        opd1 = new GPRegister(std::stoi(reg_num));
+        opd1 = std::move(std::make_unique<GPRegister>(GPRegister(std::stoi(reg_num))));
 
     } else {
         ID code_label = FindCodeLabel(label_table, tokens[cur_tok_num]);
-        opd1 = new SPRegister(code_label.get_addr());
+        opd1 = std::move(std::make_unique<SPRegister>(SPRegister(code_label.get_addr())));
     }
 
     cur_tok_num++;
 
     if (cur_tok_num == num_tok) {
-        UnaryCommand* ucmd = new UnaryCommand(label, uoper, opd1);
+        UnaryCommand* ucmd = new UnaryCommand(label, uoper, std::move(opd1));
         return ucmd;
     }
 
     //  parse 2nd opd
 
-    Operand* opd2;
+    std::unique_ptr<Operand> opd2;
 
-    if (tokens[cur_tok_num][0] == 'r')  {  //  register
-        std::string reg_num (tokens[cur_tok_num].substr(1));
-        opd2 = new GPRegister(std::stoi(reg_num));
+    if (tokens[cur_tok_num][0] == '%')  {  //  register
+        std::string reg_num (tokens[cur_tok_num].substr(2));
+        opd2 = std::move(std::make_unique<GPRegister>(std::stoi(reg_num)));
 
     } else {
         throw std::logic_error("invalid 2nd operand");
@@ -171,7 +171,7 @@ Command* parse_cmd(InstrSet &iset, std::string &cmd_str, std::size_t line_num, s
     cur_tok_num++;
 
     if (cur_tok_num == num_tok) {
-        BinaryCommand* bincmd = new BinaryCommand(label, binoper, opd1, opd2);
+        BinaryCommand* bincmd = new BinaryCommand(label, binoper, std::move(opd1), std::move(opd2));
         return bincmd;
     }
 

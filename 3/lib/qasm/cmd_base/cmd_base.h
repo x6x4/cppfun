@@ -1,28 +1,10 @@
 /** @file qasm/cmd_base.h
- *  This file contains basic classes of QASM command structure.
- *  Commands don't know that they will execute - it's only text in program memory. 
+ *  
+ *  Arch-independent basic classes of QASM command structure.
  */
 
 #pragma once
-#include <cstddef>
-#include <cstring>
-#include <fstream>
-#include <memory>
-#include <stdexcept>
-#include <unordered_set>
-#include <vector>
-
-///  fwd
-class UnaryCommand;
-class BinaryCommand;
-using addr_t = std::size_t;
-class UnaryOperator;
-class BinaryOperator;
-using unary_instr_set = std::unordered_set<UnaryOperator>;
-using binary_instr_set = std::unordered_set<BinaryOperator>;
-class CPU;
-using Mnemonic = std::string;
-class ExecUnit;
+#include "fwd_cmd_base.h"
 
 
 //  ID  //
@@ -100,7 +82,7 @@ protected:
     
 public:
 
-    virtual Operand* clone () const = 0;
+    virtual std::unique_ptr<Operand> clone () const = 0;
 
     virtual ~Operand () = default;
 
@@ -118,8 +100,8 @@ friend UnaryCommand;
 friend BinaryCommand;
 friend CPU;
 
-    Operand *opd1 = nullptr;
-    Operand *opd2 = nullptr;
+    std::unique_ptr<Operand> opd1 = nullptr;
+    std::unique_ptr<Operand> opd2 = nullptr;
 
 public:
 
@@ -133,8 +115,8 @@ public:
     };
 
     void clear () {
-        delete opd1; opd1 = nullptr;
-        delete opd2; opd2 = nullptr;
+        opd1 = nullptr;
+        opd2 = nullptr;
     }
 };
 
@@ -146,6 +128,7 @@ class Operator {
 
 protected:
     Mnemonic mnem;
+    short time;
 
 public:
     Operator () {};
@@ -270,10 +253,10 @@ public:
 
 class UnaryCommand : public Command {
 
-    Operand* opd1;
+    std::unique_ptr<Operand> opd1;
     UnaryOperator unoper;
 
-    ~UnaryCommand() override { delete opd1; }
+    ~UnaryCommand() override {}
 
 protected:
     void load (Cache &cache, CPU &cpu) const override { cache.load_opd1(*opd1, cpu); }
@@ -291,7 +274,8 @@ public:
     * @param       _opd1  1st operand
     * @return      Created command
     */
-    UnaryCommand(ID _lbl, UnaryOperator _oper, Operand* _opd1) : opd1(_opd1), unoper(_oper) {
+    UnaryCommand(ID _lbl, UnaryOperator _oper, std::unique_ptr<Operand> _opd1) 
+    : opd1(std::move(_opd1)), unoper(_oper) {
         Command::lbl = _lbl;
     }
 
@@ -301,17 +285,17 @@ public:
     * @param       _opd1  1st operand
     * @return      Created command
     */
-    UnaryCommand(UnaryOperator _oper, Operand* _opd1) : opd1(_opd1), unoper(_oper) {}
+    UnaryCommand(UnaryOperator _oper, std::unique_ptr<Operand> _opd1) : opd1(std::move(_opd1)), unoper(_oper) {}
 
 };
 
 class BinaryCommand : public Command {
     
-    Operand* opd1;
-    Operand* opd2;
+    std::unique_ptr<Operand> opd1;
+    std::unique_ptr<Operand> opd2;
     BinaryOperator binoper;
 
-    ~BinaryCommand() override { delete opd1; delete opd2; }
+    ~BinaryCommand() override {}
 
 protected:
     void load (Cache &cache, CPU &cpu) const override { cache.load_opd1(*opd1, cpu); cache.load_opd2(*opd2, cpu); }
@@ -330,8 +314,8 @@ public:
     * @param       _opd2  2nd operand
     * @return      Created command
     */
-    BinaryCommand(ID _lbl, BinaryOperator _oper, Operand* _opd1, Operand* _opd2)
-        : opd1(_opd1), opd2(_opd2), binoper(_oper)  {
+    BinaryCommand(ID _lbl, BinaryOperator _oper, std::unique_ptr<Operand> _opd1, std::unique_ptr<Operand> _opd2)
+        : opd1(std::move(_opd1)), opd2(std::move(_opd2)), binoper(_oper)  {
         Command::lbl = _lbl;
     }
 
@@ -342,8 +326,8 @@ public:
     * @param       _opd2  2nd operand
     * @return      Created command
     */
-    BinaryCommand(BinaryOperator _oper, Operand* _opd1, Operand* _opd2) 
-        : opd1(_opd1), opd2(_opd2), binoper(_oper)  {}
+    BinaryCommand(BinaryOperator _oper, std::unique_ptr<Operand> _opd1, std::unique_ptr<Operand> _opd2) 
+        : opd1(std::move(_opd1)), opd2(std::move(_opd2)), binoper(_oper)  {}
 
 };
 
