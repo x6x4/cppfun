@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../qasm/mcode_compiler/mcode_compiler.h"
+#include "../cmd_base/cmd_base.h"
 #include <cstddef>
 #include <memory>
 #include <ostream>

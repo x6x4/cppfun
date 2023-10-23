@@ -1,50 +1,21 @@
-
-#include "mcode_compiler.h"
-#include "../../cpu/cpu.h"
-
-
-//  MCode
-
-MCode::~MCode () {
-    for (auto cmd : cmds) { delete cmd; cmd = nullptr; }
-    cmds.clear();
-}
-
-MCode &MCode::operator= (const MCode& _mc) {
-    this->cmds = _mc.cmds;
-    for (std::size_t i = 0; i < _mc.cmds.size(); i++) 
-        this->cmds[i] = _mc.cmds[i]->clone();
-
-    return *this;
-}
-
-std::size_t MCode::num_lines () { return cmds.size(); }
-
-Command *MCode::operator[] (std::size_t num) const { 
-    if (num < cmds.size()) return cmds[num]; 
-    throw std::logic_error("Access out of bounds");
-}
-
-void MCode::add_cmd (Command* cmd) { cmds.push_back(cmd); };
-
-void MCode::print_mcode (std::ostream &os) const {
-    for (auto cmd : cmds) os << *cmd << '\n';
-}
-
-std::ostream &operator<<(std::ostream &os, const MCode &mc) {
-    mc.print_mcode(os);
-    return os;
-}
+#include <sstream>
+#include "../cpu/cpu.h"
+#include "mem.h"
+#include <utility>
 
 
 //  PARSING
 
-MCode parser(InstrSet &iset, std::ifstream &is);
-Command* parse_cmd(InstrSet &iset, std::string &cmd, std::size_t line_num, std::unordered_set<ID> &label_table);
+using MPair = std::pair<MCode<Directive>, MCode<Command>>;
+
+MPair parser(InstrSet &iset, std::ifstream &is);
+Command* parse_cmd(InstrSet &iset, std::string &cmd, std::size_t line_num, 
+                    std::unordered_set<ID> &data_label_table, std::unordered_set<ID> &code_label_table);
+Directive* parse_dr(std::string &dr, std::size_t line_num, std::unordered_set<ID> &data_label_table);
 std::logic_error CE (const char *error, std::size_t line_num);
 
 
-MCode file_to_mcode (InstrSet &iset, const char *filename) {
+MPair file_to_mcode (InstrSet &iset, const char *filename) {
 
     try {
         std::ifstream is (filename);
@@ -62,33 +33,54 @@ MCode file_to_mcode (InstrSet &iset, const char *filename) {
     }
 } 
 
-MCode parser(InstrSet &iset, std::ifstream &is) {
 
-    ///  .TEXT SECTION  ///
+MPair parser(InstrSet &iset, std::ifstream &is) {
+
 
     std::size_t line_num = 0;
     Command* cur_cmd;
+    Directive* cur_dr;
 
-    std::unordered_set<ID> label_table;
+    std::unordered_set<ID> code_label_table;
+    std::unordered_set<ID> data_label_table;
 
     try {
 
+        ///  .DATA SECTION  ///
+
+        std::string directive;
+
+        MCode data = MCode<Directive>();
+
+        while (std::getline(is, directive)) {  //  line-by-line parsing
+            
+            if (!directive.compare("")) continue;    //  empty line
+            if (directive[0] == '#') continue;       //  comment
+            if (!directive.compare(".text")) break;  //  end of .data section
+
+            cur_dr = parse_dr(directive, line_num, data_label_table);
+            line_num++;
+            data.add(cur_dr);
+        }
+
+        ///  .TEXT SECTION  ///
+
         std::string command;
 
-        MCode prog = MCode();
+        MCode prog = MCode<Command>();
 
         while (std::getline(is, command)) {  //  line-by-line parsing
             
             if (!command.compare("")) continue;    //  empty line
             if (command[0] == '#') continue;       //  comment
-            if (!command.compare(".data")) break;  //  end of .text section
             
-            cur_cmd = parse_cmd(iset, command, line_num, label_table);
+            cur_cmd = parse_cmd(iset, command, line_num, data_label_table, code_label_table);
             line_num++;
-            prog.add_cmd(cur_cmd);
+            prog.add(cur_cmd);
         }
 
-        return prog;
+
+        return std::make_pair(data, prog);
     }
 
     catch (std::runtime_error &e) {
@@ -99,15 +91,16 @@ MCode parser(InstrSet &iset, std::ifstream &is) {
     }
 }
 
-const ID& FindCodeLabel (std::unordered_set<ID> &label_table, const ID &id) {
-    auto code_label = label_table.find(id);
-    if (code_label == label_table.end())
+const ID& FindLabel (std::unordered_set<ID> &label_table, const ID &id) {
+    auto label = label_table.find(id);
+    if (label == label_table.end())
         throw std::logic_error("Unknown code label");
     else 
-        return code_label._M_cur->_M_v();
+        return label._M_cur->_M_v();
 }
 
-Command* parse_cmd(InstrSet &iset, std::string &cmd_str, std::size_t line_num, std::unordered_set<ID> &label_table) {
+Command* parse_cmd(InstrSet &iset, std::string &cmd_str, std::size_t line_num, 
+std::unordered_set<ID> &data_label_table, std::unordered_set<ID> &code_label_table) {
 
     std::istringstream tok_stream(cmd_str);
     std::vector<std::string> tokens;
@@ -133,7 +126,7 @@ Command* parse_cmd(InstrSet &iset, std::string &cmd_str, std::size_t line_num, s
     label.set_addr(line_num);
     if (tokens[0].back() == ':') { 
         cur_tok_num++; label = tokens[0].substr(0, tokens[0].length() - 1);  //  shrink trailing ':'
-        label_table.insert(label);
+        code_label_table.insert(label);
     }
 
     //   PARSE SIGNIFICANT PART
@@ -165,8 +158,12 @@ Command* parse_cmd(InstrSet &iset, std::string &cmd_str, std::size_t line_num, s
         std::string reg_num (tokens[cur_tok_num].substr(2));
         opd1 = std::move(std::make_unique<GPRegister>(GPRegister(std::stoi(reg_num))));
 
-    } else {
-        ID code_label = FindCodeLabel(label_table, tokens[cur_tok_num]);
+    } else if (tokens[cur_tok_num][0] == '$')  {  //  data label
+        ID data_label = FindLabel(data_label_table, tokens[cur_tok_num].substr(1));
+        opd1 = std::move(std::make_unique<DataCell>(DataCell(data_label.get_addr())));
+    }
+    else {
+        ID code_label = FindLabel(code_label_table, tokens[cur_tok_num]);
         opd1 = std::move(std::make_unique<SPRegister>(SPRegister(code_label.get_addr())));
     }
 
@@ -185,6 +182,9 @@ Command* parse_cmd(InstrSet &iset, std::string &cmd_str, std::size_t line_num, s
         std::string reg_num (tokens[cur_tok_num].substr(2));
         opd2 = std::move(std::make_unique<GPRegister>(std::stoi(reg_num)));
 
+    } else if (tokens[cur_tok_num][0] == '$')  {  //  data label
+        ID data_label = FindLabel(data_label_table, tokens[cur_tok_num].substr(1));
+        opd2 = std::move(std::make_unique<DataCell>(DataCell(data_label.get_addr())));
     } else {
         throw std::logic_error("invalid 2nd operand");
     }

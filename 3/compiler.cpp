@@ -1,7 +1,5 @@
 
 
-void preproc(std::ifstream &is);
-
 void parser(std::ifstream &is) {
 
     ///  .DATA SECTION  ///

@@ -3,6 +3,40 @@
 #include "fwd_mem.h"
 
 
+class Directive;
+
+template<typename T>
+
+class MCode {
+
+    std::vector<T*> lines;
+
+public:
+
+    ~MCode ();
+    
+    MCode () = default;
+    MCode (MCode&) = default;
+    MCode (const MCode&) = default;
+    MCode (MCode&&) = default;
+    MCode &operator= (const MCode& _mc);
+    MCode& operator= (MCode&&) = default;
+
+    std::size_t num_lines ();
+    T* operator[] (std::size_t num) const;
+
+    void add (T* cmd);
+    void print_mcode (std::ostream &os) const;
+
+};
+
+template<typename T>
+std::ostream &operator<<(std::ostream &os, const MCode<T> &mc);
+
+template<typename T>
+MCode<T> file_to_mcode (InstrSet &iset, const char *filename);
+
+
 //  PROGRAM MEMORY
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -16,11 +50,11 @@ class ProgramMemory {
 friend SPRegister;
 friend CPU;
 
-    MCode text;
+    MCode<Command> text;
     std::vector<std::size_t> sp_regs = std::vector<std::size_t>(2);
     std::size_t pc_num = 0, zf_num = 1;
 
-    void load (const MCode &mcode);
+    void load (const MCode<Command> &mtext);
     void set_spreg (std::size_t num, std::size_t val);
 
 public:

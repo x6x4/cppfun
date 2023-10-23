@@ -15,7 +15,7 @@ int main (int argc, char **argv) {
 
         CPU cpu (iset);
         
-        const MCode& mcode = file_to_mcode(iset, argv[1]);
+        const MText& mcode = file_to_mcode(iset, argv[1]);
 
         cpu.exec(mcode);
 

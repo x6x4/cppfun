@@ -1,6 +1,5 @@
 #pragma once
 
-#include "../qasm/mcode_compiler/mcode_compiler.h"
 #include "../mem/mem.h"
 #include <algorithm>
 #include <cstddef>

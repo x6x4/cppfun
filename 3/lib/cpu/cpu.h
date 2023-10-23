@@ -123,7 +123,7 @@ public:
 
     CPU(InstrSet& _iset) : iset (_iset) { check_existence(); }
     
-    void exec (const MCode &mc);
+    void exec (const MCode<Command> &mc);
     void print_regblock (std::ostream &os) { os << gp_rb; }
 };
 
