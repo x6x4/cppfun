@@ -1,21 +1,24 @@
+#include <memory>
 #include <sstream>
-#include "../cpu/cpu.h"
-#include "mem.h"
+#include "IR/IR.h"
+#include "cpu/cpu.h"
+#include "mem/mem.h"
+#include <stdexcept>
 #include <utility>
+#include <vector>
 
 
 //  PARSING
 
-using MPair = std::pair<MCode<Directive>, MCode<Command>>;
-
-MPair parser(InstrSet &iset, std::ifstream &is);
-Command* parse_cmd(InstrSet &iset, std::string &cmd, std::size_t line_num, 
+Mem parser(InstrSet &iset, std::ifstream &is);
+std::unique_ptr<Command> parse_cmd(InstrSet &iset, std::string &cmd, std::size_t line_num, 
                     std::unordered_set<ID> &data_label_table, std::unordered_set<ID> &code_label_table);
-Directive* parse_dr(std::string &dr, std::size_t line_num, std::unordered_set<ID> &data_label_table);
-std::logic_error CE (const char *error, std::size_t line_num);
+void parse_dr(std::string &data_str, std::size_t line_num, 
+                    std::vector<int> &data, std::unordered_set<ID> &data_label_table);
+std::logic_error CE (const char *section, const char *error, std::size_t line_num);
 
 
-MPair file_to_mcode (InstrSet &iset, const char *filename) {
+Mem file_to_mcode (InstrSet &iset, const char *filename) {
 
     try {
         std::ifstream is (filename);
@@ -34,72 +37,107 @@ MPair file_to_mcode (InstrSet &iset, const char *filename) {
 } 
 
 
-MPair parser(InstrSet &iset, std::ifstream &is) {
-
+Mem parser(InstrSet &iset, std::ifstream &is) {
 
     std::size_t line_num = 0;
-    Command* cur_cmd;
-    Directive* cur_dr;
+    std::size_t user_line_num = 0;
+    std::unique_ptr<Command> cur_cmd;
 
     std::unordered_set<ID> code_label_table;
     std::unordered_set<ID> data_label_table;
 
+    std::unique_ptr<Data> data = std::make_unique<Data>(Data());
+    std::unique_ptr<SafeText> text = std::make_unique<SafeText>(SafeText());
+
+    ///  .DATA SECTION  ///
     try {
-
-        ///  .DATA SECTION  ///
-
         std::string directive;
 
-        MCode data = MCode<Directive>();
-
         while (std::getline(is, directive)) {  //  line-by-line parsing
-            
+
+            user_line_num++;
+
+            if (!directive.compare(".data")) continue;    
             if (!directive.compare("")) continue;    //  empty line
             if (directive[0] == '#') continue;       //  comment
             if (!directive.compare(".text")) break;  //  end of .data section
 
-            cur_dr = parse_dr(directive, line_num, data_label_table);
+            parse_dr(directive, line_num, *data, data_label_table);
             line_num++;
-            data.add(cur_dr);
         }
+    }
 
-        ///  .TEXT SECTION  ///
+    catch (std::runtime_error &e) {
+        throw CE(".data", e.what(), user_line_num);
+    }
+    catch (std::logic_error &e) {
+        throw CE(".data", e.what(), user_line_num);
+    }
 
+    line_num = 0;
+    
+    ///  .TEXT SECTION  ///
+    try {
         std::string command;
 
-        MCode prog = MCode<Command>();
-
         while (std::getline(is, command)) {  //  line-by-line parsing
+
+            user_line_num++;
             
             if (!command.compare("")) continue;    //  empty line
             if (command[0] == '#') continue;       //  comment
             
             cur_cmd = parse_cmd(iset, command, line_num, data_label_table, code_label_table);
             line_num++;
-            prog.add(cur_cmd);
+            text->push_back(std::move(cur_cmd));
         }
-
-
-        return std::make_pair(data, prog);
     }
 
     catch (std::runtime_error &e) {
-        throw CE(e.what(), line_num);
+        throw CE(".text", e.what(), user_line_num);
     }
     catch (std::logic_error &e) {
-        throw CE(e.what(), line_num);
+        throw CE(".text", e.what(), user_line_num);
     }
+
+    return std::make_pair(std::move(data), std::move(text));
 }
 
 const ID& FindLabel (std::unordered_set<ID> &label_table, const ID &id) {
     auto label = label_table.find(id);
     if (label == label_table.end())
-        throw std::logic_error("Unknown code label");
+        throw std::logic_error("Unknown label: " + id.get_id());
     else 
         return label._M_cur->_M_v();
 }
 
-Command* parse_cmd(InstrSet &iset, std::string &cmd_str, std::size_t line_num, 
+void parse_dr(std::string &data_str, std::size_t line_num, std::vector<int> &data, std::unordered_set<ID> &data_label_table) {
+    std::istringstream tok_stream(data_str);
+    std::vector<std::string> tokens;
+    std::string cur_token;
+
+    ///  TOKENIZATION  ///
+    
+    while (tok_stream >> cur_token) tokens.push_back(cur_token);
+    if (tokens.size() != 2) throw std::logic_error ("bad directive");
+
+    //   PARSE LABEL
+
+    ID label = "";
+
+    label.set_addr(line_num);
+    if (tokens[0].back() == ':') { 
+        if (tokens[0][0] == ':') throw std::logic_error ("empty label");
+        label = tokens[0].substr(0, tokens[0].length() - 1);  //  shrink trailing ':'
+        data_label_table.insert(label);
+    } else {
+        throw std::logic_error ("bad label");
+    }
+
+    data.push_back(std::stoi(tokens[1]));
+}
+
+std::unique_ptr<Command> parse_cmd(InstrSet &iset, std::string &cmd_str, std::size_t line_num, 
 std::unordered_set<ID> &data_label_table, std::unordered_set<ID> &code_label_table) {
 
     std::istringstream tok_stream(cmd_str);
@@ -125,9 +163,10 @@ std::unordered_set<ID> &data_label_table, std::unordered_set<ID> &code_label_tab
 
     label.set_addr(line_num);
     if (tokens[0].back() == ':') { 
+        if (tokens[0][0] == ':') throw std::logic_error ("empty label");
         cur_tok_num++; label = tokens[0].substr(0, tokens[0].length() - 1);  //  shrink trailing ':'
         code_label_table.insert(label);
-    }
+    } 
 
     //   PARSE SIGNIFICANT PART
 
@@ -170,7 +209,9 @@ std::unordered_set<ID> &data_label_table, std::unordered_set<ID> &code_label_tab
     cur_tok_num++;
 
     if (cur_tok_num == num_tok) {
-        UnaryCommand* ucmd = new UnaryCommand(label, uoper, std::move(opd1));
+        std::unique_ptr<UnaryCommand> ucmd = 
+        std::make_unique<UnaryCommand>(std::move(UnaryCommand(label, uoper, std::move(opd1))));
+        
         return ucmd;
     }
 
@@ -192,18 +233,18 @@ std::unordered_set<ID> &data_label_table, std::unordered_set<ID> &code_label_tab
     cur_tok_num++;
 
     if (cur_tok_num == num_tok) {
-        BinaryCommand* bincmd = new BinaryCommand(label, binoper, std::move(opd1), std::move(opd2));
+        std::unique_ptr<BinaryCommand> bincmd = 
+        std::make_unique<BinaryCommand>(std::move(BinaryCommand(label, binoper, std::move(opd1), std::move(opd2))));
         return bincmd;
     }
 
-    throw std::logic_error("Wrong command");
-
+    throw std::logic_error("wrong command");
 } 
 
 
-std::logic_error CE (const char *error, std::size_t line_num) {
+std::logic_error CE (const char *section, const char *error, std::size_t line_num) {
     std::stringstream ss;
-    ss << "CE on line " << line_num << ": " << error;
+    ss << "In section " << section << ": CE on line " << line_num << ": " << error;
     return std::logic_error(ss.str());
 }
 

@@ -19,7 +19,7 @@ void Oper_Jump (Operand &opd1) {
     if (typeid(opd1) == typeid(SPRegister))
         static_cast<SPRegister&>(opd1).set_num(0);
     else 
-        throw std::logic_error ("jmp instruction requires code label operand");
+        throw std::logic_error ("Runtime error: jmp instruction requires code label operand");
 }
 
 //  BINARY OPERATORS

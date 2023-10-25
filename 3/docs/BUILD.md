@@ -1,10 +1,3 @@
 
+IR -> mem -> cpu -> mcode_compiler, instr_set -> main     
 
-cmd_base 
-  |
-  -------> mcode_compiler ----
-  |                          |                                 
-  --------->  mem --------> cpu ---- 
-               |                   |
-            instr_set -------->  main
-  

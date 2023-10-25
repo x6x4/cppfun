@@ -1,67 +1,47 @@
 
 #include "mem.h"
-
-
-//  MCode
-
-template<typename T>
-MCode<T>::~MCode<T> () {
-    for (auto ln : lines) { delete ln; ln = nullptr; }
-    lines.clear();
-}
-
-template<typename T>
-MCode<T> &MCode<T>::operator= (const MCode<T>& _mc) {
-    lines = _mc.lines;
-    for (std::size_t i = 0; i < _mc.lines.size(); i++) 
-        lines[i] = _mc.lines[i]->clone();
-
-    return *this;
-}
-
-template<typename T>
-std::size_t MCode<T>::num_lines () { return lines.size(); }
-
-template<typename T>
-T *MCode<T>::operator[] (std::size_t num) const { 
-    if (num < lines.size()) return lines[num]; 
-    throw std::logic_error("Access out of bounds");
-}
-
-template<typename T>
-void MCode<T>::add (T* ln) { lines.push_back(ln); };
-
-template<typename T>
-void MCode<T>::print_mcode (std::ostream &os) const {
-    for (auto ln : lines) os << *ln << '\n';
-}
-
-template<typename T>
-std::ostream &operator<<(std::ostream &os, const MCode<T> &mc) {
-    mc.print_mcode(os);
-    return os;
-}
+#include <cstddef>
+#include <memory>
 
 //  pm
 
-void ProgramMemory::load (const MCode<Command> &mcode) { text = mcode; }
+ProgramMemory::~ProgramMemory() {
+    for (auto cmd : text) delete cmd;
+}
+
+void ProgramMemory::load (const SafeText &mtext) { 
+    for (std::size_t i = 0; i < mtext.size(); i++) {
+        text.push_back((mtext[i]->clone()));
+    }
+}
 
 void ProgramMemory::set_spreg (std::size_t num, std::size_t val) { 
-    if (num < text.num_lines()) sp_regs[num] = val; 
+    if (num < text.size()) sp_regs[num] = val; 
     else throw std::logic_error("Access out of bounds");
 }
 
-bool ProgramMemory::is_over () { return sp_regs[pc_num] == text.num_lines(); }
+bool ProgramMemory::is_over () { return sp_regs[pc_num] == text.size(); }
 
 const Command &ProgramMemory::fetch () { return *text[sp_regs[pc_num]++]; }
 
 void ProgramMemory::print_regblock(std::ostream &os) const{
-    os << "pc (" << sp_regs[pc_num] << ")" << '\n'; 
-    os << "zf (" << sp_regs[zf_num] << ")" << '\n';
+    os << "pc(" << sp_regs[pc_num] << ")" << ' '; 
+    os << "zf(" << sp_regs[zf_num] << ")" << ' ';
     os << '\n';
 }
 
 std::ostream &operator<<(std::ostream &os, ProgramMemory &pm) {
-    os << pm.text;
+    for (std::size_t i = 0; i < pm.text.size(); i++)
+        os << *pm.text[i] << '\n';
+    return os;
+}
+
+//  dm
+
+void DataMemory::load (const Data &mdata) { data = mdata; }
+
+std::ostream &operator<<(std::ostream &os, DataMemory &dm) {
+    for (auto cell : dm.data) os << cell << ' ';
+    os << '\n';
     return os;
 }

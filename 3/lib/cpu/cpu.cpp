@@ -1,5 +1,7 @@
 
 #include "cpu.h"
+#include <iostream>
+#include <iterator>
 #include <stdexcept>
 
 
@@ -24,6 +26,16 @@ void SPRegister::load_to(CPU &cpu) const { cpu.mem.pm.set_spreg(num, value); }
 void SPRegister::load_from(CPU &cpu) {}
 
 std::unique_ptr<Operand> SPRegister::clone () const { return std::make_unique<SPRegister>(*this); }
+
+//  dc
+
+void DataCell::print (std::ostream &os) const { os << '(' << val() << ')'; }
+
+void DataCell::load_to(CPU &cpu) const { cpu.mem.dm.data[num] = value; }
+
+void DataCell::load_from(CPU &cpu) { value = cpu.mem.dm.data[num]; }
+
+std::unique_ptr<Operand> DataCell::clone () const { return std::make_unique<DataCell>(*this); }
 
 //  rb
 
@@ -54,8 +66,13 @@ void CPU::check_existence () {
     CPU_exists = 1;
 }
 
-void CPU::exec (const MCode& mc) {
-    mem.pm.load(mc);
+void CPU::exec (Mem &&m) {
+    mem.dm.load(*m.first);
+    mem.pm.load(*m.second);
+
+    std::cout << "IR:" << std::endl << mem.pm << std::endl;
+    std::cout << "Data:" << std::endl << mem.dm << std::endl;
+
     while (!mem.pm.is_over()) {
         const Command &cur_cmd = mem.pm.fetch();
         assign(cur_cmd);
@@ -84,6 +101,9 @@ void ExecUnit::exec(const Command &cmd, CPU &cpu) const {
     cpu.load_from_cache();
     cpu.print_regblock(std::cout);
     cpu.mem.pm.print_regblock(std::cout);
+
+    std::cout << "Data: " << cpu.mem.dm;
+    std::cout << std::endl;
 }
 
 //  LOAD FROM CACHE  //

@@ -1,10 +1,10 @@
-/** @file qasm/cmd_base.h
+/** @file IR/IR.h
  *  
- *  Arch-independent basic classes of QASM command structure.
+ *  Arch-independent basic classes of IR.
  */
 
 #pragma once
-#include "fwd_cmd_base.h"
+#include "fwd_IR.h"
 
 
 //  ID  //
@@ -244,14 +244,16 @@ class UnaryCommand : public Command {
     std::unique_ptr<Operand> opd1;
     UnaryOperator unoper;
 
-    ~UnaryCommand() override {}
-
 protected:
     void load (Cache &cache, CPU &cpu) const override;
     void exec (Cache &cache, CPU &cpu) const override;
     void print (std::ostream &os) const override;
 
 public:
+
+    ~UnaryCommand() override {}
+
+    UnaryCommand (UnaryCommand &&) = default;
 
     UnaryCommand* clone () const override;
 
@@ -280,14 +282,16 @@ class BinaryCommand : public Command {
     std::unique_ptr<Operand> opd2;
     BinaryOperator binoper;
 
-    ~BinaryCommand() override {}
-
 protected:
     void load (Cache &cache, CPU &cpu) const override;
     void exec (Cache &cache, CPU &cpu) const override;
     void print (std::ostream &os) const override;
 
 public:
+
+    ~BinaryCommand() override {}
+
+    BinaryCommand (BinaryCommand &&) = default;
 
     BinaryCommand* clone () const override;
 

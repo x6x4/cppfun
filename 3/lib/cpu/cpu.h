@@ -2,10 +2,33 @@
  *  
  *  Arch-dependent operands and devices.
  */
-
 #pragma once
 
-#include "fwd_cpu.h"
+class CPU;
+class ExecUnit;
+#include "../mem/mem.h"
+#include <algorithm>
+#include <cstddef>
+#include <memory>
+#include <stdexcept>
+#include <utility>
+#include <vector>
+#include <fstream>
+#include <iostream>
+
+
+using exectime_t = std::size_t; 
+
+enum class State {
+    FREE, 
+    BUSY
+};
+
+using ExecUnits = std::vector<std::pair<State,ExecUnit>>;
+
+using Mem = std::pair<std::unique_ptr<Data>, std::unique_ptr<SafeText>>;
+
+Mem file_to_mcode (InstrSet &iset, const char *filename);
 
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
@@ -47,7 +70,24 @@ public:
     ~SPRegister () override = default;
     std::unique_ptr<Operand> clone () const override;
 
-    SPRegister (std::size_t _val) { value = _val; };
+    SPRegister (std::size_t _val) { value = _val; }
+    void set_num (std::size_t _num) { num = _num; }  
+};
+
+
+class DataCell : public GPRegister {
+protected:
+
+    void print (std::ostream &os) const override;
+    void load_to (CPU &cpu) const override;
+    void load_from (CPU &cpu) override;
+
+public:
+    DataCell () {};
+    ~DataCell () override = default;
+    std::unique_ptr<Operand> clone () const override;
+
+    DataCell (std::size_t _val) { value = _val; }
     void set_num (std::size_t _num) { num = _num; }  
 };
 
@@ -102,6 +142,7 @@ friend CPU;
 class CPU {
 friend SPRegister;
 friend GPRegister;
+friend DataCell;
 friend ExecUnit;
 
     std::size_t bitness = 16;
@@ -123,7 +164,7 @@ public:
 
     CPU(InstrSet& _iset) : iset (_iset) { check_existence(); }
     
-    void exec (const MCode<Command> &mc);
+    void exec (Mem &&m);
     void print_regblock (std::ostream &os) { os << gp_rb; }
 };
 

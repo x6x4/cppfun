@@ -1,7 +1,5 @@
 #include "instr_set/instr_set.h"
 #include "lib/cpu/cpu.h"
-#include "lib/qasm/cmd_base/cmd_base.h"
-#include "lib/qasm/mcode_compiler/mcode_compiler.h"
 #include <cstring>
 #include <functional>
 #include <iostream>
@@ -15,11 +13,9 @@ int main (int argc, char **argv) {
 
         CPU cpu (iset);
         
-        const MText& mcode = file_to_mcode(iset, argv[1]);
+        Mem mcode = file_to_mcode(iset, argv[1]);
 
-        cpu.exec(mcode);
-
-        std::cout << mcode;
+        cpu.exec(std::move(mcode));
     }
 
     catch (std::logic_error &e) {
