@@ -38,7 +38,11 @@ std::ostream &operator<<(std::ostream &os, ProgramMemory &pm) {
 
 //  dm
 
-void DataMemory::load (const Data &mdata) { data = mdata; }
+void DataMemory::load (const Data &mdata) { 
+    
+    for (std::size_t i = 0; i < mdata.size(); i++)
+        data.at(i) = mdata.at(i); 
+}
 
 std::ostream &operator<<(std::ostream &os, DataMemory &dm) {
     for (auto cell : dm.data) os << cell << ' ';

@@ -1,8 +1,6 @@
 #include <memory>
 #include <sstream>
-#include "IR/IR.h"
-#include "cpu/cpu.h"
-#include "mem/mem.h"
+#include "../internals/cpu/cpu.h"
 #include <stdexcept>
 #include <utility>
 #include <vector>

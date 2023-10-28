@@ -12,5 +12,5 @@ inc %r2
 inc $dd
 t: mov $dd %r2 
 
-# jmp x
+#jmp x
 

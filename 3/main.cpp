@@ -1,5 +1,5 @@
 #include "instr_set/instr_set.h"
-#include "lib/cpu/cpu.h"
+#include "lib/internals/cpu/cpu.h"
 #include <cstring>
 #include <functional>
 #include <iostream>
@@ -10,12 +10,9 @@
 int main (int argc, char **argv) {
 
     try {
-
         CPU cpu (iset);
+        cpu.exec(argv[1]);
         
-        Mem mcode = file_to_mcode(iset, argv[1]);
-
-        cpu.exec(std::move(mcode));
     }
 
     catch (std::logic_error &e) {

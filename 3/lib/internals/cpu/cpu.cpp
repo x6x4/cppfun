@@ -3,6 +3,7 @@
 #include <iostream>
 #include <iterator>
 #include <stdexcept>
+#include <string>
 
 
 //  REG  //
@@ -40,8 +41,9 @@ std::unique_ptr<Operand> DataCell::clone () const { return std::make_unique<Data
 //  rb
 
 int RegBlock::operator[] (std::size_t num) const { 
-    if (num < regs.size()) return regs[num]; 
-    throw std::logic_error("Wrong register number");
+    return regs.at(num); 
+    //if (num < regs.size()) 
+    //throw std::logic_error("Wrong register number: " + std::to_string(num));
 }
 
 void RegBlock::load_reg (std::size_t num, int val) { regs[num] = val; };
@@ -59,19 +61,17 @@ std::ostream &operator<<(std::ostream &os, RegBlock &rb) {
 
 //  CPU  //
 
-bool CPU::CPU_exists = 0;
-
-void CPU::check_existence () {
-    if (CPU_exists) throw std::logic_error("Can't create more than one CPU");
-    CPU_exists = 1;
+void CPU::exec (const char *asm_prog) {
+    Mem mcode = file_to_mcode(iset, asm_prog);
+    exec_mcode(std::move(mcode));
 }
 
-void CPU::exec (Mem &&m) {
+void CPU::exec_mcode (Mem &&m) {
     mem.dm.load(*m.first);
     mem.pm.load(*m.second);
 
-    std::cout << "IR:" << std::endl << mem.pm << std::endl;
-    std::cout << "Data:" << std::endl << mem.dm << std::endl;
+    //std::cout << "IR:" << std::endl << mem.pm << std::endl;
+    //std::cout << "Data:" << std::endl << mem.dm << std::endl;
 
     while (!mem.pm.is_over()) {
         const Command &cur_cmd = mem.pm.fetch();
@@ -99,11 +99,11 @@ void CPU::assign(const Command &cmd) {
 void ExecUnit::exec(const Command &cmd, CPU &cpu) const {
     cmd.exec(cpu.cache, cpu);
     cpu.load_from_cache();
-    cpu.print_regblock(std::cout);
-    cpu.mem.pm.print_regblock(std::cout);
+    //cpu.print_regblock(std::cout);
+    //cpu.mem.pm.print_regblock(std::cout);
 
-    std::cout << "Data: " << cpu.mem.dm;
-    std::cout << std::endl;
+    //std::cout << "Data: " << cpu.mem.dm;
+    //std::cout << std::endl;
 }
 
 //  LOAD FROM CACHE  //

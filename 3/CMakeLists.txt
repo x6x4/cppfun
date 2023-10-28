@@ -7,14 +7,13 @@ project(3)
 set (CMAKE_CXX_STANDARD 20)
 set (AUX_FLAGS "-O0 -coverage ")
 
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ggdb -Wno-unused-parameter -std=c++20 -Wall -Wextra -Wpedantic")
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -ggdb -Wno-unused-parameter -std=c++20 -Wall -Wextra -Wpedantic")
 #set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -coverage -Wno-unused-parameter -std=c++20 -Wall -Wextra -Wpedantic")
 
 #  libs 
 
 add_subdirectory(lib)
 add_subdirectory(instr_set)
-target_link_libraries(instr_set cpu)
 
 #  testing
 

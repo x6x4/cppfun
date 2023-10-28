@@ -103,14 +103,15 @@ public:
 class RegBlock {
 friend GPRegister;
 
-    std::size_t num_reg = 8;
+    std::size_t num_reg = 0;
     std::vector<int> regs = std::vector<int>(num_reg);
 
-    int operator[] (std::size_t num) const;
     void load_reg (std::size_t num, int val);
 
 public:
+    int operator[] (std::size_t num) const;
     void print (std::ostream &os) const;
+    RegBlock(std::size_t _num_reg) : num_reg(_num_reg) {}; 
 };
 
 std::ostream &operator<<(std::ostream &os, RegBlock &rb);
@@ -145,26 +146,29 @@ friend GPRegister;
 friend DataCell;
 friend ExecUnit;
 
-    std::size_t bitness = 16;
+    std::size_t bitness = 8;
 
     ExecUnits EUs = {std::make_pair(State::FREE, ExecUnit())};
-    RegBlock gp_rb;
+    RegBlock gp_rb = RegBlock(bitness);
     Memory mem = Memory(bitness);
     Cache cache;
 
     InstrSet iset;
-
-    static bool CPU_exists;
-    void check_existence(); 
 
     void assign(const Command &cmd);
     void load_from_cache ();
 
 public:
 
-    CPU(InstrSet& _iset) : iset (_iset) { check_existence(); }
+    CPU(InstrSet& _iset) : iset (_iset) { }
+
+    std::size_t get_bitness () { return bitness; }
+    int gp (std::size_t num) const { return gp_rb[num]; }
+    int sp (std::size_t num) const { return mem.pm[num]; }
+    int data (std::size_t num) const { return mem.dm[num]; }
     
-    void exec (Mem &&m);
+    void exec (const char *asm_prog);
+    void exec_mcode (Mem &&m);
     void print_regblock (std::ostream &os) { os << gp_rb; }
 };
 

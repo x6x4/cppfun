@@ -51,6 +51,7 @@ public:
     bool is_over ();
     const Command &fetch ();
     void print_regblock(std::ostream &os) const;
+    int operator[] (std::size_t num) const { return sp_regs.at(num); }
 
     friend std::ostream &operator<<(std::ostream &os, ProgramMemory &pm);
 };
@@ -68,13 +69,14 @@ friend DataCell;
 friend CPU;
 
     std::size_t sz = 0;
-    Data data;
+    Data data = Data(sz);
     void load (const Data &mdata);
 
 public:
 
     DataMemory (std::size_t _sz) : sz (_sz) {};
     friend std::ostream &operator<<(std::ostream &os, DataMemory &pm);
+    int operator[] (std::size_t num) const { return data.at(num); }
 };
 
 
