@@ -96,7 +96,7 @@ void UnaryCommand::load (Cache &cache, CPU &cpu) const{ cache.load_opd1(*opd1, c
 void UnaryCommand::exec (Cache &cache, CPU &cpu) const{ load(cache, cpu); unoper(*cache.opd1); }
 
 void UnaryCommand::print(std::ostream &os) const {
-    os << label().get_addr() << " " << unoper.mnemonics() << " " << *opd1;
+    os << unoper.mnemonics() << " " << *opd1;
 }
 
 UnaryCommand* UnaryCommand::clone () const{ return new UnaryCommand(lbl, unoper, opd1->clone()); }
@@ -118,7 +118,7 @@ void BinaryCommand::exec (Cache &cache, CPU &cpu) const
 { load(cache, cpu); binoper(*cache.opd1, *cache.opd2); }
 
 void BinaryCommand::print(std::ostream &os) const {
-    os << label().get_addr() << " " << binoper.mnemonics() << " " << *opd1 << " " << *opd2;
+    os << binoper.mnemonics() << " " << *opd1 << " " << *opd2;
 }
 
 BinaryCommand* BinaryCommand::clone () const{ return new BinaryCommand(lbl, binoper, opd1->clone(), opd2->clone()); }

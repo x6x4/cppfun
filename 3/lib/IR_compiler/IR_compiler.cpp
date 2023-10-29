@@ -1,27 +1,21 @@
-#include <memory>
-#include <sstream>
-#include "../internals/cpu/cpu.h"
-#include <stdexcept>
+
+#include "fwd_IR_compiler.h"
 #include <utility>
 #include <vector>
 
 
-//  PARSING
+Mem file_to_mcode (InstrSet &iset, const char *filename, std::vector <std::size_t> &bps) {
+    std::ifstream is (filename);
+    return file_to_mcode(iset, is, bps);
+} 
 
-Mem parser(InstrSet &iset, std::ifstream &is);
-std::unique_ptr<Command> parse_cmd(InstrSet &iset, std::string &cmd, std::size_t line_num, 
-                    std::unordered_set<ID> &data_label_table, std::unordered_set<ID> &code_label_table);
-void parse_dr(std::string &data_str, std::size_t line_num, 
-                    std::vector<int> &data, std::unordered_set<ID> &data_label_table);
-std::logic_error CE (const char *section, const char *error, std::size_t line_num);
-
-
-Mem file_to_mcode (InstrSet &iset, const char *filename) {
+Mem file_to_mcode (InstrSet &iset, std::ifstream &is, std::vector <std::size_t> &bps) {
 
     try {
-        std::ifstream is (filename);
-        if (is.is_open()) 
-            return parser(iset, is);
+        if (is.is_open()) {
+            strings vec = preproc(is);
+            return parser(iset, vec, bps);
+        }
         else 
             throw std::logic_error ("Wrong file");
     }
@@ -32,20 +26,14 @@ Mem file_to_mcode (InstrSet &iset, const char *filename) {
     catch (std::logic_error &e) {
         throw e;
     }
-} 
+}
 
+Data preproc_data (std::ifstream &is) {
 
-Mem parser(InstrSet &iset, std::ifstream &is) {
-
+    std::unordered_set<ID> data_label_table;
+    Data data;
     std::size_t line_num = 0;
     std::size_t user_line_num = 0;
-    std::unique_ptr<Command> cur_cmd;
-
-    std::unordered_set<ID> code_label_table;
-    std::unordered_set<ID> data_label_table;
-
-    std::unique_ptr<Data> data = std::make_unique<Data>(Data());
-    std::unique_ptr<SafeText> text = std::make_unique<SafeText>(SafeText());
 
     ///  .DATA SECTION  ///
     try {
@@ -60,7 +48,7 @@ Mem parser(InstrSet &iset, std::ifstream &is) {
             if (directive[0] == '#') continue;       //  comment
             if (!directive.compare(".text")) break;  //  end of .data section
 
-            parse_dr(directive, line_num, *data, data_label_table);
+            parse_dr(directive, line_num, data, data_label_table);
             line_num++;
         }
     }
@@ -72,11 +60,53 @@ Mem parser(InstrSet &iset, std::ifstream &is) {
         throw CE(".data", e.what(), user_line_num);
     }
 
+    return data;
+}
+
+strings preproc_text (std::ifstream &is) {
+    
+    strings vec;
+    std::string line;
+
+    //  skip .data section
+    while (std::getline(is, line)) {
+        if (!line.compare(".text")) break;  
+    }
+        
+    while (std::getline(is, line)) {
+        if (!line.compare("")) continue;    //  empty line
+        if (line[0] == '#') continue;       //  comment
+
+        vec.push_back(line);
+    }
+
+    return vec;
+}
+
+Mem parser(InstrSet &iset, strings &vec, std::vector <std::size_t> &bps) {
+
+    std::size_t line_num = 0;
+    std::size_t user_line_num = 0;
+    std::unique_ptr<Command> cur_cmd;
+
+    std::unordered_set<ID> code_label_table;
+    
+
+    std::unique_ptr<Data> data = std::make_unique<Data>(Data());
+    std::unique_ptr<SafeText> text = std::make_unique<SafeText>(SafeText());
+
+    
+
     line_num = 0;
     
     ///  .TEXT SECTION  ///
     try {
         std::string command;
+
+        std::size_t bp_num = bps.size() ? bps[0] : SIZE_MAX;
+        std::size_t count = 0;
+        bool has_bp = 0;
+        std::unique_ptr<DebugCommand> dbgcmd = std::make_unique<DebugCommand>();
 
         while (std::getline(is, command)) {  //  line-by-line parsing
 
@@ -84,10 +114,18 @@ Mem parser(InstrSet &iset, std::ifstream &is) {
             
             if (!command.compare("")) continue;    //  empty line
             if (command[0] == '#') continue;       //  comment
+
+            if (bp_num == line_num) { has_bp = 1; bp_num = (count == bps.size() - 1) ? SIZE_MAX : bps[++count]; }
+            else { has_bp = 0; }
             
             cur_cmd = parse_cmd(iset, command, line_num, data_label_table, code_label_table);
             line_num++;
+            
             text->push_back(std::move(cur_cmd));
+            if (has_bp) {
+                text->push_back(std::move(dbgcmd)); 
+                dbgcmd = std::make_unique<DebugCommand>();
+            }
         }
     }
 
@@ -198,10 +236,11 @@ std::unordered_set<ID> &data_label_table, std::unordered_set<ID> &code_label_tab
     } else if (tokens[cur_tok_num][0] == '$')  {  //  data label
         ID data_label = FindLabel(data_label_table, tokens[cur_tok_num].substr(1));
         opd1 = std::move(std::make_unique<DataCell>(DataCell(data_label.get_addr())));
-    }
-    else {
+    }  else if (!std::isdigit(tokens[cur_tok_num][0])) {  //  code label
         ID code_label = FindLabel(code_label_table, tokens[cur_tok_num]);
         opd1 = std::move(std::make_unique<SPRegister>(SPRegister(code_label.get_addr())));
+    } else {
+        throw std::logic_error("First operand can't be immediate");
     }
 
     cur_tok_num++;
@@ -224,6 +263,8 @@ std::unordered_set<ID> &data_label_table, std::unordered_set<ID> &code_label_tab
     } else if (tokens[cur_tok_num][0] == '$')  {  //  data label
         ID data_label = FindLabel(data_label_table, tokens[cur_tok_num].substr(1));
         opd2 = std::move(std::make_unique<DataCell>(DataCell(data_label.get_addr())));
+    } else if (std::isdigit(tokens[cur_tok_num][0])) {  //  imm
+        opd2 = std::move(std::make_unique<Operand>(std::stoi(tokens[cur_tok_num])));
     } else {
         throw std::logic_error("invalid 2nd operand");
     }

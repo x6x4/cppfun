@@ -1,42 +1,20 @@
 
 #include "cpu.h"
+#include <cstdint>
 #include <iostream>
 #include <iterator>
 #include <stdexcept>
 #include <string>
 
 
-//  REG  //
+//  DBG
 
-//  gp
+void fill (SafeText &p, void (*oper)()) {
+    for (std::size_t i = 0; i < p.size(); i++) {
+        p[i]->dbg_oper = oper;
+    }
+}
 
-void GPRegister::print (std::ostream &os) const { os << "%r" << num << '(' << val() << ')'; }
-
-void GPRegister::load_to(CPU &cpu) const { cpu.gp_rb.load_reg(num, value); }
-
-void GPRegister::load_from(CPU &cpu) { value = cpu.gp_rb[num]; }
-
-std::unique_ptr<Operand> GPRegister::clone () const { return std::make_unique<GPRegister>(*this); }
-
-//  sp
-
-void SPRegister::print (std::ostream &os) const { os << '(' << val() << ')'; }
-
-void SPRegister::load_to(CPU &cpu) const { cpu.mem.pm.set_spreg(num, value); }
-
-void SPRegister::load_from(CPU &cpu) {}
-
-std::unique_ptr<Operand> SPRegister::clone () const { return std::make_unique<SPRegister>(*this); }
-
-//  dc
-
-void DataCell::print (std::ostream &os) const { os << '(' << val() << ')'; }
-
-void DataCell::load_to(CPU &cpu) const { cpu.mem.dm.data[num] = value; }
-
-void DataCell::load_from(CPU &cpu) { value = cpu.mem.dm.data[num]; }
-
-std::unique_ptr<Operand> DataCell::clone () const { return std::make_unique<DataCell>(*this); }
 
 //  rb
 
@@ -61,22 +39,27 @@ std::ostream &operator<<(std::ostream &os, RegBlock &rb) {
 
 //  CPU  //
 
-void CPU::exec (const char *asm_prog) {
-    Mem mcode = file_to_mcode(iset, asm_prog);
-    exec_mcode(std::move(mcode));
+void CPU::exec (const char *asm_prog, std::vector <std::size_t> &bps) {
+    Mem mcode = file_to_mcode(iset, asm_prog, bps);
+    load_mem(std::move(mcode));
+    exec();
 }
 
-void CPU::exec_mcode (Mem &&m) {
-    mem.dm.load(*m.first);
-    mem.pm.load(*m.second);
+void CPU::exec () {
 
-    //std::cout << "IR:" << std::endl << mem.pm << std::endl;
-    //std::cout << "Data:" << std::endl << mem.dm << std::endl;
+    std::size_t count = 0;
 
     while (!mem.pm.is_over()) {
+        std::size_t pc = mem.pm.get_pc();
         const Command &cur_cmd = mem.pm.fetch();
         assign(cur_cmd);
     }
+}
+
+
+void CPU::load_mem (Mem &&m) {
+    mem.dm.load(*m.first);
+    mem.pm.load(*m.second);
 }
 
 void CPU::assign(const Command &cmd) {
@@ -84,14 +67,14 @@ void CPU::assign(const Command &cmd) {
         auto &eu = EUs[i];
         if (eu.first == State::FREE) {
             EUs[i].first = State::BUSY;
-            std::cout << "Command assigned to EU " << i << std::endl;
+            //std::cout << "Command assigned to EU " << i << std::endl;
             EUs[i].second.exec(cmd, *this);
             EUs[i].first = State::FREE;
             return;
         }
     }
 
-    std::cout << "Command can't be assigned now, wait please" << std::endl;
+    //std::cout << "Command can't be assigned now, wait please" << std::endl;
 }
 
 //  EXEC UNIT  //
@@ -99,11 +82,6 @@ void CPU::assign(const Command &cmd) {
 void ExecUnit::exec(const Command &cmd, CPU &cpu) const {
     cmd.exec(cpu.cache, cpu);
     cpu.load_from_cache();
-    //cpu.print_regblock(std::cout);
-    //cpu.mem.pm.print_regblock(std::cout);
-
-    //std::cout << "Data: " << cpu.mem.dm;
-    //std::cout << std::endl;
 }
 
 //  LOAD FROM CACHE  //

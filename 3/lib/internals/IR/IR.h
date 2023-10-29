@@ -62,6 +62,7 @@ std::ostream &operator<<(std::ostream &os, const ID &id);
 
 //  BASE CLASS - OPERAND  //
 
+
 class Operand {
 
 friend UnaryCommand;
@@ -73,15 +74,15 @@ protected:
 
     int value = 0;
 
-    virtual void print (std::ostream &os) const {};
-    virtual void load_to (CPU &cpu) const = 0;
-    virtual void load_from (CPU &cpu) = 0;
+    virtual void print (std::ostream &os) const { os << value; }
+    virtual void load_to (CPU &cpu) const {};
+    virtual void load_from (CPU &cpu) {};
     
 public:
 
     Operand () {};
     virtual ~Operand () = default;
-    virtual std::unique_ptr<Operand> clone () const = 0;
+    virtual std::unique_ptr<Operand> clone () const { return std::make_unique<Operand>(*this);  }
 
     Operand(int val) : value(val) {};
     int val() const { return value; }
@@ -102,6 +103,13 @@ friend CPU;
     std::unique_ptr<Operand> opd2 = nullptr;
 
 public:
+
+    Cache () {};
+
+    Cache (const Cache &c) {
+        opd1 = c.opd1->clone();
+        opd2 = c.opd1->clone();
+    };
 
     void load_opd1 (Operand &_opd1, CPU &cpu);
     void load_opd2 (Operand &_opd2, CPU &cpu);
@@ -230,6 +238,8 @@ public:
     virtual void print (std::ostream &os) const = 0;
 
 public:
+
+    void (*dbg_oper)() = nullptr;
 
     const ID &label() const      { return lbl;  }
     

@@ -45,9 +45,11 @@ public:
 
     ~ProgramMemory(); 
     ProgramMemory () = default;
+    ProgramMemory (const ProgramMemory&) = default;
     ProgramMemory (ProgramMemory&&) = default;
     ProgramMemory &operator= (ProgramMemory &&_pm) = default;
     
+    std::size_t get_pc () { return sp_regs[pc_num]; }
     bool is_over ();
     const Command &fetch ();
     void print_regblock(std::ostream &os) const;
@@ -74,6 +76,7 @@ friend CPU;
 
 public:
 
+    DataMemory (const DataMemory&) = default;
     DataMemory (std::size_t _sz) : sz (_sz) {};
     friend std::ostream &operator<<(std::ostream &os, DataMemory &pm);
     int operator[] (std::size_t num) const { return data.at(num); }
