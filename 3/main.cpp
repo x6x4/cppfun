@@ -10,8 +10,8 @@
 #include <string>
 
 
-void hui() {
-    std::cout << "Hui!" << std::endl;
+void word() {
+    std::cout << "Word!" << std::endl;
 }
 
 int main (int argc, char **argv) {
@@ -19,18 +19,19 @@ int main (int argc, char **argv) {
     try {
         CPU cpu (iset);
         std::ifstream is (argv[1]);
-        std::string line; 
-        while (std::getline(is, line)) { 
-            std::istringstream iss(line); 
 
-        std::vector <std::size_t> bps = {1, 3};
+        std::unordered_set<ID> data_label_table;
 
-        Mem mcode = file_to_mcode(iset, is, bps);
-        fill (*mcode.second, hui);
-        
+        strings vec = preproc_text(is);
+        std::unique_ptr<Data> data = parse_data(is, data_label_table);
+        std::unique_ptr<SafeText> text = parse_text(iset, vec, data_label_table);
+
+        Mem mcode = std::make_pair(std::move(data), std::move(text));
         cpu.load_mem(std::move(mcode));
+
+        std::vector <std::size_t> bps = {1, 4};
         
-        cpu.exec();
+        cpu.exec(bps, word);
     }
 
     catch (std::logic_error &e) {

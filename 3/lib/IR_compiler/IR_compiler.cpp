@@ -1,20 +1,28 @@
 
 #include "fwd_IR_compiler.h"
+#include <memory>
 #include <utility>
 #include <vector>
 
 
-Mem file_to_mcode (InstrSet &iset, const char *filename, std::vector <std::size_t> &bps) {
+// MAIN
+
+Mem file_to_mcode (InstrSet &iset, const char *filename) {
     std::ifstream is (filename);
-    return file_to_mcode(iset, is, bps);
+    return file_to_mcode(iset, is);
 } 
 
-Mem file_to_mcode (InstrSet &iset, std::ifstream &is, std::vector <std::size_t> &bps) {
+Mem file_to_mcode (InstrSet &iset, std::ifstream &is) {
+
+    std::unordered_set<ID> data_label_table;
 
     try {
         if (is.is_open()) {
-            strings vec = preproc(is);
-            return parser(iset, vec, bps);
+            strings vec = preproc_text(is);
+            std::unique_ptr<Data> data = parse_data(is, data_label_table);
+            std::unique_ptr<SafeText> text = parse_text(iset, vec, data_label_table);
+
+            return std::make_pair(std::move(data), std::move(text));
         }
         else 
             throw std::logic_error ("Wrong file");
@@ -28,27 +36,43 @@ Mem file_to_mcode (InstrSet &iset, std::ifstream &is, std::vector <std::size_t> 
     }
 }
 
-Data preproc_data (std::ifstream &is) {
+//  PREPROC AND SECTIONS PARSING
 
-    std::unordered_set<ID> data_label_table;
-    Data data;
+strings preproc_text (std::ifstream &is) {
+    
+    strings vec;
+    std::string line;
+        
+    while (std::getline(is, line)) {
+        if (!line.compare(".text")) continue;    //  start of .text section
+        if (!line.compare("")) continue;    //  empty line
+        if (line[0] == '#') continue;       //  comment
+        if (!line.compare(".data")) break;  //  .data section
+
+        vec.push_back(line);
+    }
+
+    return vec;
+}
+
+std::unique_ptr<Data> parse_data (std::ifstream &is, std::unordered_set<ID> &data_label_table) {
+
+    std::unique_ptr<Data> data = std::make_unique<Data>(Data());
     std::size_t line_num = 0;
     std::size_t user_line_num = 0;
 
-    ///  .DATA SECTION  ///
     try {
         std::string directive;
 
         while (std::getline(is, directive)) {  //  line-by-line parsing
 
             user_line_num++;
-
-            if (!directive.compare(".data")) continue;    
+  
             if (!directive.compare("")) continue;    //  empty line
             if (directive[0] == '#') continue;       //  comment
-            if (!directive.compare(".text")) break;  //  end of .data section
 
-            parse_dr(directive, line_num, data, data_label_table);
+            int data_cell = parse_dr(directive, line_num, data_label_table);
+            data->push_back(data_cell);
             line_num++;
         }
     }
@@ -63,69 +87,23 @@ Data preproc_data (std::ifstream &is) {
     return data;
 }
 
-strings preproc_text (std::ifstream &is) {
-    
-    strings vec;
-    std::string line;
-
-    //  skip .data section
-    while (std::getline(is, line)) {
-        if (!line.compare(".text")) break;  
-    }
-        
-    while (std::getline(is, line)) {
-        if (!line.compare("")) continue;    //  empty line
-        if (line[0] == '#') continue;       //  comment
-
-        vec.push_back(line);
-    }
-
-    return vec;
-}
-
-Mem parser(InstrSet &iset, strings &vec, std::vector <std::size_t> &bps) {
+std::unique_ptr<SafeText> parse_text(InstrSet &iset, strings &vec, const std::unordered_set<ID> &data_label_table) {
 
     std::size_t line_num = 0;
     std::size_t user_line_num = 0;
     std::unique_ptr<Command> cur_cmd;
-
     std::unordered_set<ID> code_label_table;
-    
 
-    std::unique_ptr<Data> data = std::make_unique<Data>(Data());
     std::unique_ptr<SafeText> text = std::make_unique<SafeText>(SafeText());
-
-    
-
-    line_num = 0;
-    
-    ///  .TEXT SECTION  ///
+ 
     try {
-        std::string command;
-
-        std::size_t bp_num = bps.size() ? bps[0] : SIZE_MAX;
-        std::size_t count = 0;
-        bool has_bp = 0;
-        std::unique_ptr<DebugCommand> dbgcmd = std::make_unique<DebugCommand>();
-
-        while (std::getline(is, command)) {  //  line-by-line parsing
-
+        for (auto cmd : vec) {  //  line-by-line parsing
             user_line_num++;
             
-            if (!command.compare("")) continue;    //  empty line
-            if (command[0] == '#') continue;       //  comment
-
-            if (bp_num == line_num) { has_bp = 1; bp_num = (count == bps.size() - 1) ? SIZE_MAX : bps[++count]; }
-            else { has_bp = 0; }
-            
-            cur_cmd = parse_cmd(iset, command, line_num, data_label_table, code_label_table);
+            cur_cmd = parse_cmd(iset, cmd, line_num, data_label_table, code_label_table);
             line_num++;
             
             text->push_back(std::move(cur_cmd));
-            if (has_bp) {
-                text->push_back(std::move(dbgcmd)); 
-                dbgcmd = std::make_unique<DebugCommand>();
-            }
         }
     }
 
@@ -136,18 +114,12 @@ Mem parser(InstrSet &iset, strings &vec, std::vector <std::size_t> &bps) {
         throw CE(".text", e.what(), user_line_num);
     }
 
-    return std::make_pair(std::move(data), std::move(text));
+    return text;
 }
 
-const ID& FindLabel (std::unordered_set<ID> &label_table, const ID &id) {
-    auto label = label_table.find(id);
-    if (label == label_table.end())
-        throw std::logic_error("Unknown label: " + id.get_id());
-    else 
-        return label._M_cur->_M_v();
-}
+//  LINE PARSING
 
-void parse_dr(std::string &data_str, std::size_t line_num, std::vector<int> &data, std::unordered_set<ID> &data_label_table) {
+int parse_dr(std::string &data_str, std::size_t line_num, std::unordered_set<ID> &data_label_table) {
     std::istringstream tok_stream(data_str);
     std::vector<std::string> tokens;
     std::string cur_token;
@@ -170,11 +142,11 @@ void parse_dr(std::string &data_str, std::size_t line_num, std::vector<int> &dat
         throw std::logic_error ("bad label");
     }
 
-    data.push_back(std::stoi(tokens[1]));
+    return std::stoi(tokens[1]);
 }
 
 std::unique_ptr<Command> parse_cmd(InstrSet &iset, std::string &cmd_str, std::size_t line_num, 
-std::unordered_set<ID> &data_label_table, std::unordered_set<ID> &code_label_table) {
+const std::unordered_set<ID> &data_label_table, std::unordered_set<ID> &code_label_table) {
 
     std::istringstream tok_stream(cmd_str);
     std::vector<std::string> tokens;
@@ -280,6 +252,7 @@ std::unordered_set<ID> &data_label_table, std::unordered_set<ID> &code_label_tab
     throw std::logic_error("wrong command");
 } 
 
+//  OTHER
 
 std::logic_error CE (const char *section, const char *error, std::size_t line_num) {
     std::stringstream ss;
@@ -287,6 +260,12 @@ std::logic_error CE (const char *section, const char *error, std::size_t line_nu
     return std::logic_error(ss.str());
 }
 
-
+const ID& FindLabel (const std::unordered_set<ID> &label_table, const ID &id) {
+    auto label = label_table.find(id);
+    if (label == label_table.end())
+        throw std::logic_error("Unknown label: " + id.get_id());
+    else 
+        return label._M_cur->_M_v();
+}
 
 

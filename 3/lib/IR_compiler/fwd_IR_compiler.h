@@ -15,15 +15,17 @@
 
 using strings = std::vector<std::string>;
 
-strings preproc (std::ifstream &is);
+strings preproc_text (std::ifstream &is);
+std::unique_ptr<Data> parse_data (std::ifstream &is, std::unordered_set<ID> &data_label_table);
 
-Mem parser(InstrSet &iset, strings &vec, std::vector <std::size_t> &bps);
+std::unique_ptr<SafeText> parse_text(InstrSet &iset, strings &vec, const std::unordered_set<ID> &data_label_table);
 std::unique_ptr<Command> parse_cmd(InstrSet &iset, std::string &cmd, std::size_t line_num, 
-                    std::unordered_set<ID> &data_label_table, std::unordered_set<ID> &code_label_table);
-void parse_dr(std::string &data_str, std::size_t line_num, 
-                    std::vector<int> &data, std::unordered_set<ID> &data_label_table);
+    const std::unordered_set<ID> &data_label_table, std::unordered_set<ID> &code_label_table);
+int parse_dr(std::string &data_str, std::size_t line_num, std::unordered_set<ID> &data_label_table);
+
+const ID& FindLabel (const std::unordered_set<ID> &label_table, const ID &id);
 std::logic_error CE (const char *section, const char *error, std::size_t line_num);
 
-Mem file_to_mcode (InstrSet &iset, const char *filename, std::vector <std::size_t> &bps);
-Mem file_to_mcode (InstrSet &iset, std::ifstream &is, std::vector <std::size_t> &bps);
+Mem file_to_mcode (InstrSet &iset, const char *filename);
+Mem file_to_mcode (InstrSet &iset, std::ifstream &is);
 

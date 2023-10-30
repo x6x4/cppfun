@@ -3,7 +3,7 @@
  */
 
 #pragma once
-#include "../lib/internals/cpu/cpu.h"
+#include "../lib/internals/operands/operands.h"
 #include <cstddef>
 
 

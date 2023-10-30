@@ -78,37 +78,16 @@ public:
     CPU (CPU &cpu) = default;
     CPU(InstrSet& _iset) : iset (_iset) { }
 
-    std::size_t get_bitness () { return bitness; }
     int gp (std::size_t num) const { return gp_rb[num]; }
     int sp (std::size_t num) const { return mem.pm[num]; }
     int data (std::size_t num) const { return mem.dm[num]; }
+    std::size_t data_sz () const { return mem.dm.sz; }
     
     void load_mem (Mem &&m);
-    void exec (const char *asm_prog, std::vector <std::size_t> &bps);
-    void exec ();
+    void exec (std::vector <std::size_t> &bps, void (*dbg)() );
+
     void print_regblock (std::ostream &os) { os << gp_rb; }
     void print_dm (std::ostream &os) { os << mem.dm; }
     void print_pm (std::ostream &os) { os << mem.pm; }
 };
 
-//  DEBUG
-
-class DebugCommand : public Command {
-
-protected:
-    void load (Cache &cache, CPU &cpu) const override {};
-    void exec (Cache &cache, CPU &cpu) const override { if (dbg_oper) dbg_oper(); }
-    void print (std::ostream &os) const override {};
-
-public:
-
-    ~DebugCommand() override {}
-    DebugCommand () {};
-
-    DebugCommand (DebugCommand &&) = default;
-
-    DebugCommand* clone () const override 
-    { auto cmd = new DebugCommand(); cmd->dbg_oper = Command::dbg_oper; return cmd; }
-};
-
-void fill (SafeText &p, void (*oper)());

@@ -7,21 +7,10 @@
 #include <string>
 
 
-//  DBG
-
-void fill (SafeText &p, void (*oper)()) {
-    for (std::size_t i = 0; i < p.size(); i++) {
-        p[i]->dbg_oper = oper;
-    }
-}
-
-
 //  rb
 
 int RegBlock::operator[] (std::size_t num) const { 
     return regs.at(num); 
-    //if (num < regs.size()) 
-    //throw std::logic_error("Wrong register number: " + std::to_string(num));
 }
 
 void RegBlock::load_reg (std::size_t num, int val) { regs[num] = val; };
@@ -39,18 +28,20 @@ std::ostream &operator<<(std::ostream &os, RegBlock &rb) {
 
 //  CPU  //
 
-void CPU::exec (const char *asm_prog, std::vector <std::size_t> &bps) {
-    Mem mcode = file_to_mcode(iset, asm_prog, bps);
-    load_mem(std::move(mcode));
-    exec();
-}
+void CPU::exec (std::vector <std::size_t> &bps, void (*dbg)() ) {
 
-void CPU::exec () {
-
+    std::size_t bp_num = bps.size() ? bps[0] : SIZE_MAX;
     std::size_t count = 0;
 
     while (!mem.pm.is_over()) {
         std::size_t pc = mem.pm.get_pc();
+        
+        //  dbg
+        if (pc == bp_num) {
+            bp_num = (count == bps.size() - 1) ? SIZE_MAX : bps[++count];
+            dbg();
+        }
+
         const Command &cur_cmd = mem.pm.fetch();
         assign(cur_cmd);
     }

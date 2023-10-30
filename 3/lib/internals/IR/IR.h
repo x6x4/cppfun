@@ -239,8 +239,6 @@ public:
 
 public:
 
-    void (*dbg_oper)() = nullptr;
-
     const ID &label() const      { return lbl;  }
     
     friend std::ostream &operator<<(std::ostream &os, Command &cmd);

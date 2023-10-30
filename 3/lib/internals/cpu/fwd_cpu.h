@@ -25,5 +25,3 @@ enum class State {
 using ExecUnits = std::vector<std::pair<State,ExecUnit>>;
 
 using Mem = std::pair<std::unique_ptr<Data>, std::unique_ptr<SafeText>>;
-
-Mem file_to_mcode (InstrSet &iset, const char *filename, std::vector <std::size_t> &bps);
