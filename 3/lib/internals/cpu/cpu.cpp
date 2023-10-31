@@ -1,10 +1,12 @@
 
 #include "cpu.h"
 #include <cstdint>
+#include <functional>
 #include <iostream>
 #include <iterator>
 #include <stdexcept>
 #include <string>
+#include <functional>
 
 
 //  rb
@@ -17,7 +19,7 @@ void RegBlock::load_reg (std::size_t num, int val) { regs[num] = val; };
 
 void RegBlock::print (std::ostream &os) const { 
     for (std::size_t i = 0; i < regs.size(); i++) 
-        if (regs[i]) os << 'r' << i << '(' << regs[i] << ')' << ' '; 
+        os << 'r' << i << '(' << regs[i] << ')' << ' '; 
     os << '\n';
 }
 
@@ -26,27 +28,35 @@ std::ostream &operator<<(std::ostream &os, RegBlock &rb) {
     return os;
 }
 
-//  CPU  //
+//  Exec CPU  //
 
-void CPU::exec (std::vector <std::size_t> &bps, void (*dbg)() ) {
+
+void exec (CPU &cpu, std::vector <std::size_t> &bps, std::function<void()> dbg_func) {
 
     std::size_t bp_num = bps.size() ? bps[0] : SIZE_MAX;
     std::size_t count = 0;
 
-    while (!mem.pm.is_over()) {
-        std::size_t pc = mem.pm.get_pc();
+    while (!cpu.is_over()) {
+        std::size_t pc = cpu.get_pc();
         
         //  dbg
         if (pc == bp_num) {
             bp_num = (count == bps.size() - 1) ? SIZE_MAX : bps[++count];
-            dbg();
+            dbg_func();
         }
 
-        const Command &cur_cmd = mem.pm.fetch();
-        assign(cur_cmd);
+        cpu.exec();
     }
+
+    dbg_func();
 }
 
+//  CPU  //
+
+void CPU::exec () {
+    const Command &cur_cmd = fetch();
+    assign(cur_cmd);
+}
 
 void CPU::load_mem (Mem &&m) {
     mem.dm.load(*m.first);

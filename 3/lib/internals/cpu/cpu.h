@@ -4,6 +4,8 @@
  */
 #pragma once
 #include "fwd_cpu.h"
+#include <cstddef>
+#include <functional>
 
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
@@ -25,7 +27,7 @@ friend GPRegister;
 public:
     int operator[] (std::size_t num) const;
     void print (std::ostream &os) const;
-    RegBlock(std::size_t _num_reg) : num_reg(_num_reg) {}; 
+    RegBlock(std::size_t _num_reg) : num_reg(_num_reg) { }; 
 };
 
 std::ostream &operator<<(std::ostream &os, RegBlock &rb);
@@ -53,6 +55,7 @@ friend CPU;
  *  and then assigns it to free execution unit.
  *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
 
 class CPU {
 friend SPRegister;
@@ -82,12 +85,27 @@ public:
     int sp (std::size_t num) const { return mem.pm[num]; }
     int data (std::size_t num) const { return mem.dm[num]; }
     std::size_t data_sz () const { return mem.dm.sz; }
+    bool is_over () { return mem.pm.is_over(); }
+    std::size_t get_pc () { return mem.pm.get_pc(); }
+    const Command &fetch () { return mem.pm.fetch(); }
     
     void load_mem (Mem &&m);
-    void exec (std::vector <std::size_t> &bps, void (*dbg)() );
+    void exec ();
 
-    void print_regblock (std::ostream &os) { os << gp_rb; }
+
+    void print_gpregblock (std::ostream &os) { os << gp_rb; }
+    void print_spregblock (std::ostream &os) { mem.pm.print_regblock(os); }
     void print_dm (std::ostream &os) { os << mem.dm; }
     void print_pm (std::ostream &os) { os << mem.pm; }
 };
 
+
+
+void exec (CPU &cpu, std::vector <std::size_t> &bps, std::function<void()> dbg_func);
+
+/*class Executor {
+
+public:
+    template<DebugFunctor> void exec (CPU &cpu, std::vector <std::size_t> &bps);
+
+};*/
