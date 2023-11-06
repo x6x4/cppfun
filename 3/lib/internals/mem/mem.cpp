@@ -2,6 +2,7 @@
 #include "mem.h"
 #include <cstddef>
 #include <memory>
+#include <sstream>
 
 //  pm
 
@@ -34,6 +35,18 @@ std::ostream &operator<<(std::ostream &os, ProgramMemory &pm) {
     for (std::size_t i = 0; i < pm.text.size(); i++)
         os << *pm.text[i] << '\n';
     return os;
+}
+
+strings ProgramMemory::to_strings () {
+    
+    std::stringstream str_stream;
+    str_stream << *this;
+
+    strings strs;
+
+    for (std::string str; std::getline(str_stream, str, '\n'); ) strs.push_back(str);
+
+    return strs;
 }
 
 //  dm

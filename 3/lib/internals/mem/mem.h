@@ -29,6 +29,9 @@ using Text = std::vector<Command*>;
  *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
+
+using strings = std::vector<std::string>;
+
 class ProgramMemory {
 
 friend SPRegister;
@@ -54,8 +57,10 @@ public:
     const Command &fetch ();
     void print_regblock(std::ostream &os) const;
     int operator[] (std::size_t num) const { return sp_regs.at(num); }
+    void clear () { for (auto &reg : sp_regs) reg = 0; }
 
     friend std::ostream &operator<<(std::ostream &os, ProgramMemory &pm);
+    strings to_strings ();
 };
 
 

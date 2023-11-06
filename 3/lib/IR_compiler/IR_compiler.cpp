@@ -7,6 +7,10 @@
 
 // MAIN
 
+void load_cpu (CPU &cpu, const char *filename) {
+    cpu.load_mem(file_to_mcode(cpu.iSet(), filename));
+}
+
 Mem file_to_mcode (InstrSet &iset, const char *filename) {
     std::ifstream is (filename);
     return file_to_mcode(iset, is);
@@ -149,7 +153,7 @@ std::unique_ptr<Command> parse_cmd(InstrSet &iset, std::string &cmd_str, std::si
 const std::unordered_set<ID> &data_label_table, std::unordered_set<ID> &code_label_table) {
 
     std::istringstream tok_stream(cmd_str);
-    std::vector<std::string> tokens;
+    strings tokens;
     std::string cur_token;
 
     ID label = "";

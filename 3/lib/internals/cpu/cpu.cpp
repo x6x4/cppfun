@@ -49,6 +49,12 @@ void exec (CPU &cpu, std::vector <std::size_t> &bps, std::function<void()> dbg_f
     }
 
     dbg_func();
+    cpu.clear_regs();
+}
+
+void CPU::clear_regs() {
+    gp_rb.clear();
+    mem.pm.clear();
 }
 
 //  CPU  //

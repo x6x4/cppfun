@@ -27,6 +27,8 @@ friend GPRegister;
 public:
     int operator[] (std::size_t num) const;
     void print (std::ostream &os) const;
+    void clear () { for (auto &reg : regs) reg = 0; }
+
     RegBlock(std::size_t _num_reg) : num_reg(_num_reg) { }; 
 };
 
@@ -83,15 +85,22 @@ public:
 
     int gp (std::size_t num) const { return gp_rb[num]; }
     int sp (std::size_t num) const { return mem.pm[num]; }
-    int data (std::size_t num) const { return mem.dm[num]; }
+    int data_cell (std::size_t num) const { return mem.dm[num]; }
     std::size_t data_sz () const { return mem.dm.sz; }
+
+    auto &data () { return mem.dm.data; }
+    auto &pm () { return mem.pm; }
+    auto lines () { return mem.pm.to_strings(); }
+    auto &iSet () { return iset; }
+
     bool is_over () { return mem.pm.is_over(); }
     std::size_t get_pc () { return mem.pm.get_pc(); }
     const Command &fetch () { return mem.pm.fetch(); }
     
     void load_mem (Mem &&m);
+    void load_mem (const char *filename);
     void exec ();
-
+    void clear_regs();
 
     void print_gpregblock (std::ostream &os) { os << gp_rb; }
     void print_spregblock (std::ostream &os) { mem.pm.print_regblock(os); }
@@ -100,12 +109,4 @@ public:
 };
 
 
-
 void exec (CPU &cpu, std::vector <std::size_t> &bps, std::function<void()> dbg_func);
-
-/*class Executor {
-
-public:
-    template<DebugFunctor> void exec (CPU &cpu, std::vector <std::size_t> &bps);
-
-};*/

@@ -12,9 +12,7 @@
 
 //  PARSING
 
-
-using strings = std::vector<std::string>;
-
+//  removes insignificant lines
 strings preproc_text (std::ifstream &is);
 std::unique_ptr<Data> parse_data (std::ifstream &is, std::unordered_set<ID> &data_label_table);
 
@@ -28,4 +26,5 @@ std::logic_error CE (const char *section, const char *error, std::size_t line_nu
 
 Mem file_to_mcode (InstrSet &iset, const char *filename);
 Mem file_to_mcode (InstrSet &iset, std::ifstream &is);
+void load_cpu (CPU &cpu, const char *filename);
 
