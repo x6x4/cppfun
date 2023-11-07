@@ -7,14 +7,14 @@
 #include "../cpu/cpu.h"
 
 
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
- *  Small and fast memory cell inside CPU. 
- *
- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-
+/**
+ * @class GPRegister
+ * @brief Small and fast memory cell inside CPU. 
+ */
 class GPRegister : public Operand {
+friend SPRegister;
+friend DataCell;
 
-protected:
     std::size_t num = 0;
 
     void print (std::ostream &os) const override;
@@ -24,18 +24,30 @@ protected:
 public:
     GPRegister() {};
     ~GPRegister () override = default;
+
+    /**
+    * @brief Creates a copy of the Operand object
+    *
+    * @note This is an overriden function. 
+    * @see Operand
+    * 
+    * @return Pointer to the cloned Operand object
+    */
     std::unique_ptr<Operand> clone () const override;
 
+    /**
+    * @brief Constructor for the GPRegister class.
+    *
+    * @param number Register number
+    */
     GPRegister(std::size_t number) : num(number) {};
 };
 
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
- *  Small and fast memory cell inside Program Memory. 
- *
- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+/**
+ * @class SPRegister
+ * @brief Small and fast memory cell inside Program Memory. 
+ */
 class SPRegister : public GPRegister {
-
-protected:
 
     void print (std::ostream &os) const override;
     void load_to (CPU &cpu) const override;
@@ -44,18 +56,35 @@ protected:
 public:
     SPRegister () {};
     ~SPRegister () override = default;
+
+    /**
+    * @brief Creates a copy of the Operand object
+    *
+    * @note This is an overriden function. 
+    * @see Operand
+    * 
+    * @return Pointer to the cloned Operand object
+    */
     std::unique_ptr<Operand> clone () const override;
 
+    /**
+    * @brief Constructor for the SPRegister class.
+    *
+    * @param _val Register value
+    */
     SPRegister (std::size_t _val) { value = _val; }
+
+    /** 
+    * @brief Trivial setter for special-purpose register number.
+    */
     void set_num (std::size_t _num) { num = _num; }  
 };
 
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
- *  Big and slow memory cell inside Data Memory. 
- *
- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+/**
+ * @class DataCell
+ * @brief Big and slow memory cell inside Data Memory. 
+ */
 class DataCell : public GPRegister {
-protected:
 
     void print (std::ostream &os) const override;
     void load_to (CPU &cpu) const override;
@@ -64,8 +93,26 @@ protected:
 public:
     DataCell () {};
     ~DataCell () override = default;
+
+    /**
+    * @brief Creates a copy of the Operand object
+    *
+    * @note This is an overriden function. 
+    * @see Operand
+    * 
+    * @return Pointer to the cloned Operand object
+    */
     std::unique_ptr<Operand> clone () const override;
 
+    /**
+    * @brief Constructor for the DataCell class.
+    *
+    * @param _val Data cell value
+    */
     DataCell (std::size_t _val) { value = _val; }
+
+    /** 
+    * @brief Trivial setter for data cell number.
+    */
     void set_num (std::size_t _num) { num = _num; }  
 };

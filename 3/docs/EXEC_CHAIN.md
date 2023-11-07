@@ -18,7 +18,7 @@ _Exec process:_
 
 User program + Instruction set
     |
-Mcode compiler  *DONE*
+Mcode compiler 
     |
 Program Memory
     |
@@ -29,6 +29,6 @@ Execution unit
 Cache (exec command)
     |
 Register Block
-Data Memory  //  not implemented yet
+Data Memory  
     |
 Program Memory

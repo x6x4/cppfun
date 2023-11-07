@@ -1,8 +1,5 @@
 
 #include "fwd_IR_compiler.h"
-#include <memory>
-#include <utility>
-#include <vector>
 
 
 // MAIN
@@ -11,12 +8,12 @@ void load_cpu (CPU &cpu, const char *filename) {
     cpu.load_mem(file_to_mcode(cpu.iSet(), filename));
 }
 
-Mem file_to_mcode (InstrSet &iset, const char *filename) {
+Mem file_to_mcode (const InstrSet &iset, const char *filename) {
     std::ifstream is (filename);
     return file_to_mcode(iset, is);
 } 
 
-Mem file_to_mcode (InstrSet &iset, std::ifstream &is) {
+Mem file_to_mcode (const InstrSet &iset, std::ifstream &is) {
 
     std::unordered_set<ID> data_label_table;
 
@@ -91,7 +88,7 @@ std::unique_ptr<Data> parse_data (std::ifstream &is, std::unordered_set<ID> &dat
     return data;
 }
 
-std::unique_ptr<SafeText> parse_text(InstrSet &iset, strings &vec, const std::unordered_set<ID> &data_label_table) {
+std::unique_ptr<SafeText> parse_text(const InstrSet &iset, strings &vec, const std::unordered_set<ID> &data_label_table) {
 
     std::size_t line_num = 0;
     std::size_t user_line_num = 0;
@@ -140,7 +137,7 @@ int parse_dr(std::string &data_str, std::size_t line_num, std::unordered_set<ID>
     label.set_addr(line_num);
     if (tokens[0].back() == ':') { 
         if (tokens[0][0] == ':') throw std::logic_error ("empty label");
-        label = tokens[0].substr(0, tokens[0].length() - 1);  //  shrink trailing ':'
+        label = tokens[0].substr(0, tokens[0].length() - 1).c_str();  //  shrink trailing ':'
         data_label_table.insert(label);
     } else {
         throw std::logic_error ("bad label");
@@ -149,7 +146,7 @@ int parse_dr(std::string &data_str, std::size_t line_num, std::unordered_set<ID>
     return std::stoi(tokens[1]);
 }
 
-std::unique_ptr<Command> parse_cmd(InstrSet &iset, std::string &cmd_str, std::size_t line_num, 
+std::unique_ptr<Command> parse_cmd(const InstrSet &iset, std::string &cmd_str, std::size_t line_num, 
 const std::unordered_set<ID> &data_label_table, std::unordered_set<ID> &code_label_table) {
 
     std::istringstream tok_stream(cmd_str);
@@ -176,7 +173,7 @@ const std::unordered_set<ID> &data_label_table, std::unordered_set<ID> &code_lab
     label.set_addr(line_num);
     if (tokens[0].back() == ':') { 
         if (tokens[0][0] == ':') throw std::logic_error ("empty label");
-        cur_tok_num++; label = tokens[0].substr(0, tokens[0].length() - 1);  //  shrink trailing ':'
+        cur_tok_num++; label = tokens[0].substr(0, tokens[0].length() - 1).c_str();  //  shrink trailing ':'
         code_label_table.insert(label);
     } 
 
@@ -210,10 +207,10 @@ const std::unordered_set<ID> &data_label_table, std::unordered_set<ID> &code_lab
         opd1 = std::move(std::make_unique<GPRegister>(GPRegister(std::stoi(reg_num))));
 
     } else if (tokens[cur_tok_num][0] == '$')  {  //  data label
-        ID data_label = FindLabel(data_label_table, tokens[cur_tok_num].substr(1));
+        ID data_label = FindLabel(data_label_table, tokens[cur_tok_num].substr(1).c_str());
         opd1 = std::move(std::make_unique<DataCell>(DataCell(data_label.get_addr())));
     }  else if (!std::isdigit(tokens[cur_tok_num][0])) {  //  code label
-        ID code_label = FindLabel(code_label_table, tokens[cur_tok_num]);
+        ID code_label = FindLabel(code_label_table, tokens[cur_tok_num].c_str());
         opd1 = std::move(std::make_unique<SPRegister>(SPRegister(code_label.get_addr())));
     } else {
         throw std::logic_error("First operand can't be immediate");
@@ -237,7 +234,7 @@ const std::unordered_set<ID> &data_label_table, std::unordered_set<ID> &code_lab
         opd2 = std::move(std::make_unique<GPRegister>(std::stoi(reg_num)));
 
     } else if (tokens[cur_tok_num][0] == '$')  {  //  data label
-        ID data_label = FindLabel(data_label_table, tokens[cur_tok_num].substr(1));
+        ID data_label = FindLabel(data_label_table, tokens[cur_tok_num].substr(1).c_str());
         opd2 = std::move(std::make_unique<DataCell>(DataCell(data_label.get_addr())));
     } else if (std::isdigit(tokens[cur_tok_num][0])) {  //  imm
         opd2 = std::move(std::make_unique<Operand>(std::stoi(tokens[cur_tok_num])));

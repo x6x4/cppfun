@@ -30,7 +30,6 @@ std::ostream &operator<<(std::ostream &os, RegBlock &rb) {
 
 //  Exec CPU  //
 
-
 void exec (CPU &cpu, std::vector <std::size_t> &bps, std::function<void()> dbg_func) {
 
     std::size_t bp_num = bps.size() ? bps[0] : SIZE_MAX;
@@ -54,7 +53,7 @@ void exec (CPU &cpu, std::vector <std::size_t> &bps, std::function<void()> dbg_f
 
 void CPU::clear_regs() {
     gp_rb.clear();
-    mem.pm.clear();
+    mem.pm.clear_regs();
 }
 
 //  CPU  //
@@ -75,7 +74,7 @@ void CPU::assign(const Command &cmd) {
         if (eu.first == State::FREE) {
             EUs[i].first = State::BUSY;
             //std::cout << "Command assigned to EU " << i << std::endl;
-            EUs[i].second.exec(cmd, *this);
+            EUs[i].second.exec(cmd);
             EUs[i].first = State::FREE;
             return;
         }
@@ -86,9 +85,9 @@ void CPU::assign(const Command &cmd) {
 
 //  EXEC UNIT  //
 
-void ExecUnit::exec(const Command &cmd, CPU &cpu) const {
-    cmd.exec(cpu.cache, cpu);
-    cpu.load_from_cache();
+void ExecUnit::exec(const Command &cmd) const {
+    cmd.exec_in_cache(cpu->cache);
+    cpu->load_from_cache();
 }
 
 //  LOAD FROM CACHE  //

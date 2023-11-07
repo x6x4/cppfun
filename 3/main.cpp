@@ -29,7 +29,7 @@ int main (int argc, char **argv) {
 
     try {
         CPU cpu (iset);
-        //CLI cli (&cpu);
+        
         load_cpu(cpu, "/home/cracky/cppfun/3/prog2.asm");
 
         std::vector <std::size_t> bps = {1, 4};
