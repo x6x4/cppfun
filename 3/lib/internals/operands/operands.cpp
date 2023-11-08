@@ -25,7 +25,7 @@ std::unique_ptr<Operand> SPRegister::clone () const { return std::make_unique<SP
 
 //  dc
 
-void DataCell::print (std::ostream &os) const { os << '(' << val() << ')'; }
+void DataCell::print (std::ostream &os) const { os << '(' << num << ')'; }
 
 void DataCell::load_to(CPU &cpu) const { cpu.mem.dm.data[num] = value; }
 

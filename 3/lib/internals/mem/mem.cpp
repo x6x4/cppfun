@@ -10,7 +10,17 @@ ProgramMemory::~ProgramMemory() {
     for (auto cmd : text) delete cmd;
 }
 
+void ProgramMemory::clear() {
+    clear_regs();
+
+    for (auto cmd : text) delete cmd;
+    text.clear();
+}
+
 void ProgramMemory::load (const SafeText &mtext) { 
+    
+    clear();
+
     for (std::size_t i = 0; i < mtext.size(); i++) {
         text.push_back((mtext[i]->clone()));
     }
@@ -53,8 +63,9 @@ strings ProgramMemory::to_strings () {
 
 void DataMemory::load (const Data &mdata) { 
     
-    for (std::size_t i = 0; i < mdata.size(); i++)
+    for (std::size_t i = 0; i < mdata.size(); i++) {
         data.at(i) = mdata.at(i); 
+    }
 }
 
 std::ostream &operator<<(std::ostream &os, DataMemory &dm) {

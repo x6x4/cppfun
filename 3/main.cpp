@@ -30,7 +30,7 @@ int main (int argc, char **argv) {
     try {
         CPU cpu (iset);
         
-        load_cpu(cpu, "/home/cracky/cppfun/3/prog2.asm");
+        load_file_cpu(cpu, "/home/cracky/cppfun/3/prog2.asm");
 
         std::vector <std::size_t> bps = {1, 4};
 
@@ -38,6 +38,8 @@ int main (int argc, char **argv) {
         std::function<void()> f = CLI_DBG(&cpu);
         
         exec(cpu, bps, f);
+
+        load_file_cpu(cpu, "/home/cracky/cppfun/3/prog2.asm");
         exec(cpu, bps, f);
     }
 

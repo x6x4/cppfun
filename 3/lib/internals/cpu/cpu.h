@@ -91,6 +91,7 @@ friend ExecUnit;
     ExecUnits EUs = {std::make_pair(State::FREE, ExecUnit(this))};
     RegBlock gp_rb = RegBlock(8);
     Memory mem = Memory(std::pow(2, bitness));
+    Data cache_data;
     CPU_Cache cache = CPU_Cache(this);
 
     InstrSet iset;
@@ -189,7 +190,7 @@ public:
     /**
     * @brief Clears contents of general-purpose register block.
     */  
-    void clear_regs();
+    void clear();
     
     /**
     * @brief Prints contents of general-purpose register block.

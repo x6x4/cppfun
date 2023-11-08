@@ -1,10 +1,16 @@
 
 #include "fwd_IR_compiler.h"
+#include <sstream>
 
 
 // MAIN
 
-void load_cpu (CPU &cpu, const char *filename) {
+void load_text_cpu (CPU &cpu, const char *program_text) {
+    std::istringstream iss(program_text);
+    cpu.load_mem(file_to_mcode(cpu.iSet(), iss));
+}
+
+void load_file_cpu (CPU &cpu, const char *filename) {
     cpu.load_mem(file_to_mcode(cpu.iSet(), filename));
 }
 
@@ -13,19 +19,19 @@ Mem file_to_mcode (const InstrSet &iset, const char *filename) {
     return file_to_mcode(iset, is);
 } 
 
-Mem file_to_mcode (const InstrSet &iset, std::ifstream &is) {
+Mem file_to_mcode (const InstrSet &iset, std::istream &is) {
 
     std::unordered_set<ID> data_label_table;
 
     try {
-        if (is.is_open()) {
+        //if (is.is_open()) {
             strings vec = preproc_text(is);
             std::unique_ptr<Data> data = parse_data(is, data_label_table);
             std::unique_ptr<SafeText> text = parse_text(iset, vec, data_label_table);
 
             return std::make_pair(std::move(data), std::move(text));
-        }
-        else 
+        //}
+        //else 
             throw std::logic_error ("Wrong file");
     }
 
@@ -39,7 +45,7 @@ Mem file_to_mcode (const InstrSet &iset, std::ifstream &is) {
 
 //  PREPROC AND SECTIONS PARSING
 
-strings preproc_text (std::ifstream &is) {
+strings preproc_text (std::istream &is) {
     
     strings vec;
     std::string line;
@@ -56,7 +62,7 @@ strings preproc_text (std::ifstream &is) {
     return vec;
 }
 
-std::unique_ptr<Data> parse_data (std::ifstream &is, std::unordered_set<ID> &data_label_table) {
+std::unique_ptr<Data> parse_data (std::istream &is, std::unordered_set<ID> &data_label_table) {
 
     std::unique_ptr<Data> data = std::make_unique<Data>(Data());
     std::size_t line_num = 0;

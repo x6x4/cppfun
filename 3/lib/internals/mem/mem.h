@@ -27,6 +27,7 @@ friend CPU;
     strings to_strings ();
     std::size_t get_pc () { return sp_regs[pc_num]; }
     bool is_over ();
+    void clear();
 
 public:
 

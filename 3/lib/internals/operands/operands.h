@@ -107,12 +107,7 @@ public:
     /**
     * @brief Constructor for the DataCell class.
     *
-    * @param _val Data cell value
+    * @param _num Data cell _num
     */
-    DataCell (std::size_t _val) { value = _val; }
-
-    /** 
-    * @brief Trivial setter for data cell number.
-    */
-    void set_num (std::size_t _num) { num = _num; }  
+    DataCell (std::size_t _num) { num = _num; }
 };

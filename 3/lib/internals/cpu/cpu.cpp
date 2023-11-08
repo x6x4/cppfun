@@ -48,12 +48,13 @@ void exec (CPU &cpu, std::vector <std::size_t> &bps, std::function<void()> dbg_f
     }
 
     dbg_func();
-    cpu.clear_regs();
+    cpu.clear();
 }
 
-void CPU::clear_regs() {
+void CPU::clear() {
     gp_rb.clear();
     mem.pm.clear_regs();
+    mem.dm.load(cache_data);
 }
 
 //  CPU  //
@@ -66,6 +67,7 @@ void CPU::exec () {
 void CPU::load_mem (Mem &&m) {
     mem.dm.load(*m.first);
     mem.pm.load(*m.second);
+    cache_data = *m.first;
 }
 
 void CPU::assign(const Command &cmd) {
