@@ -28,9 +28,16 @@ public:
     /**
     * @brief Constructor for the ID class.
     *
-    * @param other The string for the ID.
+    * @param str The string for the ID.
     */
     ID(const char *str);
+
+    /**
+    * @brief Copy constructor for the ID class.
+    *
+    * @param other The other ID object.
+    */
+    //constexpr ID(const ID& other) = default;
  
     /**
     * @brief Trivial accessor for ID.

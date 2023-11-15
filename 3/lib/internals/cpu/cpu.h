@@ -139,13 +139,6 @@ public:
     * @return The number of data cells.
     */
     std::size_t data_sz () const { return mem.dm.size(); }
-    
-    /**
-    * @brief Returns program memory contents as a vector of strings.
-    *
-    * @return Vector of std::string.
-    */
-    auto lines () { return mem.pm.to_strings(); }
 
     /**
     * @brief Trivial accessor for instruction set.

@@ -28,5 +28,8 @@ void Oper_Movement (Operand &opd1, Operand &opd2) {
     opd1.set(opd2.val());
 };
 
+//  parallel programming 
+//  Oper_Strcmp %r1/%r2 scmpsb
+//  scasb - find symbol in string 
 
 

@@ -47,18 +47,6 @@ std::ostream &operator<<(std::ostream &os, ProgramMemory &pm) {
     return os;
 }
 
-strings ProgramMemory::to_strings () {
-    
-    std::stringstream str_stream;
-    str_stream << *this;
-
-    strings strs;
-
-    for (std::string str; std::getline(str_stream, str, '\n'); ) strs.push_back(str);
-
-    return strs;
-}
-
 //  dm
 
 void DataMemory::load (const Data &mdata) { 

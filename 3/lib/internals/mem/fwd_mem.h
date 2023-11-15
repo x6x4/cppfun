@@ -15,4 +15,13 @@ using SafeText = std::vector<std::unique_ptr<Command>>;
 using Data = std::vector<int>;
 
 using Text = std::vector<Command*>;
-using strings = std::vector<std::string>;
+
+struct NumberedLine {
+    std::size_t num = 0;
+    std::string line = "nop";
+
+    NumberedLine() {};
+    NumberedLine (std::size_t _num, std::string _line) : num (_num), line (_line) {};
+};
+
+using strings = std::vector<NumberedLine>;

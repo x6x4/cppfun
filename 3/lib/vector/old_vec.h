@@ -46,6 +46,7 @@ public:
         }
     };
 
+    //  bad practice
     Vector (const Vector &v) {
         *this = v;
     };
@@ -143,3 +144,42 @@ private:
         std::swap (sz, v2.sz);
     }
 };
+
+        /**
+        *  Returns a read/write reverse iterator that points to the
+        *  last element in the %Vec.  Iteration is done in reverse
+        *  element o.
+        */
+        [[nodiscard]] constexpr reverse_iterator 
+        rbegin() noexcept
+        { return reverse_iterator(end()); }
+
+        /**
+        *  Returns a read/write reverse iterator that points to one
+        *  before the first element in the %Vec.  Iteration is done
+        *  in reverse element o.
+        */
+        [[nodiscard]] constexpr reverse_iterator 
+        rend() noexcept { return reverse_iterator(begin()); }
+
+
+        /**
+        *  Returns a read-only (constant) reverse iterator that points
+        *  to the last element in the %Vec.  Iteration is done in
+        *  reverse element o.
+        */
+        [[nodiscard]] constexpr const_reverse_iterator 
+        crbegin() const noexcept
+        { return const_reverse_iterator(end()); }
+
+        /**
+        *  Returns a read-only (constant) reverse iterator that points
+        *  to one before the first element in the %Vec.  Iteration
+        *  is done in reverse ent order.
+        */
+        [[nodiscard]] constexpr const_reverse_iterator 
+        crend() const noexcept
+        { return const_reverse_iterator(begin()); }
+
+        typedef std::reverse_iterator<const_iterator>	const_reverse_iterator;
+        typedef std::reverse_iterator<iterator>		    reverse_iterator;

@@ -24,7 +24,6 @@ friend CPU;
     void set_spreg (std::size_t num, std::size_t val);
     const Command &fetch ();
     int operator[] (std::size_t num) const { return sp_regs.at(num); }
-    strings to_strings ();
     std::size_t get_pc () { return sp_regs[pc_num]; }
     bool is_over ();
     void clear();

@@ -32,7 +32,7 @@ int main (int argc, char **argv) {
         
         load_file_cpu(cpu, "/home/cracky/cppfun/3/prog2.asm");
 
-        std::vector <std::size_t> bps = {1, 4};
+        std::vector <std::size_t> bps = {1, 2, 3, 4, 5};
 
         // store a call to a function object
         std::function<void()> f = CLI_DBG(&cpu);
