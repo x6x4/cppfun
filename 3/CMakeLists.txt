@@ -11,10 +11,10 @@ set (CMAKE_CXX_FLAGS "-ggdb -O0 -coverage -fPIC -Wno-unused-parameter -std=c++20
 
 #  libs 
 
-#add_subdirectory(lib)
-#add_subdirectory(instr_set)
+add_subdirectory(lib)
+add_subdirectory(instr_set)
 
-add_subdirectory(lib/vector)
+#add_subdirectory(lib/vector)
 
 #  testing
 
@@ -22,8 +22,9 @@ add_subdirectory(lib/vector)
 #target_link_libraries(test1 instr_set IR_compiler)
 
 #  dialog application
+find_package(fmt)
 
-#add_executable(main main.cpp)
-#target_link_libraries(main instr_set IR_compiler)
+add_executable(main main.cpp)
+target_link_libraries(main instr_set IR_compiler fmt::fmt)
 
 

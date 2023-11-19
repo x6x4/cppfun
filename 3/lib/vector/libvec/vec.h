@@ -10,16 +10,24 @@
 #pragma once
 #include <algorithm>
 #include <bits/iterator_concepts.h>
+#include <charconv>
 #include <concepts>
 #include <cstddef>
+#include <cstdlib>
+#include <cstring>
 #include <initializer_list>
 #include <iterator>
 #include <limits>
 #include <memory>
+#include <new>
 #include <optional>
+#include <ostream>
+#include <sstream>
 #include <stdexcept>
+#include <string>
 #include <type_traits>
 #include <iostream>
+#include <fmt/core.h>
 
 //#include "vec_iterator.h"
 
@@ -27,21 +35,19 @@
 namespace my_std 
 {
     template <typename T> 
-    concept is_vec_element = std::is_copy_constructible_v<T> 
-                          && std::is_copy_assignable_v<T>
-                          && std::equality_comparable<T>
-                          && std::destructible<T>;
+    concept is_vec_element = std::destructible<T>;
 
     template <is_vec_element T> 
     struct Vec_base
     {
         typedef T* pointer;
+        typedef __gnu_cxx::__numeric_traits<ptrdiff_t> ptr_limits;
 
         struct Vec_range
         {
-            pointer start;
-            pointer finish;
-            pointer end_of_storage;
+            pointer start = pointer();
+            pointer finish = pointer();
+            pointer end_of_storage = pointer();
 
             constexpr 
             Vec_range() noexcept
@@ -87,21 +93,18 @@ namespace my_std
             deallocate(range.start);
         }
 
-        typedef __gnu_cxx::__numeric_traits<ptrdiff_t> ptr;
-
-    public:
-    
         Vec_range range;
-        size_t max_alloc_size = ptr::__max / sizeof(T);
+        size_t max_alloc_size = ptr_limits::__max / sizeof(T);
+
+    private:
 
         constexpr pointer allocate(size_t n) { 
-            return n != 0 ? new T[n] : pointer();
+            return n != 0 ? static_cast<pointer>(calloc(n, sizeof(T))) : pointer();
         }
 
         constexpr void deallocate(pointer p) {
-            if (p) delete[] p;
+            if (p) free(p);
         }
-
     };
 
     /**
@@ -119,12 +122,12 @@ namespace my_std
     *  provided as with C-style arrays.
     */
     template<typename T>
-        class Vec : protected Vec_base<T> {
+        class Vec : private Vec_base<T> {
 
             static_assert(std::is_same<typename std::remove_cv<T>::type, T>::value,
             "Vec must have a non-const, non-volatile value_type");
 
-            typedef Vec_base<T>			     Base;
+            typedef Vec_base<T> Base; 
             typedef Base::pointer		  pointer;
             typedef const pointer	const_pointer;
 
@@ -132,22 +135,17 @@ namespace my_std
 
         //  CONTAINER
 
-            typedef T				   value_type;
-            typedef T&		            reference;
-            typedef const T&	  const_reference;
-            typedef pointer iterator;
-            typedef const_pointer const_iterator;
-            typedef ptrdiff_t     difference_type;
-            typedef size_t			    size_type;
+            typedef T				           value_type;
+            typedef value_type&		            reference;
+            typedef const value_type&	  const_reference;
+            typedef pointer                      iterator;
+            typedef const_pointer          const_iterator;
+            typedef ptrdiff_t             difference_type;
+            typedef size_t			            size_type;
 
-
-            protected:
-            using Base::allocate;
-            using Base::deallocate;
             using Base::range;
             using Base::max_alloc_size;
-
-            public:
+            using Base::create_storage;
 
             //  CONSTRUCTORS & DESTRUCTOR
 
@@ -166,22 +164,10 @@ namespace my_std
             *
             *  @note @c Non-trivial constructor.
             */
-            Vec(size_type n) : Base(n) { 
-                for (auto &elm : *this) { elm = value_type(); }
+            Vec(size_type _n) : Base(_n) { 
+                fill_init (value_type());
             }   
 
-            /**
-            *  @brief  Builds a %Vec from an initializer list.
-            *  @param  list  An initializer_list.
-            *
-            *  Create a %Vec consisting of copies of the elements in the
-            *  initializer_list @a list.
-            *
-            *  @note @c Non-trivial constructor.
-            */
-            Vec (const std::initializer_list<T> &list) : Base (list.size()) {
-                std::copy(list.begin(), list.end(), begin());
-            }
 
             /**
             *  @brief  %Vec copy constructor.
@@ -205,18 +191,8 @@ namespace my_std
             *  moved instance.
             * @note  Swappable = @c std::is_nothrow_move_constructible_v && std::is_nothrow_move_assignable_v
             */
-            Vec(Vec&&) noexcept = default;
-
-            /**
-            *  The dtor only erases the elements, and note that if the
-            *  elements themselves are pointers, the pointed-to memory is
-            *  not touched in any way.  Managing the pointer is the user's
-            *  responsibility.
-            */
             constexpr 
-            ~Vec() noexcept {
-                std::destroy(range.start, range.finish);
-            }
+            Vec(Vec &&to_move) noexcept = default;
 
             /**
             *  @brief  %Vec copy assignment operator.
@@ -225,7 +201,8 @@ namespace my_std
             *  All the elements of @a copy are copied, but any unused capacity in
             *  @a copy will not be copied.
             */
-            constexpr Vec& operator=(const Vec& to_copy) {
+            constexpr 
+            Vec& operator=(const Vec& to_copy) {
                 Vec tmp (to_copy);
                 range.swap(tmp.range);
                 return *this;
@@ -238,20 +215,21 @@ namespace my_std
             *  The contents of @a move are moved into this %Vec.
             *  @note Swappable = std::is_nothrow_move_constructible_v && @c std::is_nothrow_move_assignable_v
             */
-            constexpr Vec& operator=(Vec&& to_move) noexcept {
+            constexpr 
+            Vec& operator=(Vec &&to_move) noexcept {
                 swap(to_move);
                 return *this;
             }
 
             /**
-            *  @brief  Swaps data with another %Vec.
-            *  @param  _other  A %Vec of the same element type.
-            *
-            *  This exchanges the elements between two vectors in constant time.
-            *  (Three pointers, so it should be quite fast.)
+            *  The dtor only erases the elements, and note that if the
+            *  elements themselves are pointers, the pointed-to memory is
+            *  not touched in any way.  Managing the pointer is the user's
+            *  responsibility.
             */
-            void swap(Vec &_other) {
-                range.swap(_other.range);
+            constexpr 
+            ~Vec() noexcept {
+                std::destroy(range.start, range.finish);
             }
 
             //  ITERATORS
@@ -263,7 +241,7 @@ namespace my_std
             */
             [[nodiscard]] constexpr iterator 
             begin() noexcept
-            { return iterator(range.start); }
+            { return iterator(this->range.start); }
 
             /**
             *  Returns a read-only (constant) iterator that points to the
@@ -310,21 +288,32 @@ namespace my_std
             cend() const noexcept
             { return const_iterator(range.finish); }
 
-
-            //  GENERAL METHODS
+            //  CAPACITY
 
             /**  Returns the number of elements in the %Vec.  */
-            [[nodiscard]] constexpr size_type 
+            [[nodiscard]] constexpr inline size_type 
             size() const noexcept
             { return size_type(range.finish - range.start); }
+
+            /**
+            *  Returns the total number of elements that the %Vec can
+            *  hold before needing to allocate more memory.
+            */
+            [[nodiscard]] constexpr inline size_type 
+            capacity() const noexcept
+            { return size_type(range.end_of_storage - range.start); }
 
             /**
             *  Returns true if the %Vec is empty.  
             *  (Thus begin() would equal end().)
             */
-            [[nodiscard]] constexpr bool
+            [[nodiscard]] constexpr inline bool
             empty() const noexcept
             { return begin() == end(); }
+
+            [[nodiscard]] constexpr inline bool 
+            full() const noexcept 
+            { return size() == capacity(); }
 
             /**  Returns the size() of the largest possible %Vec.  */
             [[nodiscard]] constexpr size_type 
@@ -332,8 +321,299 @@ namespace my_std
                 return max_alloc_size; 
             }
 
-        };
+            //  MODIFIERS
 
+            /**
+            *  @brief  Swaps data with another %Vec.
+            *  @param  _other  A %Vec of the same element type.
+            *
+            *  This exchanges the elements between two vectors in constant time.
+            *  (Three pointers, so it should be quite fast.)
+            */
+            void swap(Vec &_other) {
+                range.swap(_other.range);
+            }
+
+
+        //  SEQUENCE CONTAINER
+
+            //  CONSTRUCTORS
+
+            /**
+            *  @brief  Creates a %Vec with copies of an exemplar element.
+            *  @param  _n  The number of elements to initially create.
+            *  @param  _val  An element to copy.
+            *
+            *  This constructor fills the %Vec with @a _n copies of @a _val.
+            */
+            constexpr
+            Vec (size_type _n, const value_type& _val) : Base(_n) {
+                fill_init (_val);
+            }
+
+            /**
+            *  @brief  Builds a %Vec from a range.
+            *  @param  _first  An input iterator.
+            *  @param  _last  An input iterator.
+            *
+            *  Create a %Vec consisting of copies of the elements from
+            *  [first,last).
+            */
+            template<std::input_iterator _It>
+            constexpr   
+            Vec(_It _first, _It _last)
+            requires std::constructible_from<T, std::iter_reference_t<_It>> :
+            Base (std::distance(_first, _last)) {
+
+                for (auto off = 0; off < std::distance(begin(), end()); off++) 
+                    *(begin()+off) = *(_first+off);
+            }
+
+            /**
+            *  @brief  Builds a %Vec from an initializer list.
+            *  @param  _l  An initializer_list.
+            *
+            *  Create a %Vec consisting of copies of the elements in the
+            *  initializer_list @a _l.
+            *
+            *  @note @c Non-trivial constructor.
+            */
+            Vec (const std::initializer_list<value_type> &_l) : Base (_l.size()) {
+                std::copy(_l.begin(), _l.end(), begin());
+            }
+
+            /*  absent because of (from stl_vector.h):
+            *  Note that this kind of operation could be expensive for a %Vec
+            *  and if it is frequently used the user should consider using
+            *  std::list.
+
+            //  a.emplace(p, args) 
+            *  This function will insert an object of type T constructed
+            *  with T(std::forward<Args>(args)...) before the specified location.
+
+            //  a.insert(p, t)
+            *  This function will insert a copy of the given value before
+            *  the specified location. 
+
+            //  a.insert(p, rv)
+            *  This function will insert a copy of the given rvalue before
+            *  the specified location. 
+            
+            //  a.insert(p, n, t)
+            *  This function will insert a specified number of copies of
+            *  the given data before the location specified by @a position.
+
+            //  a.insert(p, i, j)
+            *  This function will insert copies of the data in the range
+            *  [__first,__last) into the %Vec before the location specified
+            *  by @a pos.
+
+            //  a.insert(p, il)
+            *  This function will insert copies of the data in the
+            *  initializer_list @a l into the %Vec before the location
+            *  specified by @a position.
+
+            //  a.erase(q)
+            *  This function will erase the element at the given position and thus
+            *  shorten the %Vec by one.
+
+            //  a.erase(q1, q2)
+            *  This function will erase the elements in the range
+            *  [__first,__last) and shorten the %Vec accordingly.
+            */
+
+            //  MODIFIERS
+
+            /**
+            *  Erases all the elements.  Note that this function only erases the
+            *  elements, and that if the elements themselves are pointers, the
+            *  pointed-to memory is not touched in any way.  Managing the pointer is
+            *  the user's responsibility.
+            */
+            constexpr void 
+            clear () noexcept 
+            { _assign(Vec()); }
+
+            /**
+            *  @brief  Assigns a range to a %Vec.
+            *  @param  _first  An input iterator.
+            *  @param  _last   An input iterator.
+            *
+            *  This function fills a %Vec with copies of the elements in the
+            *  range [_first,_last).
+            *
+            *  Note that the assignment completely changes the %Vec and
+            *  that the resulting %Vec's size is the same as the number
+            *  of elements assigned.
+            */
+            template<std::input_iterator _It>
+            constexpr void
+            assign(_It _first, _It _last)
+            { _assign(Vec(_first, _last)); }
+
+            /**
+            *  @brief  Assigns an initializer list to a %Vec.
+            *  @param  _l  An initializer_list.
+            *
+            *  This function fills a %Vec with copies of the elements in the
+            *  initializer list @a _l.
+            *
+            *  Note that the assignment completely changes the %Vec and
+            *  that the resulting %Vec's size is the same as the number
+            *  of elements assigned.
+            */
+            constexpr void
+            assign(const std::initializer_list<value_type> &_l)
+            { _assign(_l); }
+
+            /**
+            *  @brief  Assigns a given value to a %Vec.
+            *  @param  _n  Number of elements to be assigned.
+            *  @param  _val  Value to be assigned.
+            *
+            *  This function fills a %Vec with @a _n copies of the given
+            *  value.  Note that the assignment completely changes the
+            *  %Vec and that the resulting %Vec's size is the same as
+            *  the number of elements assigned.
+            */
+            constexpr void
+            assign(size_type _n, const value_type& _val)
+            { _assign(Vec(_n, _val)); }
+
+            //  OPTIONAL
+
+            //  element access
+
+            /**
+            *  @brief  Subscript access to the data contained in the %Vec.
+            *  @param _n The index of the element for which data should be
+            *  accessed.
+            *  @return  Read/write reference to data.
+            *
+            *  This operator allows for easy, array-style, data access.
+            *  Note that data access with this operator is unchecked and
+            *  out_of_range lookups are not defined. (For checked lookups
+            *  see at().)
+            */
+            [[nodiscard]] constexpr reference
+            operator[](size_type _n) noexcept
+            { return *(range.start + _n); }
+
+            /**
+            *  @brief  Subscript access to the data contained in the %Vec.
+            *  @param _n The index of the element for which data should be
+            *  accessed.
+            *  @return  Read-only (constant) reference to data.
+            *
+            *  This operator allows for easy, array-style, data access.
+            *  Note that data access with this operator is unchecked and
+            *  out_of_range lookups are not defined. (For checked lookups
+            *  see at().)
+            */
+            [[nodiscard]] constexpr const_reference
+            operator[](size_type _n) const noexcept
+            { return *(range.start + _n); }
+
+            /**
+            *  @brief  Provides access to the data contained in the %Vec.
+            *  @param _n The index of the element for which data should be
+            *  accessed.
+            *  @return  Read/write reference to data.
+            *  @throw  std::out_of_range  If @a _n is an invalid index.
+            *
+            *  This function provides for safer data access.  The parameter
+            *  is first checked that it is in the range of the vector.  The
+            *  function throws out_of_range if the check fails.
+            */
+            [[nodiscard]] constexpr reference
+            at(size_type _n) {
+                range_check(_n);
+                return (*this)[_n];
+            }
+
+            /**
+            *  @brief  Provides access to the data contained in the %Vec.
+            *  @param _n The index of the element for which data should be
+            *  accessed.
+            *  @return  Read-only (constant) reference to data.
+            *  @throw  std::out_of_range  If @a _n is an invalid index.
+            *
+            *  This function provides for safer data access.  The parameter
+            *  is first checked that it is in the range of the vector.  The
+            *  function throws out_of_range if the check fails.
+            */
+            [[nodiscard]] constexpr const_reference
+            at(size_type _n) const {
+                range_check(_n);
+                return (*this)[_n];
+            }
+
+            //  modifiers
+
+            /**
+            *  @brief  Add data to the end of the %Vec.
+            *  @param  _val  Data to be added.
+            *
+            *  This is a typical stack operation.  The function creates an
+            *  element at the end of the %Vec and assigns the given data
+            *  to it.  Due to the nature of a %Vec this operation can be
+            *  done in constant time if the %Vec has preallocated space
+            *  available.
+            */
+            constexpr void
+            push_back(const value_type &_val) {
+                if (full()) _expand();
+                *(range.finish) = _val;
+                range.finish++;
+            }
+
+            constexpr void
+            push_back(value_type&& _val) {
+                if (full()) _expand();
+                *(range.finish++) = std::move(_val);
+            }
+
+            private:
+
+            // Called by the constructors from n.
+            void fill_init (const value_type &val) {
+                for (auto &elm : *this) { elm = val; }
+            }
+            //  Called by functions assigning to existing vector
+            void _assign (Vec to_assign) {
+                swap (to_assign);
+            }
+
+            /// Safety check used only from at().
+            constexpr void
+            range_check(size_type _n) const {
+                if (_n >= size()) {
+                    std::string str = 
+                    fmt::format("Vec::range_check: _n (which is {}) " 
+                    ">= size() (which is {})", _n, size());
+
+                    throw std::logic_error(str);
+                }  
+            };
+
+            void _expand () {
+                size() ? _resize() : create_storage(1);
+            }
+
+            void _resize () {
+                size_type new_sz = 2*size();
+                size_type old_sz = size();
+
+                range.start = static_cast<pointer>(reallocarray(range.start, new_sz, sizeof(value_type)));
+                range.finish = range.start + old_sz;
+                range.end_of_storage = range.start + new_sz;
+            }
+
+        };  //  Vec
+
+        //  NON-MEMBER FUNCTIONS
+
+        template<typename T>
         /**
         *  @brief  Vector equality comparison.
         *  @param  vec1  A %Vec.
@@ -344,9 +624,9 @@ namespace my_std
         *  vectors.  Vectors are considered equivalent if their sizes are equal,
         *  and if corresponding elements compare equal.
         */
-        template<typename T>
         constexpr inline bool
-        operator==(const Vec<T> &vec1, const Vec<T> &vec2) { 
+        operator==(const Vec<T> &vec1, const Vec<T> &vec2) 
+        requires std::equality_comparable<T> { 
             return (vec1.size() == vec2.size()
             && std::equal(vec1.begin(), vec1.end(), vec2.begin()));
         };
@@ -358,4 +638,4 @@ namespace my_std
             vec1.swap(vec2);
         }
 
-}; // namespace my_std
+};  // namespace my_std

@@ -21,7 +21,7 @@ friend GPRegister;
 friend CPU;
 
     std::size_t num_reg = 0;
-    std::vector<int> regs = std::vector<int>(num_reg);
+    my_std::Vec<int> regs = my_std::Vec<int>(num_reg);
 
     void load_reg (std::size_t num, int val);
     int operator[] (std::size_t num) const;
@@ -217,4 +217,4 @@ public:
  * @param bps The vector of breakpoints.
  * @param dbg_func The callback function for debugging.
  */
-void exec(CPU &cpu, std::vector<std::size_t>& bps, std::function<void()> dbg_func);
+void exec(CPU &cpu, my_std::Vec<std::size_t>& bps, std::function<void()> dbg_func);

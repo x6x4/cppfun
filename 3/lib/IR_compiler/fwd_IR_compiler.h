@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <memory>
 #include <sstream>
-#include "../internals/operands/operands.h"
+#include "../internals/cpu/cpu.h"
 #include <stdexcept>
 #include <utility>
 #include <vector>
@@ -28,6 +28,6 @@ const ID& FindLabel (const std::unordered_set<ID> &label_table, const ID &id);
 std::logic_error CE (const char *section, const char *error, std::size_t line_num);
 
 Mem file_to_mcode (const InstrSet &iset, strings program);
-strings load_file_cpu (CPU &cpu, const char *filename);
-strings load_text_cpu (CPU &cpu, const char *program_text);
+strings load_file_cpu (CPU &cpu, const std::string &filename);
+strings load_text_cpu (CPU &cpu, const std::string &program_text);
 

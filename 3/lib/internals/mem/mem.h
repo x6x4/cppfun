@@ -17,7 +17,7 @@ friend SPRegister;
 friend CPU;
 
     Text text;
-    std::vector<std::size_t> sp_regs = std::vector<std::size_t>(2);
+    my_std::Vec<std::size_t> sp_regs = my_std::Vec<std::size_t>(2);
     std::size_t pc_num = 0, zf_num = 1;
 
     void load (const SafeText &mtext);

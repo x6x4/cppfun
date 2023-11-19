@@ -2,9 +2,11 @@
 #include "fwd_IR_compiler.h"
 #include <cstddef>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <utility>
 #include <vector>
+#include "../../lib/internals/operands/operands.h"
 
 
 // MAIN
@@ -15,34 +17,30 @@ strings to_strings (std::istream &is) {
     std::string line;
     std::size_t user_line_num = 0;
         
-    while (std::getline(is, line)) 
-        vec.push_back(NumberedLine(user_line_num++, line));
+    while (std::getline(is, line)) {
+        auto buf = NumberedLine(user_line_num++, line);
+        vec.push_back(buf);
+    }        
 
     return vec;
 }
 
-strings load_text_cpu (CPU &cpu, const char *program_text) {
+strings load_text_cpu (CPU &cpu, const std::string &program_text) {
     std::istringstream iss(program_text);
     strings program = to_strings(iss);
     cpu.load_mem(file_to_mcode(cpu.iSet(), program));
     return program;
 }
 
-strings load_file_cpu (CPU &cpu, const char *filename) {
+strings load_file_cpu (CPU &cpu, const std::string &filename) {
     
     strings program;
     
-    try {
-        std::ifstream iss(filename);
-        program = to_strings(iss);
-        cpu.load_mem(file_to_mcode(cpu.iSet(), program));
-    }
-    catch (std::runtime_error &e) {
-        throw std::logic_error ("Wrong file");
-    }
-    catch (std::logic_error &e) {
-        throw e;
-    }
+    std::ifstream iss(filename);
+    if (iss.fail()) throw std::logic_error ("Wrong file");
+    
+    program = to_strings(iss);
+    cpu.load_mem(file_to_mcode(cpu.iSet(), program));
 
     return program;
 }
@@ -144,7 +142,7 @@ std::unique_ptr<SafeText> parse_text(const InstrSet &iset, strings &vec, const s
 
 int parse_dr(NumberedLine data_str, std::unordered_set<ID> &data_label_table) {
     std::istringstream tok_stream(data_str.line);
-    std::vector<std::string> tokens;
+    my_std::Vec<std::string> tokens;
     std::string cur_token;
 
     ///  TOKENIZATION  ///
@@ -173,7 +171,7 @@ std::unique_ptr<Command> parse_cmd(const InstrSet &iset, NumberedLine cmd_str,
 const std::unordered_set<ID> &data_label_table, std::unordered_set<ID> &code_label_table) {
 
     std::istringstream tok_stream(cmd_str.line);
-    std::vector<std::string> tokens;
+    my_std::Vec<std::string> tokens;
     std::string cur_token;
 
     ID label = "";
@@ -250,12 +248,12 @@ const std::unordered_set<ID> &data_label_table, std::unordered_set<ID> &code_lab
 
     //  parse 2nd opd
 
+
     std::unique_ptr<Operand> opd2;
 
     if (tokens[cur_tok_num][0] == '%')  {  //  register
         std::string reg_num (tokens[cur_tok_num].substr(2));
         opd2 = std::make_unique<GPRegister>(std::stoi(reg_num));
-
     } else if (tokens[cur_tok_num][0] == '$')  {  //  data label
         ID data_label = FindLabel(data_label_table, tokens[cur_tok_num].substr(1).c_str());
         opd2 = std::make_unique<DataCell>(DataCell(data_label.get_addr()));

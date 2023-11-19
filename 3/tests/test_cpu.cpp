@@ -34,7 +34,7 @@ TEST_CASE("SIMPLE CASES") {
     "label: inc %r7";
 
     load_text_cpu(cpu, prog1);
-    std::vector <std::size_t> bps = {};    
+    my_std::Vec <std::size_t> bps = {};    
     exec(cpu, bps, f);
 
     REQUIRE(out.str() == "r0(0) r1(0) r2(0) r3(0) r4(0) r5(0) r6(0) r7(1) \n0 0 0 0 0 0 0 0 \npc(1) zf(0) \n");

@@ -7,7 +7,7 @@
 #include <stdexcept>
 #include <string>
 #include <functional>
-
+#include "fmt/core.h"
 
 //  rb
 
@@ -17,9 +17,18 @@ int RegBlock::operator[] (std::size_t num) const {
 
 void RegBlock::load_reg (std::size_t num, int val) { regs[num] = val; };
 
+#define YELLOW  "\033[33m"      /* Yellow */
+#define RESET   "\033[0m"
+
 void RegBlock::print (std::ostream &os) const { 
     for (std::size_t i = 0; i < regs.size(); i++) 
-        os << 'r' << i << '(' << regs[i] << ')' << ' '; 
+        os << fmt::format("r{} ", i);
+    os << '\n';
+
+    for (std::size_t i = 0; i < regs.size(); i++) {
+        if (regs[i]) os << fmt::format(YELLOW" {} " RESET, regs[i]);
+        else os << fmt::format(" {} ", regs[i]);
+    }
     os << '\n';
 }
 
@@ -30,7 +39,7 @@ std::ostream &operator<<(std::ostream &os, RegBlock &rb) {
 
 //  Exec CPU  //
 
-void exec (CPU &cpu, std::vector <std::size_t> &bps, std::function<void()> dbg_func) {
+void exec (CPU &cpu, my_std::Vec <std::size_t> &bps, std::function<void()> dbg_func) {
 
     std::size_t bp_num = bps.size() ? bps[0] : SIZE_MAX;
     std::size_t count = 0;

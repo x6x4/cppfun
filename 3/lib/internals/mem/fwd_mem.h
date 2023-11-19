@@ -9,19 +9,19 @@ class Memory;
 #include <ostream>
 #include <stdexcept>
 #include <utility>
-#include <vector>
+#include "../../vector/libvec/vec.h"
 
-using SafeText = std::vector<std::unique_ptr<Command>>;
-using Data = std::vector<int>;
+using SafeText = my_std::Vec<std::unique_ptr<Command>>;
+using Data = my_std::Vec<int>;
 
-using Text = std::vector<Command*>;
+using Text = my_std::Vec<Command*>;
 
 struct NumberedLine {
     std::size_t num = 0;
     std::string line = "nop";
 
     NumberedLine() {};
-    NumberedLine (std::size_t _num, std::string _line) : num (_num), line (_line) {};
+    NumberedLine (std::size_t _num, std::string _line) : num (_num), line (_line) {}; 
 };
 
-using strings = std::vector<NumberedLine>;
+using strings = my_std::Vec<NumberedLine>;

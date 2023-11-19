@@ -37,7 +37,7 @@ public:
     *
     * @param other The other ID object.
     */
-    //constexpr ID(const ID& other) = default;
+    constexpr ID(const ID& other) = default;
  
     /**
     * @brief Trivial accessor for ID.
