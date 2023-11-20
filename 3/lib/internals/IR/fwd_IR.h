@@ -6,7 +6,6 @@
 #include <memory>
 #include <stdexcept>
 #include <unordered_set>
-#include <vector>
 
 
 class CPU_Cache;

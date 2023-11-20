@@ -24,4 +24,6 @@ struct NumberedLine {
     NumberedLine (std::size_t _num, std::string _line) : num (_num), line (_line) {}; 
 };
 
+std::ostream &operator<<(std::ostream &os, NumberedLine &nl);
+
 using strings = my_std::Vec<NumberedLine>;

@@ -6,7 +6,6 @@
 #include <memory>
 #include <stdexcept>
 #include <utility>
-#include <vector>
 #include <fstream>
 #include <iostream>
 
@@ -23,5 +22,4 @@ enum class State {
 };
 
 using ExecUnits = my_std::Vec<std::pair<State,ExecUnit>>;
-
 using Mem = std::pair<std::unique_ptr<Data>, std::unique_ptr<SafeText>>;

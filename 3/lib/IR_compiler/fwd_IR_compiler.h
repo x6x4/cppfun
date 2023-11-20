@@ -7,7 +7,6 @@
 #include "../internals/cpu/cpu.h"
 #include <stdexcept>
 #include <utility>
-#include <vector>
 
 
 //  PARSING

@@ -8,28 +8,13 @@
  */
 
 #pragma once
-#include <algorithm>
-#include <bits/iterator_concepts.h>
-#include <charconv>
-#include <concepts>
-#include <cstddef>
+#include "fwd_vec.h"
 #include <cstdlib>
-#include <cstring>
-#include <initializer_list>
 #include <iterator>
-#include <limits>
 #include <memory>
 #include <new>
-#include <optional>
-#include <ostream>
-#include <sstream>
 #include <stdexcept>
-#include <string>
 #include <type_traits>
-#include <iostream>
-#include <fmt/core.h>
-
-//#include "vec_iterator.h"
 
 
 namespace my_std 
@@ -42,6 +27,7 @@ namespace my_std
     {
         typedef T* pointer;
         typedef __gnu_cxx::__numeric_traits<ptrdiff_t> ptr_limits;
+        size_t max_alloc_size = ptr_limits::__max / sizeof(T);
 
         struct Vec_range
         {
@@ -50,8 +36,7 @@ namespace my_std
             pointer end_of_storage = pointer();
 
             constexpr 
-            Vec_range() noexcept
-            : start(), finish(), end_of_storage() { }
+            Vec_range() noexcept = default;
 
             constexpr 
             Vec_range(Vec_range &&_other) noexcept
@@ -60,17 +45,29 @@ namespace my_std
             { _other.start = _other.finish = _other.end_of_storage = pointer(); }
 
             constexpr 
-            Vec_range(const Vec_range &_other) noexcept = default;
-
-            constexpr 
             Vec_range &operator=(const Vec_range &_other) noexcept = default;
 
-            void swap (Vec_range &_other) {
-                std::swap (start, _other.start);
-                std::swap (finish, _other.finish);
-                std::swap (end_of_storage, _other.end_of_storage);
-            }
-        };
+            void swap (Vec_range &_other) 
+            { std::swap(*this, _other); }
+        } range;
+
+        constexpr Vec_base() noexcept (std::is_nothrow_default_constructible<T>()) { }
+        constexpr Vec_base(Vec_base&& _rv) noexcept = default;
+
+        Vec_base(size_t _n) : range() { 
+            create_storage(_n);
+            init_storage(_n); 
+        } 
+
+        Vec_base(size_t _n, const T& _val) : range() { 
+            create_storage(_n);
+            range.finish = std::uninitialized_fill_n(range.start, _n, _val);
+        } 
+
+        constexpr ~Vec_base() noexcept 
+        { deallocate(range.start); }
+
+    private:
 
         constexpr void create_storage(size_t n) {
             if (n > max_alloc_size)
@@ -81,30 +78,28 @@ namespace my_std
             range.end_of_storage = range.start + n;
         }
 
-        constexpr Vec_base() noexcept (std::is_nothrow_default_constructible<T>()) { }
-        constexpr Vec_base(Vec_base&& _rv) noexcept : range(std::move(_rv.range)) {};
-    
-        Vec_base(size_t n) : range() { 
-            create_storage(n); 
-            range.finish = range.end_of_storage;
+        void init_storage (size_t _n) 
+        requires std::is_default_constructible_v<T>{
+            range.finish = 
+            std::uninitialized_value_construct_n(range.start, _n);
         }
 
-        constexpr ~Vec_base() noexcept {
-            deallocate(range.start);
+        void init_storage (size_t _n) { range.finish = range.end_of_storage; }
+
+
+        constexpr pointer allocate(size_t n)
+        requires std::is_default_constructible_v<T> {
+            return n != 0 ? 
+            static_cast<pointer>(new T[n]) : pointer();
         }
 
-        Vec_range range;
-        size_t max_alloc_size = ptr_limits::__max / sizeof(T);
-
-    private:
-
-        constexpr pointer allocate(size_t n) { 
-            return n != 0 ? static_cast<pointer>(calloc(n, sizeof(T))) : pointer();
+        constexpr pointer allocate(size_t n) {
+            return n != 0 ? 
+            reinterpret_cast<pointer>(new char[n*sizeof(T)]) : pointer();
         }
 
-        constexpr void deallocate(pointer p) {
-            if (p) free(p);
-        }
+        constexpr void deallocate(pointer p) 
+        { if (p) delete[] p; }
     };
 
     /**
@@ -145,7 +140,9 @@ namespace my_std
 
             using Base::range;
             using Base::max_alloc_size;
-            using Base::create_storage;
+
+
+        public:
 
             //  CONSTRUCTORS & DESTRUCTOR
 
@@ -164,10 +161,44 @@ namespace my_std
             *
             *  @note @c Non-trivial constructor.
             */
-            Vec(size_type _n) : Base(_n) { 
-                fill_init (value_type());
-            }   
+            Vec(size_type _n) : Base(_n) {}  
 
+            /**
+            *  @brief  Creates a %Vec with copies of an exemplar element.
+            *  @param  _n  The number of elements to initially create.
+            *  @param  _val  An element to copy.
+            *
+            *  This constructor fills the %Vec with @a _n copies of @a _val.
+            */
+            constexpr
+            Vec (size_type _n, const value_type& _val) : Base(_n, _val) {} 
+
+            /**
+            *  @brief  Builds a %Vec from an initializer list.
+            *  @param  _l  An initializer_list.
+            *
+            *  Create a %Vec consisting of copies of the elements in the
+            *  initializer_list @a _l.
+            *
+            *  @note @c Non-trivial constructor.
+            */
+            Vec (const std::initializer_list<value_type> &_l) : Base (_l.size()) 
+            { std::copy(_l.begin(), _l.end(), begin()); }
+
+            /**
+            *  @brief  Builds a %Vec from a range.
+            *  @param  _first  An input iterator.
+            *  @param  _last  An input iterator.
+            *
+            *  Create a %Vec consisting of copies of the elements from
+            *  [first,last).
+            */
+            template<std::input_iterator _It>
+            constexpr   
+            Vec(_It _first, _It _last)
+            requires std::constructible_from<T, std::iter_reference_t<_It>> :
+            Base (std::distance(_first, _last))
+            { std::copy(_first, _last, begin()); }
 
             /**
             *  @brief  %Vec copy constructor.
@@ -181,7 +212,7 @@ namespace my_std
             */
             constexpr 
             Vec(const Vec &to_copy) : Base (to_copy.size()) { 
-                std::copy(to_copy.begin(), to_copy.end(), begin()); 
+                *this = Vec(to_copy.begin(), to_copy.end());
             }
 
             /**
@@ -204,7 +235,7 @@ namespace my_std
             constexpr 
             Vec& operator=(const Vec& to_copy) {
                 Vec tmp (to_copy);
-                range.swap(tmp.range);
+                swap(tmp);
                 return *this;
             }
             
@@ -228,9 +259,7 @@ namespace my_std
             *  responsibility.
             */
             constexpr 
-            ~Vec() noexcept {
-                std::destroy(range.start, range.finish);
-            }
+            ~Vec() noexcept = default;
 
             //  ITERATORS
 
@@ -332,55 +361,11 @@ namespace my_std
             */
             void swap(Vec &_other) {
                 range.swap(_other.range);
+                std::swap(max_alloc_size, _other.max_alloc_size);
             }
 
 
         //  SEQUENCE CONTAINER
-
-            //  CONSTRUCTORS
-
-            /**
-            *  @brief  Creates a %Vec with copies of an exemplar element.
-            *  @param  _n  The number of elements to initially create.
-            *  @param  _val  An element to copy.
-            *
-            *  This constructor fills the %Vec with @a _n copies of @a _val.
-            */
-            constexpr
-            Vec (size_type _n, const value_type& _val) : Base(_n) {
-                fill_init (_val);
-            }
-
-            /**
-            *  @brief  Builds a %Vec from a range.
-            *  @param  _first  An input iterator.
-            *  @param  _last  An input iterator.
-            *
-            *  Create a %Vec consisting of copies of the elements from
-            *  [first,last).
-            */
-            template<std::input_iterator _It>
-            constexpr   
-            Vec(_It _first, _It _last)
-            requires std::constructible_from<T, std::iter_reference_t<_It>> :
-            Base (std::distance(_first, _last)) {
-
-                for (auto off = 0; off < std::distance(begin(), end()); off++) 
-                    *(begin()+off) = *(_first+off);
-            }
-
-            /**
-            *  @brief  Builds a %Vec from an initializer list.
-            *  @param  _l  An initializer_list.
-            *
-            *  Create a %Vec consisting of copies of the elements in the
-            *  initializer_list @a _l.
-            *
-            *  @note @c Non-trivial constructor.
-            */
-            Vec (const std::initializer_list<value_type> &_l) : Base (_l.size()) {
-                std::copy(_l.begin(), _l.end(), begin());
-            }
 
             /*  absent because of (from stl_vector.h):
             *  Note that this kind of operation could be expensive for a %Vec
@@ -480,6 +465,16 @@ namespace my_std
             assign(size_type _n, const value_type& _val)
             { _assign(Vec(_n, _val)); }
 
+        private:
+
+            //  Called by functions assigning to existing vector
+            void 
+            _assign (Vec to_assign) 
+            { swap (to_assign); }
+
+
+        public:
+
             //  OPTIONAL
 
             //  element access
@@ -548,6 +543,22 @@ namespace my_std
                 return (*this)[_n];
             }
 
+        private:
+
+            /// Safety check used only from at().
+            constexpr void
+            range_check(size_type _n) const {
+                if (_n >= size()) {
+                    std::string str = 
+                    fmt::format("Vec::range_check: _n (which is {}) " 
+                    ">= size() (which is {})", _n, size());
+
+                    throw std::logic_error(str);
+                }  
+            };
+
+        public:
+
             //  modifiers
 
             /**
@@ -562,51 +573,28 @@ namespace my_std
             */
             constexpr void
             push_back(const value_type &_val) {
-                if (full()) _expand();
-                *(range.finish) = _val;
-                range.finish++;
+                if (full()) _resize();
+                *(range.finish++) = _val;
             }
 
             constexpr void
             push_back(value_type&& _val) {
-                if (full()) _expand();
+                if (full()) _resize();
                 *(range.finish++) = std::move(_val);
             }
 
             private:
 
-            // Called by the constructors from n.
-            void fill_init (const value_type &val) {
-                for (auto &elm : *this) { elm = val; }
-            }
-            //  Called by functions assigning to existing vector
-            void _assign (Vec to_assign) {
-                swap (to_assign);
-            }
-
-            /// Safety check used only from at().
-            constexpr void
-            range_check(size_type _n) const {
-                if (_n >= size()) {
-                    std::string str = 
-                    fmt::format("Vec::range_check: _n (which is {}) " 
-                    ">= size() (which is {})", _n, size());
-
-                    throw std::logic_error(str);
-                }  
-            };
-
-            void _expand () {
-                size() ? _resize() : create_storage(1);
-            }
-
             void _resize () {
-                size_type new_sz = 2*size();
-                size_type old_sz = size();
 
-                range.start = static_cast<pointer>(reallocarray(range.start, new_sz, sizeof(value_type)));
-                range.finish = range.start + old_sz;
-                range.end_of_storage = range.start + new_sz;
+                size_type old_sz = size();
+                size_type new_sz = old_sz ? 2*old_sz : 1;
+
+                Vec buf (new_sz);
+                std::move(begin(), end(), buf.begin());
+
+                buf.range.finish = buf.range.start + old_sz;
+                swap(buf);
             }
 
         };  //  Vec

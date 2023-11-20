@@ -1,26 +1,25 @@
 
 #include "fwd_IR_compiler.h"
 #include <cstddef>
+#include <cstdlib>
+#include <fmt/core.h>
 #include <sstream>
 #include <stdexcept>
 #include <string>
 #include <utility>
-#include <vector>
 #include "../../lib/internals/operands/operands.h"
 
 
 // MAIN
 
 strings to_strings (std::istream &is) {
-
     strings vec;
+        
     std::string line;
     std::size_t user_line_num = 0;
         
-    while (std::getline(is, line)) {
-        auto buf = NumberedLine(user_line_num++, line);
-        vec.push_back(buf);
-    }        
+    while (std::getline(is, line)) 
+        vec.push_back(NumberedLine(user_line_num++, line));
 
     return vec;
 }
@@ -28,20 +27,18 @@ strings to_strings (std::istream &is) {
 strings load_text_cpu (CPU &cpu, const std::string &program_text) {
     std::istringstream iss(program_text);
     strings program = to_strings(iss);
+
     cpu.load_mem(file_to_mcode(cpu.iSet(), program));
     return program;
 }
 
 strings load_file_cpu (CPU &cpu, const std::string &filename) {
     
-    strings program;
-    
     std::ifstream iss(filename);
     if (iss.fail()) throw std::logic_error ("Wrong file");
-    
-    program = to_strings(iss);
-    cpu.load_mem(file_to_mcode(cpu.iSet(), program));
+    strings program = to_strings(iss);
 
+    cpu.load_mem(file_to_mcode(cpu.iSet(), program));
     return program;
 }
 

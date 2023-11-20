@@ -8,6 +8,7 @@
 #include <stdexcept>
 #include <sstream>
 #include <string>
+#include <type_traits>
 
 class CLI_DBG {
 
@@ -42,9 +43,9 @@ int main (int, char **argv) {
         exec(cpu, bps, f);
         std::cout << std::endl;
 
-        load_file_cpu(cpu, argv[1]);
+        /*load_file_cpu(cpu, argv[1]);
         exec(cpu, bps, f);
-        std::cout << std::endl;
+        std::cout << std::endl;*/
     }
 
     catch (std::logic_error &e) {

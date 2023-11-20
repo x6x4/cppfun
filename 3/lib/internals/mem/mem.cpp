@@ -61,3 +61,8 @@ std::ostream &operator<<(std::ostream &os, DataMemory &dm) {
     os << '\n';
     return os;
 }
+
+std::ostream &operator<<(std::ostream &os, NumberedLine &nl) {
+    os << nl.num << " " << nl.line;
+    return os;
+}
