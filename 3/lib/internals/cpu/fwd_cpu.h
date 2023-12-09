@@ -12,7 +12,7 @@
 class CPU;
 class ExecUnit;
 class GPRegister;
-class SPRegister;
+class PCRegister;
 
 using exectime_t = std::size_t; 
 

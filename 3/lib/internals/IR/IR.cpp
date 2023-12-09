@@ -45,8 +45,8 @@ std::ostream &operator<<(std::ostream &os, const Operand &opd) {
 //  CACHE  //
 
 CPU_Cache::CPU_Cache (const CPU_Cache &c) {
-    opd1 = c.opd1->clone();
-    opd2 = c.opd1->clone();
+    if (opd1) opd1 = c.opd1->clone();
+    if (opd2) opd2 = c.opd1->clone();
 };
 
 void CPU_Cache::load_opd1 (Operand &_opd1) {

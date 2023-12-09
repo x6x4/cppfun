@@ -1,5 +1,6 @@
 
 #include "cpu.h"
+#include <cstddef>
 #include <cstdint>
 #include <functional>
 #include <iostream>
@@ -26,8 +27,9 @@ void RegBlock::print (std::ostream &os) const {
     os << '\n';
 
     for (std::size_t i = 0; i < regs.size(); i++) {
-        if (regs[i]) os << fmt::format(YELLOW" {} " RESET, regs[i]);
-        else os << fmt::format(" {} ", regs[i]);
+        //if (regs[i]) os << fmt::format(YELLOW" {} " RESET, regs[i]);
+        //else 
+        os << fmt::format(" {} ", regs[i]);
     }
     os << '\n';
 }
@@ -39,24 +41,29 @@ std::ostream &operator<<(std::ostream &os, RegBlock &rb) {
 
 //  Exec CPU  //
 
-void exec (CPU &cpu, my_std::Vec <std::size_t> &bps, std::function<void()> dbg_func) {
 
-    std::size_t bp_num = bps.size() ? bps[0] : SIZE_MAX;
+
+void exec (CPU &cpu, my_std::Vec <bpNum> &bps, std::function<void(bpNum)> dbg_func) {
+
+    auto bp_num = bps.size() ? bps[0] : bpNum();
     std::size_t count = 0;
 
     while (!cpu.is_over()) {
-        std::size_t pc = cpu.get_pc();
         
-        //  dbg
-        if (pc == bp_num) {
-            bp_num = (count == bps.size() - 1) ? SIZE_MAX : bps[++count];
-            dbg_func();
+        if (bp_num.progNum != NO_BPS) {
+            std::size_t pc = cpu.get_pc();
+            
+            //  dbg
+            if (pc == bp_num.textNum) {
+                dbg_func(bp_num);
+                bp_num = (count == bps.size() - 1) ? bpNum() : bps[++count];
+            }
         }
 
-        cpu.exec();
+        cpu.exec_once();
     }
 
-    dbg_func();
+    dbg_func(bp_num);
     cpu.clear();
 }
 
@@ -68,7 +75,7 @@ void CPU::clear() {
 
 //  CPU  //
 
-void CPU::exec () {
+void CPU::exec_once () {
     const Command &cur_cmd = fetch();
     assign(cur_cmd);
 }

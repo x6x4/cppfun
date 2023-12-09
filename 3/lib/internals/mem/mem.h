@@ -13,7 +13,7 @@
  */
 class ProgramMemory {
 
-friend SPRegister;
+friend PCRegister;
 friend CPU;
 
     Text text;
@@ -109,7 +109,7 @@ public:
  */
 class Memory {
 friend CPU;
-friend SPRegister;
+friend PCRegister;
 friend DataCell;
 
     ProgramMemory pm;

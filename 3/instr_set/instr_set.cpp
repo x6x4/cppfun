@@ -16,8 +16,8 @@ void Oper_Increment (Operand &opd1) {
 };
 
 void Oper_Jump (Operand &opd1) {
-    if (typeid(opd1) == typeid(SPRegister))
-        static_cast<SPRegister&>(opd1).set_num(0);
+    if (typeid(opd1) == typeid(PCRegister))
+        static_cast<PCRegister&>(opd1).set_num(0);
     else 
         throw std::logic_error ("Runtime error: jmp instruction requires code label operand");
 }

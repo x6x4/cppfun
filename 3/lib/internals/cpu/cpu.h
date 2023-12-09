@@ -6,6 +6,7 @@
 #include "fwd_cpu.h"
 #include <cmath>
 #include <cstddef>
+#include <cstdint>
 #include <functional>
 
 /**
@@ -81,16 +82,17 @@ friend CPU;
  *  and then assigns it to free execution unit.
  */
 class CPU {
-friend SPRegister;
+friend PCRegister;
 friend GPRegister;
 friend DataCell;
 friend ExecUnit;
 
     std::size_t bitness = 3;
+    std::size_t mem_cap = std::pow(2, bitness);
 
     ExecUnits EUs = {std::make_pair(State::FREE, ExecUnit(this))};
     RegBlock gp_rb = RegBlock(8);
-    Memory mem = Memory(std::pow(2, bitness));
+    Memory mem = Memory(mem_cap);
     Data cache_data;
     CPU_Cache cache = CPU_Cache(this);
 
@@ -102,8 +104,8 @@ friend ExecUnit;
 
 public:
 
-    CPU (const CPU &cpu) = default;
-    CPU (CPU &cpu) = default;
+    CPU (const CPU &cpu) = delete;
+    CPU (CPU &cpu) = delete;
 
     /**
     * @brief Constructor for the CPU class.
@@ -141,11 +143,18 @@ public:
     std::size_t data_sz () const { return mem.dm.size(); }
 
     /**
+    * @brief Trivial accessor for capacity.
+    *
+    * @return The number of available data cells.
+    */
+    std::size_t data_cap () const { return mem_cap; }
+
+    /**
     * @brief Trivial accessor for instruction set.
     *
     * @return The const reference to instruction set.
     */
-    const auto &iSet () { return iset; }
+    const auto &iSet () const { return iset; }
 
     /**
     * @brief Indicates if execution of program ended.
@@ -178,7 +187,7 @@ public:
     /**
     * @brief Execute current command.
     */  
-    void exec ();
+    void exec_once ();
 
     /**
     * @brief Clears contents of general-purpose register block.
@@ -210,6 +219,16 @@ public:
     void print_pm (std::ostream &os) { os << mem.pm; }
 };
 
+#define NO_BPS SIZE_MAX
+
+struct bpNum {
+    std::size_t textNum = NO_BPS;
+    std::size_t progNum = NO_BPS;
+
+    bpNum() {};
+    bpNum(std::size_t num1, std::size_t num2) : textNum(num1), progNum(num2) {};
+};
+
 /**
  * @brief Executes the CPU using breakpoints and debug function.
  *
@@ -217,4 +236,4 @@ public:
  * @param bps The vector of breakpoints.
  * @param dbg_func The callback function for debugging.
  */
-void exec(CPU &cpu, my_std::Vec<std::size_t>& bps, std::function<void()> dbg_func);
+void exec(CPU &cpu, my_std::Vec<bpNum>& bps, std::function<void(bpNum)> dbg_func);

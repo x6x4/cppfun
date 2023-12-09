@@ -12,7 +12,7 @@
  * @brief Small and fast memory cell inside CPU. 
  */
 class GPRegister : public Operand {
-friend SPRegister;
+friend PCRegister;
 friend DataCell;
 
     std::size_t num = 0;
@@ -44,18 +44,18 @@ public:
 };
 
 /**
- * @class SPRegister
- * @brief Small and fast memory cell inside Program Memory. 
+ * @class PCRegister
+ * @brief Instruction pointer register. 
  */
-class SPRegister : public GPRegister {
+class PCRegister : public GPRegister {
 
     void print (std::ostream &os) const override;
     void load_to (CPU &cpu) const override;
     void load_from (CPU &cpu) override;
 
 public:
-    SPRegister () {};
-    ~SPRegister () override = default;
+    PCRegister () {};
+    ~PCRegister () override = default;
 
     /**
     * @brief Creates a copy of the Operand object
@@ -72,7 +72,7 @@ public:
     *
     * @param _val Register value
     */
-    SPRegister (std::size_t _val) { value = _val; }
+    PCRegister (std::size_t _val) { value = _val; }
 
     /** 
     * @brief Trivial setter for special-purpose register number.

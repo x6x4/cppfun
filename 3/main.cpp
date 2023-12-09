@@ -1,14 +1,7 @@
 #include "instr_set/instr_set.h"
 #include "lib/IR_compiler/fwd_IR_compiler.h"
-#include <cstddef>
-#include <cstring>
-#include <functional>
-#include <iostream>
-#include <memory>
-#include <stdexcept>
-#include <sstream>
-#include <string>
-#include <type_traits>
+
+
 
 class CLI_DBG {
 
@@ -18,12 +11,14 @@ public:
 
     CLI_DBG (CPU *_cpu) : cpu(_cpu) {};
 
-    void operator() () { 
+    void operator() (bpNum) { 
         cpu->print_gpregblock(std::cout); 
         cpu->print_dm(std::cout); 
         cpu->print_spregblock(std::cout);
     };
 };
+
+#include <iostream>
 
 
 int main (int, char **argv) {
@@ -32,20 +27,25 @@ int main (int, char **argv) {
         CPU cpu (iset);
 
         if (!argv[1]) throw std::logic_error ("No arguments.");
-        
-        load_file_cpu(cpu, argv[1]);
 
-        my_std::Vec <std::size_t> bps = {1, 2, 3, 4, 5};
+        my_std::Vec<std::size_t> avl_bps;
+        
+        load_file_cpu(cpu, argv[1], avl_bps);
+        for (auto e : avl_bps) 
+            std::cout << e << std::endl;
+
+        my_std::Vec <bpNum> bps = {bpNum(1, 0), bpNum(2, 0), bpNum(3, 0), bpNum(4, 0), bpNum(5, 0)};
 
         // store a call to a function object
-        std::function<void()> f = CLI_DBG(&cpu);
+        std::function<void(bpNum)> f = CLI_DBG(&cpu);
         
+        exec(cpu, bps, f);
+        std::cout << std::endl;
         exec(cpu, bps, f);
         std::cout << std::endl;
 
         /*load_file_cpu(cpu, argv[1]);
-        exec(cpu, bps, f);
-        std::cout << std::endl;*/
+        */
     }
 
     catch (std::logic_error &e) {

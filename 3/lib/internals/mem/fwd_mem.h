@@ -1,6 +1,6 @@
 #pragma once
 
-class SPRegister;
+class PCRegister;
 class DataCell;
 class Memory;
 #include "../IR/IR.h"

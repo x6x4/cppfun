@@ -24,30 +24,30 @@ strings to_strings (std::istream &is) {
     return vec;
 }
 
-strings load_text_cpu (CPU &cpu, const std::string &program_text) {
+strings load_text_cpu (CPU &cpu, const std::string &program_text, my_std::Vec<std::size_t> &avl_bps) {
     std::istringstream iss(program_text);
     strings program = to_strings(iss);
 
-    cpu.load_mem(file_to_mcode(cpu.iSet(), program));
+    cpu.load_mem(file_to_mcode(cpu.iSet(), program, avl_bps));
     return program;
 }
 
-strings load_file_cpu (CPU &cpu, const std::string &filename) {
+strings load_file_cpu (CPU &cpu, const std::string &filename, my_std::Vec<std::size_t> &avl_bps) {
     
     std::ifstream iss(filename);
     if (iss.fail()) throw std::logic_error ("Wrong file");
     strings program = to_strings(iss);
 
-    cpu.load_mem(file_to_mcode(cpu.iSet(), program));
+    cpu.load_mem(file_to_mcode(cpu.iSet(), program, avl_bps));
     return program;
 }
 
-Mem file_to_mcode (const InstrSet &iset, strings program) {
+Mem file_to_mcode (const InstrSet &iset, strings program, my_std::Vec<std::size_t> &avl_bps) {
 
     std::unordered_set<ID> data_label_table;
 
     try {
-        auto vec_pair = preproc_code(program);
+        auto vec_pair = preproc_code(program, avl_bps);
         std::unique_ptr<Data> data = parse_data(vec_pair.second, data_label_table);
         std::unique_ptr<SafeText> text = parse_text(iset, vec_pair.first, data_label_table);
 
@@ -64,7 +64,7 @@ Mem file_to_mcode (const InstrSet &iset, strings program) {
 
 //  PREPROC AND SECTIONS PARSING
 
-std::pair<strings, strings> preproc_code (strings program) {
+std::pair<strings, strings> preproc_code (strings program, my_std::Vec<std::size_t> &avl_bps) {
 
     strings vec_text, vec_data;
     std::string line;
@@ -76,7 +76,11 @@ std::pair<strings, strings> preproc_code (strings program) {
         if (asm_line.line[0] == '#') continue;       //  comment
         if (!asm_line.line.compare(".data")) { is_data = 1; continue; } //  .data section
 
-        !is_data ? vec_text.push_back(asm_line) : vec_data.push_back(asm_line);
+        if (!is_data) {
+            vec_text.push_back(asm_line);
+            avl_bps.push_back(asm_line.num);
+        } else  
+            vec_data.push_back(asm_line);
     }
 
     return std::make_pair(vec_text, vec_data);
@@ -107,29 +111,27 @@ std::unique_ptr<Data> parse_data (strings vec_data, std::unordered_set<ID> &data
     return data;
 }
 
-std::unique_ptr<SafeText> parse_text(const InstrSet &iset, strings &vec, const std::unordered_set<ID> &data_label_table) {
+std::unique_ptr<SafeText> parse_text(const InstrSet &iset, strings &vec_text, const std::unordered_set<ID> &data_label_table) {
 
     std::unique_ptr<Command> cur_cmd;
     std::unordered_set<ID> code_label_table;
-    NumberedLine cmd;
-    std::size_t num = 0;
+    std::size_t cur_num = 0;
 
     std::unique_ptr<SafeText> text = std::make_unique<SafeText>(SafeText());
  
     try {
-        for (auto _cmd : vec) {  //  line-by-line parsing
-            cmd.num = _cmd.num;
-            _cmd.num = num++;
-            cur_cmd = parse_cmd(iset, _cmd, data_label_table, code_label_table);
+        for (auto cmd : vec_text) {  //  line-by-line parsing
+            cur_num = cmd.num;
+            cur_cmd = parse_cmd(iset, cmd, data_label_table, code_label_table);
             text->push_back(std::move(cur_cmd));
         }
     }
 
     catch (std::runtime_error &e) {
-        throw CE(".text", e.what(), cmd.num);
+        throw CE(".text", e.what(), cur_num);
     }
     catch (std::logic_error &e) {
-        throw CE(".text", e.what(), cmd.num);
+        throw CE(".text", e.what(), cur_num);
     }
 
     return text;
@@ -229,7 +231,7 @@ const std::unordered_set<ID> &data_label_table, std::unordered_set<ID> &code_lab
         opd1 = std::make_unique<DataCell>(DataCell(data_label.get_addr()));
     }  else if (!std::isdigit(tokens[cur_tok_num][0])) {  //  code label
         ID code_label = FindLabel(code_label_table, tokens[cur_tok_num].c_str());
-        opd1 = std::make_unique<SPRegister>(SPRegister(code_label.get_addr()));
+        opd1 = std::make_unique<PCRegister>(PCRegister(code_label.get_addr()));
     } else {
         throw std::logic_error("First operand can't be immediate");
     }
@@ -275,7 +277,7 @@ const std::unordered_set<ID> &data_label_table, std::unordered_set<ID> &code_lab
 
 std::logic_error CE (const char *section, const char *error, std::size_t line_num) {
     std::stringstream ss;
-    ss << "In section " << section << ": CE on line " << line_num << ": " << error;
+    ss << "in section " << section << ": CE on line " << line_num << ":\n" << error;
     return std::logic_error(ss.str());
 }
 

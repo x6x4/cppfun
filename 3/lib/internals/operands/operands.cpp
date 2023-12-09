@@ -15,13 +15,13 @@ std::unique_ptr<Operand> GPRegister::clone () const { return std::make_unique<GP
 
 //  sp
 
-void SPRegister::print (std::ostream &os) const { }
+void PCRegister::print (std::ostream &os) const { }
 
-void SPRegister::load_to(CPU &cpu) const { cpu.mem.pm.set_spreg(num, value); }
+void PCRegister::load_to(CPU &cpu) const { cpu.mem.pm.set_spreg(num, value); }
 
-void SPRegister::load_from(CPU &cpu) {}
+void PCRegister::load_from(CPU &cpu) {}
 
-std::unique_ptr<Operand> SPRegister::clone () const { return std::make_unique<SPRegister>(*this); }
+std::unique_ptr<Operand> PCRegister::clone () const { return std::make_unique<PCRegister>(*this); }
 
 //  dc
 

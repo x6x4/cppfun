@@ -15,6 +15,7 @@
 #include <new>
 #include <stdexcept>
 #include <type_traits>
+#include <vector>
 
 
 namespace my_std 
@@ -109,22 +110,23 @@ namespace my_std
     *  @tparam T  Type of element.
     *
     *  Meets the requirements of a Container, SequenceContainer, 
-    *  ContiguousContainer and ReversibleContainer (+).
+    *  ContiguousContainer and ReversibleContainer.
     *
     *  It offers fast and efficient access to individual
     *  elements in any order and saves the user from worrying about
     *  memory and size allocation. Subscripting ([]) access is
     *  provided as with C-style arrays.
     */
+
     template<typename T>
         class Vec : private Vec_base<T> {
 
             static_assert(std::is_same<typename std::remove_cv<T>::type, T>::value,
             "Vec must have a non-const, non-volatile value_type");
 
-            typedef Vec_base<T> Base; 
-            typedef Base::pointer		  pointer;
-            typedef const pointer	const_pointer;
+            typedef Vec_base<T>                      Base;
+            typedef typename Base::pointer		  pointer;
+            typedef const pointer           const_pointer;
 
             public:
 
@@ -581,6 +583,16 @@ namespace my_std
             push_back(value_type&& _val) {
                 if (full()) _resize();
                 *(range.finish++) = std::move(_val);
+            }
+
+            /**
+            *  @brief  Performs specific operation on the elements of the %Vec.
+            *  @param    
+            *
+            *  
+            */
+            void reduce () {
+
             }
 
             private:
