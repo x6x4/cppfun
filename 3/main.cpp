@@ -31,8 +31,6 @@ int main (int, char **argv) {
         my_std::Vec<std::size_t> avl_bps;
         
         load_file_cpu(cpu, argv[1], avl_bps);
-        for (auto e : avl_bps) 
-            std::cout << e << std::endl;
 
         my_std::Vec <bpNum> bps = {bpNum(1, 0), bpNum(2, 0), bpNum(3, 0), bpNum(4, 0), bpNum(5, 0)};
 
@@ -41,8 +39,8 @@ int main (int, char **argv) {
         
         exec(cpu, bps, f);
         std::cout << std::endl;
-        exec(cpu, bps, f);
-        std::cout << std::endl;
+        //exec(cpu, bps, f);
+        //std::cout << std::endl;
 
         /*load_file_cpu(cpu, argv[1]);
         */

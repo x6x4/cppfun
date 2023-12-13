@@ -14,14 +14,13 @@
  *                                                               *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-class ID {
+struct ID {
 
     std::string id;
     addr_t addr;
+    bool is_ascii = 0;
 
     void swap (ID other) { std::swap(other.id, id); }
-    
-public:
 
     ID() {};
 
@@ -53,10 +52,22 @@ public:
     */
     addr_t get_addr () const { return addr; }
 
+    /**
+    * @brief Trivial accessor for being ascii.
+    *
+    * @return Is ascii.
+    */
+    bool iSascii() const { return is_ascii; }
+
     /** 
     * @brief Trivial setter for ID value.
     */
     void set_addr (addr_t _addr) { addr = _addr; }
+
+    /** 
+    * @brief Trivial setter for being ascii.
+    */
+    void set_ascii (bool is_ascii) { this->is_ascii = is_ascii; }
 
     /**
     * @brief Assignment operator for ID.
@@ -108,7 +119,7 @@ std::ostream &operator<<(std::ostream &os, const ID &id);
  *  Can be loaded from CPU and back.                             * 
  *                                                               *
  *  Compiler recognize GPRegisters, SPRegisters, DataCells       *
- *  and immediate operands.                                      *
+ *  and ImmOperands.                                             *
  *                                                               *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
@@ -116,6 +127,7 @@ class Operand {
 
 friend UnaryCommand;
 friend BinaryCommand;
+friend TernaryCommand;
 friend CPU;
 friend CPU_Cache;
 
@@ -209,16 +221,19 @@ public:
 class CPU_Cache {
 friend UnaryCommand;
 friend BinaryCommand;
+friend TernaryCommand;
 friend CPU;
 
     std::unique_ptr<Operand> opd1 = nullptr;
     std::unique_ptr<Operand> opd2 = nullptr;
+    std::unique_ptr<Operand> opd3 = nullptr;
     CPU *cpu = nullptr;
     CPU_Cache (CPU* _parent) : cpu(_parent) {};
     CPU_Cache (const CPU_Cache &c);
 
     void load_opd1 (Operand &_opd1);
     void load_opd2 (Operand &_opd2);
+    void load_opd3 (Operand &_opd3);
 
     void clear ();
 };
@@ -314,12 +329,12 @@ public:
     bool operator== (const UnaryOperator& other) const noexcept;
 };
 
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
- *  Derived from Operator.                                       *
- *                                                               *
- *  Consists of binary operation acting on two operands.         *
- *                                                               *
- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+/*
+ *  Derived from Operator.                                       
+ *                                                               
+ *  Consists of binary operation acting on two operands.         
+ *                                                               
+ */
 
 class BinaryOperator : public Operator {
 
@@ -361,6 +376,54 @@ public:
     bool operator== (const BinaryOperator& other) const noexcept;
 };   
 
+/* 
+ *  Derived from Operator.                                       
+ *                                                               
+ *  Consists of ternary operation acting on three operands.         
+ *                                                               
+ */
+
+class TernaryOperator : public Operator {
+
+protected:
+    void (*oper)(Operand &opd1, Operand &opd2, Operand &opd3);
+
+public:
+
+    TernaryOperator () {};
+
+    TernaryOperator(TernaryOperator &copy) = default;
+    TernaryOperator(const TernaryOperator &copy) = default;
+    TernaryOperator &operator= (TernaryOperator &copy) = default;
+
+    TernaryOperator(TernaryOperator &&move) = default;
+    TernaryOperator &operator= (TernaryOperator &&move) = default;
+
+    /**
+    * @brief Constructor for the TernaryOperator class.
+    *
+    * @param _mnem The mnemonic string for the TernaryOperator.
+    */
+    TernaryOperator(const Mnemonic &_mnem) : Operator(_mnem) {};
+    
+    /**
+    * @brief Function call operator for TernaryOperator.
+    *
+    * @param opd1 The first operand reference.
+    * @param opd2 The second operand reference.
+    * @param opd3 The third operand reference.
+    */
+    void operator() (Operand &opd1, Operand &opd2, Operand &opd3) const { oper(opd1, opd2, opd3); } 
+    
+    /**
+    * @brief Equality comparison operator for TernaryOperator.
+    *
+    * @param other The TernaryOperator object to compare with.
+    * @return True if the mnemonics are the same, false otherwise.
+    */    
+    bool operator== (const TernaryOperator& other) const noexcept;
+};   
+
 
 namespace std {
 
@@ -390,6 +453,15 @@ namespace std {
             return hash;
         }
     };
+
+    template<> struct hash<TernaryOperator>
+    {
+        std::size_t operator()(const TernaryOperator& oper) const noexcept
+        {
+            std::size_t hash = std::hash<Mnemonic>()(oper.mnemonics());
+            return hash;
+        }
+    };
 }
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -403,10 +475,12 @@ namespace std {
 
 using unary_instr_set = std::unordered_set<UnaryOperator>;
 using binary_instr_set = std::unordered_set<BinaryOperator>;
+using ternary_instr_set = std::unordered_set<TernaryOperator>;
 
 class InstrSet {
     const unary_instr_set uset;
     const binary_instr_set bset;
+    const ternary_instr_set tset;
 
 public:
 
@@ -416,7 +490,7 @@ public:
     * @param _uset A const reference to unary_instr_set object.
     * @param _bset A const reference to binary_instr_set object.
     */
-    InstrSet(const unary_instr_set& _uset, const binary_instr_set& _bset);
+    InstrSet(const unary_instr_set& _uset, const binary_instr_set& _bset, const ternary_instr_set& _tset);
 
     /**
     * @brief Finds an unary operator by its mnemonics.
@@ -435,20 +509,29 @@ public:
     * @return A reference to the BinaryOperator object.
     */
     BinaryOperator &FindBinOper(const Mnemonic &str) const;
+
+     /**
+    * @brief Finds a ternary operator by its mnemonics.
+    *
+    * @param str A const reference to mnemonic string of the ternary operator.
+    * @throw std::logic_error "Ternary operator not found"
+    * @return A reference to the TernaryOperator object.
+    */
+    TernaryOperator &FindTernOper(const Mnemonic &str) const;
 };
 
 
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
- *  The base abstract class of all commands.                     *
- *                                                               *
- *  Contains label and some general interface.                   *
- *  Consists of operands and operation on them.                  *
- *  Is always executed in cache.                                 *
- *  Result of an operation is always put to first operand.       * 
- *                                                               *
- *  Compiler recognize only unary and binary commands.           *
- *                                                               *
- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+/* 
+ *  The base abstract class of all commands.                     
+ *                                                               
+ *  Contains label and some general interface.                   
+ *  Consists of operands and operation on them.                  
+ *  Is always executed in cache.                                 
+ *  Result of an operation is always put to first operand.        
+ *                                                               
+ *  Compiler recognize only unary and binary commands.           
+ *                                                               
+ */
 
 class Command {
 
@@ -515,12 +598,12 @@ public:
 };
 
 
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
- *  Derived from Command. Implements its abstract methods.       *
- *                                                               *
- *  Consists of operand and unary operator acting on it.         *
- *                                                               *
- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+/* 
+ *  Derived from Command. Implements its abstract methods.       
+ *                                                               
+ *  Consists of operand and unary operator acting on it.         
+ *                                                               
+ */
 
 class UnaryCommand : public Command {
 
@@ -604,12 +687,12 @@ public:
 
 };
 
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
- *  Derived from Command. Implements its abstract methods.       *
- *                                                               *
- *  Consists of two operands and binary operator acting on them. *               *
- *                                                               *
- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+/* 
+ *  Derived from Command. Implements its abstract methods.       
+ *                                                               
+ *  Consists of two operands and binary operator acting on them. 
+ *                                                               
+ */
 
 class BinaryCommand : public Command {
     
@@ -695,6 +778,103 @@ public:
     */
     BinaryCommand(const BinaryOperator _oper, 
         std::unique_ptr<Operand> _opd1, std::unique_ptr<Operand> _opd2);
+
+};
+
+/* 
+ *  Derived from Command. Implements its abstract methods.          
+ *                                                                  
+ *  Consists of three operands and ternary operator acting on them. 
+ *                                                                  
+ */
+
+class TernaryCommand : public Command {
+    
+    std::unique_ptr<Operand> opd1;
+    std::unique_ptr<Operand> opd2;
+    std::unique_ptr<Operand> opd3;
+    TernaryOperator ternoper;
+
+protected:
+
+    /**
+    * @brief Executes the ternary command operation in the cache.
+    * 
+    * @param cache The cache object where the ternary operator is executed.
+    *
+    * @note This is an implementation of the abstract one in base Command class.
+    * @see Command
+    */
+    void exec_in_cache (CPU_Cache &cache) const override;
+    
+    /**
+    * @brief Loads ternary command from CPU to cache.
+    * 
+    * @param cache The cache object to which command's operands are loaded.
+    *
+    * @note This is an implementation of the abstract one in base Command class.
+    * @see Command
+    */
+    void load_to_cache (CPU_Cache &cache) const override;
+
+    /**
+    * @brief Prints ternary command contents.
+    * @param os The output stream for printing.
+    *
+    * @note This is an implementation of the abstract one in base Command class.
+    * @see Command
+    */
+    void print (std::ostream &os) const override;
+
+public:
+
+    /**
+    * @brief Destructor for TernaryCommand class
+    *
+    * @note This is an implementation of the abstract one in base Command class.
+    * @see Command
+    */
+    ~TernaryCommand() noexcept override {};
+
+    /**
+    * @brief Default move constructor for TernaryCommand class
+    * 
+    * @param other Rvalue reference to another TernaryCommand object
+    */
+    TernaryCommand (TernaryCommand &&other) = default;
+
+    /**
+    * @brief Creates a copy of the TernaryCommand object
+    * 
+    * @note This is an implementation of the abstract one in base Command class.
+    * @see Command
+    *
+    * @return Pointer to the cloned TernaryCommand object
+    */
+    TernaryCommand* clone () const override;
+
+    /**
+    * @brief Constructor for TernaryCommand class
+    * 
+    * @param _lbl ID of the command label
+    * @param _oper TernaryOperator to be applied to operands
+    * @param _opd1 Unique pointer to the first operand
+    * @param _opd2 Unique pointer to the second operand
+    * @param _opd3 Unique pointer to the third operand
+    */
+    TernaryCommand(const ID _lbl, const TernaryOperator _oper, 
+        std::unique_ptr<Operand> _opd1, std::unique_ptr<Operand> _opd2, std::unique_ptr<Operand> _opd3);
+
+    /**
+    * @brief Constructor for TernaryCommand class
+    * 
+    * @param _oper TernaryOperator to be applied to operands
+    * @param _opd1 Unique pointer to the first operand
+    * @param _opd2 Unique pointer to the second operand
+    * @param _opd3 Unique pointer to the third operand
+    */
+    TernaryCommand(const TernaryOperator _oper, 
+        std::unique_ptr<Operand> _opd1, std::unique_ptr<Operand> _opd2, std::unique_ptr<Operand> _opd3);
 
 };
 

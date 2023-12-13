@@ -20,7 +20,7 @@ std::unique_ptr<Data> parse_data (strings program, std::unordered_set<ID> &data_
 std::unique_ptr<SafeText> parse_text(const InstrSet &iset, strings &vec, const std::unordered_set<ID> &data_label_table);
 std::unique_ptr<Command> parse_cmd(const InstrSet &iset, NumberedLine cmd_str, 
     const std::unordered_set<ID> &data_label_table, std::unordered_set<ID> &code_label_table);
-int parse_dr(NumberedLine data_str, std::unordered_set<ID> &data_label_table);
+size_t parse_dr(NumberedLine data_str, std::unordered_set<ID> &data_label_table, std::unique_ptr<Data> &data);
 
 
 const ID& FindLabel (const std::unordered_set<ID> &label_table, const ID &id);

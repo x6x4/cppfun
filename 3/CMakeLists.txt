@@ -18,13 +18,14 @@ add_subdirectory(instr_set)
 
 #  testing
 
-add_subdirectory(tests)
-target_link_libraries(test1 instr_set IR_compiler fmt::fmt)
+#add_subdirectory(tests)
+#target_link_libraries(test1 instr_set IR_compiler fmt::fmt)
 
-#  dialog application
 find_package(fmt)
 
-#add_executable(main main.cpp)
-#target_link_libraries(main instr_set IR_compiler fmt::fmt)
+#add_subdirectory(plugin)
+
+add_executable(main main.cpp)
+target_link_libraries(main instr_set IR_compiler fmt::fmt)
 
 

@@ -11,8 +11,9 @@
 
 class CPU;
 class ExecUnit;
-class GPRegister;
+class NumberedCell;
 class PCRegister;
+class String;
 
 using exectime_t = std::size_t; 
 

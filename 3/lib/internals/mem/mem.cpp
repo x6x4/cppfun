@@ -27,7 +27,7 @@ void ProgramMemory::load (const SafeText &mtext) {
 }
 
 void ProgramMemory::set_spreg (std::size_t num, std::size_t val) { 
-    if (num < text.size()) sp_regs[num] = val; 
+    if (num < text.size()) sp_regs.at(num) = val; 
     else throw std::logic_error("Access out of bounds");
 }
 
@@ -50,8 +50,10 @@ std::ostream &operator<<(std::ostream &os, ProgramMemory &pm) {
 //  dm
 
 void DataMemory::load (const Data &mdata) { 
+
+    if (!mdata.size()) return;
     
-    for (std::size_t i = 0; i < mdata.size(); i++) {
+    for (std::size_t i = 0; i < std::min(data.capacity(), mdata.size()); i++) {
         data.at(i) = mdata.at(i); 
     }
 }

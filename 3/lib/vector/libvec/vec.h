@@ -15,8 +15,7 @@
 #include <new>
 #include <stdexcept>
 #include <type_traits>
-#include <vector>
-
+#include <source_location>
 
 namespace my_std 
 {
@@ -551,6 +550,11 @@ namespace my_std
             constexpr void
             range_check(size_type _n) const {
                 if (_n >= size()) {
+                    const std::source_location &location = std::source_location::current();
+                     std::cout << location.file_name() << ":"
+                    << location.line() << ":"
+                    << location.function_name() << std::endl;
+                    
                     std::string str = 
                     fmt::format("Vec::range_check: _n (which is {}) " 
                     ">= size() (which is {})", _n, size());
@@ -592,7 +596,7 @@ namespace my_std
             *  
             */
             void reduce () {
-
+                
             }
 
             private:

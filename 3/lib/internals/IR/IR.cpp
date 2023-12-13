@@ -1,6 +1,7 @@
 
 #include "IR.h"
 #include <ios>
+#include <iostream>
 
 
 //  ID  //
@@ -59,6 +60,11 @@ void CPU_Cache::load_opd2 (Operand &_opd2) {
     opd2->load_from(*cpu);
 };
 
+void CPU_Cache::load_opd3 (Operand &_opd3) {
+    opd3 = _opd3.clone();
+    opd3->load_from(*cpu);
+};
+
 void CPU_Cache::clear () {
     opd1 = nullptr;
     opd2 = nullptr;
@@ -76,6 +82,10 @@ bool UnaryOperator::operator== (const UnaryOperator &other) const noexcept{
 }
 
 bool BinaryOperator::operator== (const BinaryOperator &other) const noexcept{
+    return mnemonics() == other.mnemonics();
+}
+
+bool TernaryOperator::operator== (const TernaryOperator& other) const noexcept {
     return mnemonics() == other.mnemonics();
 }
 
@@ -97,8 +107,17 @@ BinaryOperator &InstrSet::FindBinOper (const Mnemonic &str) const {
         return boper._M_cur->_M_v();
 };
 
+TernaryOperator &InstrSet::FindTernOper (const Mnemonic &str) const {
+    auto toper = tset.find(TernaryOperator(str));
+    if (toper == tset.end())
+        throw std::logic_error("Ternary operator not found");
+    else 
+        return toper._M_cur->_M_v();
+};
+
 InstrSet::InstrSet(const unary_instr_set& _uset, 
-    const binary_instr_set& _bset) : uset(_uset), bset(_bset) {}; 
+    const binary_instr_set& _bset, const ternary_instr_set& _tset) 
+    : uset(_uset), bset(_bset), tset(_tset) {}; 
 
 
 //  COMMAND  //
@@ -155,3 +174,29 @@ BinaryCommand::BinaryCommand(const ID _lbl, const BinaryOperator _oper,
 BinaryCommand::BinaryCommand(const BinaryOperator _oper, 
     std::unique_ptr<Operand> _opd1, std::unique_ptr<Operand> _opd2)  
     : opd1(std::move(_opd1)), opd2(std::move(_opd2)), binoper(_oper) {}
+
+
+//  TERNARY COMMAND
+
+void TernaryCommand::load_to_cache (CPU_Cache &cache) const 
+    { cache.load_opd1(*opd1); cache.load_opd2(*opd2); cache.load_opd3(*opd3); }
+
+void TernaryCommand::exec_in_cache (CPU_Cache &cache) const  
+    { load_to_cache(cache); ternoper(*cache.opd1, *cache.opd2, *cache.opd3); }
+
+void TernaryCommand::print(std::ostream &os) const {
+    os << ternoper.mnemonics() << " " << *opd1 << " " << *opd2 << " " << *opd3;
+}
+
+TernaryCommand* TernaryCommand::clone () const 
+    { return new TernaryCommand(lbl, ternoper, opd1->clone(), opd2->clone(), opd3->clone()); }
+
+TernaryCommand::TernaryCommand(const ID _lbl, const TernaryOperator _oper, 
+    std::unique_ptr<Operand> _opd1, std::unique_ptr<Operand> _opd2, std::unique_ptr<Operand> _opd3) 
+    : opd1(std::move(_opd1)), opd2(std::move(_opd2)), opd3(std::move(_opd3)), ternoper(_oper) {
+    Command::lbl = _lbl;
+}
+
+TernaryCommand::TernaryCommand(const TernaryOperator _oper, 
+    std::unique_ptr<Operand> _opd1, std::unique_ptr<Operand> _opd2, std::unique_ptr<Operand> _opd3)  
+    : opd1(std::move(_opd1)), opd2(std::move(_opd2)), opd3(std::move(_opd3)), ternoper(_oper) {}

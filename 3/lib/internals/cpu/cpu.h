@@ -18,7 +18,7 @@
  *      blocked.
  */
 class RegBlock {
-friend GPRegister;
+friend NumberedCell;
 friend CPU;
 
     std::size_t num_reg = 0;
@@ -83,11 +83,12 @@ friend CPU;
  */
 class CPU {
 friend PCRegister;
-friend GPRegister;
+friend NumberedCell;
+friend String;
 friend DataCell;
 friend ExecUnit;
 
-    std::size_t bitness = 3;
+    std::size_t bitness = 4;
     std::size_t mem_cap = std::pow(2, bitness);
 
     ExecUnits EUs = {std::make_pair(State::FREE, ExecUnit(this))};
@@ -129,25 +130,11 @@ public:
     int sp (std::size_t num) const { return mem.pm[num]; }
 
     /**
-    * @brief Accessor for data memory by number.
+    * @brief Accessor for data memory.
     *
-    * @return The value of data cell.
+    * @return The ref to data.
     */
-    int data_cell (std::size_t num) const { return mem.dm[num]; }
-
-    /**
-    * @brief Trivial accessor for size.
-    *
-    * @return The number of data cells.
-    */
-    std::size_t data_sz () const { return mem.dm.size(); }
-
-    /**
-    * @brief Trivial accessor for capacity.
-    *
-    * @return The number of available data cells.
-    */
-    std::size_t data_cap () const { return mem_cap; }
+    auto &data() const { return mem.dm.data; }
 
     /**
     * @brief Trivial accessor for instruction set.

@@ -1,11 +1,13 @@
 
 #include "fwd_IR_compiler.h"
+#include <cctype>
 #include <cstddef>
 #include <cstdlib>
 #include <fmt/core.h>
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <unistd.h>
 #include <utility>
 #include "../../lib/internals/operands/operands.h"
 
@@ -33,13 +35,22 @@ strings load_text_cpu (CPU &cpu, const std::string &program_text, my_std::Vec<st
 }
 
 strings load_file_cpu (CPU &cpu, const std::string &filename, my_std::Vec<std::size_t> &avl_bps) {
-    
-    std::ifstream iss(filename);
-    if (iss.fail()) throw std::logic_error ("Wrong file");
-    strings program = to_strings(iss);
+    try {
+        std::ifstream iss(filename);
+        if (iss.fail()) throw std::logic_error ("Wrong file");
+        strings program = to_strings(iss);
 
-    cpu.load_mem(file_to_mcode(cpu.iSet(), program, avl_bps));
-    return program;
+        cpu.load_mem(file_to_mcode(cpu.iSet(), program, avl_bps));
+        return program;
+    }
+    catch (std::runtime_error &e) {
+        std::cout << __PRETTY_FUNCTION__ << ": " << '\n';
+        throw e;
+    }
+    catch (std::logic_error &e) {
+        std::cout << __PRETTY_FUNCTION__ << ": " << '\n';
+        throw e;
+    }
 }
 
 Mem file_to_mcode (const InstrSet &iset, strings program, my_std::Vec<std::size_t> &avl_bps) {
@@ -55,9 +66,11 @@ Mem file_to_mcode (const InstrSet &iset, strings program, my_std::Vec<std::size_
     }
 
     catch (std::runtime_error &e) {
+        std::cout << __PRETTY_FUNCTION__ << ": " << '\n';
         throw e;
     }
     catch (std::logic_error &e) {
+        std::cout << __PRETTY_FUNCTION__ << ": " << '\n';
         throw e;
     }
 }
@@ -86,30 +99,7 @@ std::pair<strings, strings> preproc_code (strings program, my_std::Vec<std::size
     return std::make_pair(vec_text, vec_data);
 }
 
-std::unique_ptr<Data> parse_data (strings vec_data, std::unordered_set<ID> &data_label_table) {
 
-    std::unique_ptr<Data> data = std::make_unique<Data>(Data());    
-    NumberedLine directive;
-    std::size_t num = 0;
-
-    try {
-        for (auto _directive : vec_data) {  //  line-by-line parsing
-            directive.num = _directive.num;
-            _directive.num = num++;
-            int data_cell = parse_dr(_directive, data_label_table);
-            data->push_back(data_cell);
-        }
-    }
-
-    catch (std::runtime_error &e) {
-        throw CE(".data", e.what(), directive.num);
-    }
-    catch (std::logic_error &e) {
-        throw CE(".data", e.what(), directive.num);
-    }
-
-    return data;
-}
 
 std::unique_ptr<SafeText> parse_text(const InstrSet &iset, strings &vec_text, const std::unordered_set<ID> &data_label_table) {
 
@@ -121,7 +111,7 @@ std::unique_ptr<SafeText> parse_text(const InstrSet &iset, strings &vec_text, co
  
     try {
         for (auto cmd : vec_text) {  //  line-by-line parsing
-            cur_num = cmd.num;
+            cur_num = cmd.num + 1;
             cur_cmd = parse_cmd(iset, cmd, data_label_table, code_label_table);
             text->push_back(std::move(cur_cmd));
         }
@@ -137,17 +127,42 @@ std::unique_ptr<SafeText> parse_text(const InstrSet &iset, strings &vec_text, co
     return text;
 }
 
+std::unique_ptr<Data> parse_data (strings vec_data, std::unordered_set<ID> &data_label_table) {
+
+    std::unique_ptr<Data> data = std::make_unique<Data>(Data());    
+    std::size_t rel_num = 0;
+    std::size_t abs_num = 0;
+
+    try {
+        for (auto cur_directive : vec_data) {  //  line-by-line parsing
+            abs_num = cur_directive.num;
+            cur_directive.num = rel_num;
+            rel_num+=parse_dr(cur_directive, data_label_table, data);
+        }
+    }
+
+    catch (std::runtime_error &e) {
+        throw CE(".data", e.what(), abs_num);
+    }
+    catch (std::logic_error &e) {
+        throw CE(".data", e.what(), abs_num);
+    }
+
+    return data;
+}
+
 //  LINE PARSING
 
-int parse_dr(NumberedLine data_str, std::unordered_set<ID> &data_label_table) {
+size_t parse_dr(NumberedLine data_str, std::unordered_set<ID> &data_label_table, std::unique_ptr<Data> &data) {
     std::istringstream tok_stream(data_str.line);
     my_std::Vec<std::string> tokens;
     std::string cur_token;
+    size_t DataSize = 0;
 
     ///  TOKENIZATION  ///
     
     while (tok_stream >> cur_token) tokens.push_back(cur_token);
-    if (tokens.size() != 2) throw std::logic_error ("bad directive");
+    if (tokens.size() != 2 && tokens.size() != 3) throw std::logic_error ("bad directive");
 
     //   PARSE LABEL
 
@@ -157,13 +172,27 @@ int parse_dr(NumberedLine data_str, std::unordered_set<ID> &data_label_table) {
     if (tokens[0].back() == ':') { 
         if (tokens[0][0] == ':') throw std::logic_error ("empty label");
         label = tokens[0].substr(0, tokens[0].length() - 1).c_str();  //  shrink trailing ':'
+        if (tokens[1] == ".ascii") label.set_ascii(1);
         if (!data_label_table.insert(label).second)
             throw std::logic_error ("can't add label");
     } else {
         throw std::logic_error ("bad label");
     }
 
-    return std::stoi(tokens[1]);
+    if (tokens.size() != 3) {
+        data->push_back(std::stoi(tokens[1]));
+        return 1;
+    }
+
+    if (tokens[1] != ".ascii") throw std::logic_error ("bad ascii directive");
+
+    for (auto sym : tokens[2]) {
+        DataSize++;
+        data->push_back(sym);
+    }
+    data->push_back(0);
+    DataSize++;
+    return DataSize;
 }
 
 std::unique_ptr<Command> parse_cmd(const InstrSet &iset, NumberedLine cmd_str, 
@@ -180,8 +209,8 @@ const std::unordered_set<ID> &data_label_table, std::unordered_set<ID> &code_lab
     while (tok_stream >> cur_token) tokens.push_back(cur_token);
     std::size_t num_tok = tokens.size();
 
-    ///  Ucmd has max 3 tokens, Bcmd - 4.
-    if (num_tok > 4) throw std::logic_error("Too many tokens");
+    ///  Ucmd has max 3 tokens, Bcmd - 4, Tcmd - 5.
+    if (num_tok > 5) throw std::logic_error("Too many tokens");
     if (num_tok < 2) throw std::logic_error("Incomplete command");
 
     ///  PARSING  ///
@@ -200,20 +229,21 @@ const std::unordered_set<ID> &data_label_table, std::unordered_set<ID> &code_lab
     //   PARSE SIGNIFICANT PART
 
     std::size_t num_sign_tok = num_tok-cur_tok_num;
-    if (num_sign_tok > 3) throw std::logic_error("Too many significant tokens");
+    if (num_sign_tok > 4) throw std::logic_error("Too many significant tokens");
 
     //  1st significant token is operator  
 
     UnaryOperator uoper;
     BinaryOperator binoper;
+    TernaryOperator ternoper;
 
     if (num_sign_tok == 2) {         //  parse Uoper
-
         uoper = iset.FindUnOper(tokens[cur_tok_num]); 
 
     } else if (num_sign_tok == 3) {  //  parse Boper
-
         binoper = iset.FindBinOper(tokens[cur_tok_num]); 
+    } else {  //  parse Toper
+        ternoper = iset.FindTernOper(tokens[cur_tok_num]);
     }
 
     cur_tok_num++;
@@ -247,7 +277,6 @@ const std::unordered_set<ID> &data_label_table, std::unordered_set<ID> &code_lab
 
     //  parse 2nd opd
 
-
     std::unique_ptr<Operand> opd2;
 
     if (tokens[cur_tok_num][0] == '%')  {  //  register
@@ -255,9 +284,14 @@ const std::unordered_set<ID> &data_label_table, std::unordered_set<ID> &code_lab
         opd2 = std::make_unique<GPRegister>(std::stoi(reg_num));
     } else if (tokens[cur_tok_num][0] == '$')  {  //  data label
         ID data_label = FindLabel(data_label_table, tokens[cur_tok_num].substr(1).c_str());
-        opd2 = std::make_unique<DataCell>(DataCell(data_label.get_addr()));
-    } else if (std::isdigit(tokens[cur_tok_num][0])) {  //  imm
-        opd2 = std::make_unique<Operand>(std::stoi(tokens[cur_tok_num]));
+        if (data_label.iSascii())
+            opd2 = std::make_unique<String>(String(data_label.get_addr()));
+        else 
+            opd2 = std::make_unique<DataCell>(DataCell(data_label.get_addr()));
+    } else if (std::isdigit(tokens[cur_tok_num][0])) {  //  imm int
+        opd2 = std::make_unique<ImmOperand>(std::stoi(tokens[cur_tok_num]));
+    } else if (std::isalpha(tokens[cur_tok_num][0])) {  //  imm char
+        opd2 = std::make_unique<ImmOperand>(static_cast<int>(tokens[cur_tok_num][0]));
     } else {
         throw std::logic_error("invalid 2nd operand");
     }
@@ -268,6 +302,23 @@ const std::unordered_set<ID> &data_label_table, std::unordered_set<ID> &code_lab
         std::unique_ptr<BinaryCommand> bincmd = 
         std::make_unique<BinaryCommand>(BinaryCommand(label, binoper, std::move(opd1), std::move(opd2)));
         return bincmd;
+    }
+
+    //  parse 3rd opd
+
+    std::unique_ptr<Operand> opd3;
+
+    if (tokens[cur_tok_num][0] == '$')  {  //  data label
+        ID data_label = FindLabel(data_label_table, tokens[cur_tok_num].substr(1).c_str());
+        opd3 = std::make_unique<String>(String(data_label.get_addr()));
+    }
+
+    cur_tok_num++;
+
+    if (cur_tok_num == num_tok) {
+        std::unique_ptr<TernaryCommand> terncmd = 
+        std::make_unique<TernaryCommand>(TernaryCommand(label, ternoper, std::move(opd1), std::move(opd2), std::move(opd3)));
+        return terncmd;
     }
 
     throw std::logic_error("wrong command");

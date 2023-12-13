@@ -70,8 +70,8 @@ class DataMemory {
 friend DataCell;
 friend CPU;
 
-    std::size_t sz = 0;
-    Data data = Data(sz);
+    std::size_t cap = 0;
+    Data data = Data(cap);
     void load (const Data &mdata);
     int operator[] (std::size_t num) const { return data.at(num); }
 
@@ -80,16 +80,16 @@ public:
     /**
     * @brief Constructor for the DataMemory class.
     *
-    * @param sz The number of data cells.
+    * @param _cap The number of data cells.
     */
-    DataMemory (std::size_t _sz) : sz (_sz) {};
+    DataMemory (std::size_t _cap) : cap (_cap) {};
 
     /**
-    * @brief Trivial accessor for size.
+    * @brief Trivial accessor for capacity.
     *
     * @return The number of data cells.
     */
-    std::size_t size () const { return sz; }
+    std::size_t getCap() const { return cap; }
 
     /**
     * @brief Overloaded friend function to stream the DataMemory object.

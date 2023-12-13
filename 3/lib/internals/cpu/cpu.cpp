@@ -81,9 +81,19 @@ void CPU::exec_once () {
 }
 
 void CPU::load_mem (Mem &&m) {
-    mem.dm.load(*m.first);
-    mem.pm.load(*m.second);
-    cache_data = *m.first;
+    try {
+        mem.dm.load(*m.first);
+        mem.pm.load(*m.second);
+        cache_data = *m.first;
+    }
+    catch (std::runtime_error &e) {
+        std::cout << __PRETTY_FUNCTION__ << ": " << '\n';
+        throw e;
+    }
+    catch (std::logic_error &e) {
+        std::cout << __PRETTY_FUNCTION__ << ": " << '\n';
+        throw e;
+    }
 }
 
 void CPU::assign(const Command &cmd) {

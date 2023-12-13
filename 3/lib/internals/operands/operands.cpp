@@ -1,6 +1,20 @@
 
 #include "operands.h"
 
+//  STRING
+
+void String::print (std::ostream &os) const { 
+    for (size_t i = val(); i < store->capacity() && store->at(i) != '\0'; i++) 
+        os << char (store->at(i)); 
+    os << '\n'; 
+}
+
+void String::load_to(CPU &cpu) const { }
+
+void String::load_from(CPU &cpu) { store = &cpu.data(); }
+
+std::unique_ptr<Operand> String::clone () const { return std::make_unique<String>(*this); }
+
 //  REG  //
 
 //  gp
@@ -22,6 +36,9 @@ void PCRegister::load_to(CPU &cpu) const { cpu.mem.pm.set_spreg(num, value); }
 void PCRegister::load_from(CPU &cpu) {}
 
 std::unique_ptr<Operand> PCRegister::clone () const { return std::make_unique<PCRegister>(*this); }
+
+
+//  DATA CELL
 
 //  dc
 
