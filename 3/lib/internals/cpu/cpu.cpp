@@ -27,9 +27,8 @@ void RegBlock::print (std::ostream &os) const {
     os << '\n';
 
     for (std::size_t i = 0; i < regs.size(); i++) {
-        //if (regs[i]) os << fmt::format(YELLOW" {} " RESET, regs[i]);
-        //else 
-        os << fmt::format(" {} ", regs[i]);
+        if (regs[i]) os << fmt::format(YELLOW" {} " RESET, regs[i]);
+        else os << fmt::format(" {} ", regs[i]);
     }
     os << '\n';
 }
@@ -40,8 +39,6 @@ std::ostream &operator<<(std::ostream &os, RegBlock &rb) {
 }
 
 //  Exec CPU  //
-
-
 
 void exec (CPU &cpu, my_std::Vec <bpNum> &bps, std::function<void(bpNum)> dbg_func) {
 
@@ -101,14 +98,11 @@ void CPU::assign(const Command &cmd) {
         auto &eu = EUs[i];
         if (eu.first == State::FREE) {
             EUs[i].first = State::BUSY;
-            //std::cout << "Command assigned to EU " << i << std::endl;
             EUs[i].second.exec(cmd);
             EUs[i].first = State::FREE;
             return;
         }
     }
-
-    //std::cout << "Command can't be assigned now, wait please" << std::endl;
 }
 
 //  EXEC UNIT  //
@@ -121,7 +115,7 @@ void ExecUnit::exec(const Command &cmd) const {
 //  LOAD FROM CACHE  //
 
 void CPU::load_from_cache () {
-    if (cache.opd1) cache.opd1->load_to(*this);
-    if (cache.opd2) cache.opd2->load_to(*this);
+    for (const auto &opd : cache.opds)
+        if (opd) opd->load_to(*this);
     cache.clear();
 }

@@ -1,5 +1,6 @@
 
 #include "IR.h"
+#include <cstddef>
 #include <ios>
 #include <iostream>
 
@@ -31,8 +32,8 @@ std::istream& operator>> (std::istream& is, ID &id) {
     return is;
 }
 
-std::ostream &operator<<(std::ostream &os, const ID &id) {
-    os << id.get_id();
+std::ostream &operator<<(std::ostream &os, const ID &_id) {
+    os << _id.id;
     return os;
 }
 
@@ -46,157 +47,78 @@ std::ostream &operator<<(std::ostream &os, const Operand &opd) {
 //  CACHE  //
 
 CPU_Cache::CPU_Cache (const CPU_Cache &c) {
-    if (opd1) opd1 = c.opd1->clone();
-    if (opd2) opd2 = c.opd1->clone();
+    for (size_t cur = 0; cur < opds.size(); cur++)
+        if (opds[cur]) opds[cur] = c.opds[cur]->clone();
 };
 
-void CPU_Cache::load_opd1 (Operand &_opd1) {
-    opd1 = _opd1.clone();
-    opd1->load_from(*cpu);
+void CPU_Cache::load_opds (const my_std::Vec<std::unique_ptr<Operand>> &_opds) {
+    for (auto &opd : _opds) {
+        opd->load_from(*cpu);
+        opds.push_back(opd->clone());
+    }
 };
 
-void CPU_Cache::load_opd2 (Operand &_opd2) {
-    opd2 = _opd2.clone();
-    opd2->load_from(*cpu);
-};
-
-void CPU_Cache::load_opd3 (Operand &_opd3) {
-    opd3 = _opd3.clone();
-    opd3->load_from(*cpu);
-};
-
-void CPU_Cache::clear () {
-    opd1 = nullptr;
-    opd2 = nullptr;
+void CPU_Cache::clear () { 
+    for (auto &opd : opds) opd = nullptr; 
+    opds.clear();
 }
 
 //  OPERATOR  //
 
-std::ostream &operator<<(std::ostream &os, const Operator &op) {
+std::ostream &operator<<(std::ostream &os, const OperatorBase &op) {
     os << op.mnemonics();
     return os;
 }
 
-bool UnaryOperator::operator== (const UnaryOperator &other) const noexcept{
+bool Operator::operator== (const Operator &other) const noexcept{
     return mnemonics() == other.mnemonics();
 }
 
-bool BinaryOperator::operator== (const BinaryOperator &other) const noexcept{
-    return mnemonics() == other.mnemonics();
-}
-
-bool TernaryOperator::operator== (const TernaryOperator& other) const noexcept {
-    return mnemonics() == other.mnemonics();
-}
 
 //  INSTR SET  //
 
-UnaryOperator &InstrSet::FindUnOper (const Mnemonic &str) const {
-    auto uoper = uset.find(UnaryOperator(str));
-    if (uoper == uset.end())
-        throw std::logic_error("Unary operator not found");
+Operator &InstrSet::FindOper (const Mnemonic &str) const {
+    auto oper = iset.find(Operator(str));
+    if (oper == iset.end())
+        throw std::logic_error("Operator not found");
     else 
-        return uoper._M_cur->_M_v();
+        return oper._M_cur->_M_v();
 };
 
-BinaryOperator &InstrSet::FindBinOper (const Mnemonic &str) const {
-    auto boper = bset.find(BinaryOperator(str));
-    if (boper == bset.end())
-        throw std::logic_error("Binary operator not found");
-    else 
-        return boper._M_cur->_M_v();
-};
 
-TernaryOperator &InstrSet::FindTernOper (const Mnemonic &str) const {
-    auto toper = tset.find(TernaryOperator(str));
-    if (toper == tset.end())
-        throw std::logic_error("Ternary operator not found");
-    else 
-        return toper._M_cur->_M_v();
-};
+//  COMMAND BASE  //
 
-InstrSet::InstrSet(const unary_instr_set& _uset, 
-    const binary_instr_set& _bset, const ternary_instr_set& _tset) 
-    : uset(_uset), bset(_bset), tset(_tset) {}; 
-
-
-//  COMMAND  //
-
-std::ostream &operator<<(std::ostream &os, const Command &cmd) {
+std::ostream &operator<<(std::ostream &os, const CommandBase &cmd) {
     cmd.print(os);
     return os;
 }
 
-//  UNARY COMMAND
+//  COMMAND
 
-void UnaryCommand::load_to_cache (CPU_Cache &cache) const
-    { cache.load_opd1(*opd1); }
+void Command::load_to_cache (CPU_Cache &cache) const
+    { cache.load_opds(opds); }
 
-void UnaryCommand::exec_in_cache (CPU_Cache &cache) const
-    { load_to_cache(cache); unoper(*cache.opd1); }
+void Command::exec_in_cache (CPU_Cache &cache) const
+    { load_to_cache(cache); oper(cache.opds); }
 
-void UnaryCommand::print(std::ostream &os) const {
-    os << unoper.mnemonics() << " " << *opd1;
+void Command::print(std::ostream &os) const {
+    os << oper.mnemonics();
+    for (const auto &opd : opds) os << " " << *opd;
+    os << '\n';
 }
 
-UnaryCommand* UnaryCommand::clone () const
-    { return new UnaryCommand(lbl, unoper, opd1->clone()); }
-
-UnaryCommand::UnaryCommand(const ID _lbl, const UnaryOperator _oper, 
-    std::unique_ptr<Operand> _opd1) 
-    : opd1(std::move(_opd1)), unoper(_oper) { Command::lbl = _lbl; }
-
-UnaryCommand::UnaryCommand(const UnaryOperator _oper, 
-    std::unique_ptr<Operand> _opd1) 
-    : opd1(std::move(_opd1)), unoper(_oper) {}
-
-//  BINARY COMMAND
-
-void BinaryCommand::load_to_cache (CPU_Cache &cache) const 
-    { cache.load_opd1(*opd1); cache.load_opd2(*opd2); }
-
-void BinaryCommand::exec_in_cache (CPU_Cache &cache) const  
-    { load_to_cache(cache); binoper(*cache.opd1, *cache.opd2); }   
-
-void BinaryCommand::print(std::ostream &os) const {
-    os << binoper.mnemonics() << " " << *opd1 << " " << *opd2;
+Command* Command::clone () const {
+    my_std::Vec<std::unique_ptr<Operand>> _opds; 
+    for (const auto &opd : opds) _opds.push_back(opd->clone());
+    return new Command(lbl, oper, std::move(_opds)); 
 }
 
-BinaryCommand* BinaryCommand::clone () const 
-    { return new BinaryCommand(lbl, binoper, opd1->clone(), opd2->clone()); }
+Command::Command(const ID _lbl, const Operator _oper, 
+    my_std::Vec<std::unique_ptr<Operand>> _opds) 
+    : opds(std::move(_opds)), oper(_oper) { CommandBase::lbl = _lbl; }
 
-BinaryCommand::BinaryCommand(const ID _lbl, const BinaryOperator _oper, 
-    std::unique_ptr<Operand> _opd1, std::unique_ptr<Operand> _opd2) 
-    : opd1(std::move(_opd1)), opd2(std::move(_opd2)), binoper(_oper) {
-    Command::lbl = _lbl;
-}
-
-BinaryCommand::BinaryCommand(const BinaryOperator _oper, 
-    std::unique_ptr<Operand> _opd1, std::unique_ptr<Operand> _opd2)  
-    : opd1(std::move(_opd1)), opd2(std::move(_opd2)), binoper(_oper) {}
+Command::Command(const Operator _oper, 
+    my_std::Vec<std::unique_ptr<Operand>> _opds) 
+    : opds(std::move(_opds)), oper(_oper) {}
 
 
-//  TERNARY COMMAND
-
-void TernaryCommand::load_to_cache (CPU_Cache &cache) const 
-    { cache.load_opd1(*opd1); cache.load_opd2(*opd2); cache.load_opd3(*opd3); }
-
-void TernaryCommand::exec_in_cache (CPU_Cache &cache) const  
-    { load_to_cache(cache); ternoper(*cache.opd1, *cache.opd2, *cache.opd3); }
-
-void TernaryCommand::print(std::ostream &os) const {
-    os << ternoper.mnemonics() << " " << *opd1 << " " << *opd2 << " " << *opd3;
-}
-
-TernaryCommand* TernaryCommand::clone () const 
-    { return new TernaryCommand(lbl, ternoper, opd1->clone(), opd2->clone(), opd3->clone()); }
-
-TernaryCommand::TernaryCommand(const ID _lbl, const TernaryOperator _oper, 
-    std::unique_ptr<Operand> _opd1, std::unique_ptr<Operand> _opd2, std::unique_ptr<Operand> _opd3) 
-    : opd1(std::move(_opd1)), opd2(std::move(_opd2)), opd3(std::move(_opd3)), ternoper(_oper) {
-    Command::lbl = _lbl;
-}
-
-TernaryCommand::TernaryCommand(const TernaryOperator _oper, 
-    std::unique_ptr<Operand> _opd1, std::unique_ptr<Operand> _opd2, std::unique_ptr<Operand> _opd3)  
-    : opd1(std::move(_opd1)), opd2(std::move(_opd2)), opd3(std::move(_opd3)), ternoper(_oper) {}

@@ -115,6 +115,13 @@ public:
     */
     CPU(InstrSet& _iset) : iset(_iset) { }
 
+        /**
+    * @brief Constructor for the CPU class.
+    *
+    * @param _iset Instruction set.
+    */
+    CPU(InstrSet& _iset, std::size_t _bitness) : bitness(_bitness), iset(_iset) { }
+
     /**
     * @brief Accessor for general-purpose register block by number.
     *

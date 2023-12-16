@@ -18,6 +18,7 @@ using GPRegister = NumberedCell;
 class String : public Operand {
 
     const Data *store = nullptr;
+    const size_t _end = 0;
     
     void print (std::ostream &os) const override;
     void load_to (CPU &cpu) const override;
@@ -27,13 +28,14 @@ class String : public Operand {
     String() {};
     ~String () override = default;
 
-    //virtual void printStr() {};
+    auto begin() const { return value; }
+    auto end() const { return _end;}
 
     /** 
     * @brief Trivial accessor for store.
     * @return const ref to store
     */
-    const auto &getStore () { return *store; }
+    const auto &getStore() const { return *store; }
 
     /**
     * @brief Creates a copy of the Operand object
@@ -43,14 +45,14 @@ class String : public Operand {
     * 
     * @return Pointer to the cloned Operand object
     */
-    std::unique_ptr<Operand> clone () const override;
+    std::unique_ptr<Operand> clone() const override;
 
     /**
     * @brief Constructor for the String class.
     *
     * @param 
     */
-    String (int val) : Operand(val) {};
+    String (int val, size_t end) : Operand(val), _end(end) {};
 };
 
 /**

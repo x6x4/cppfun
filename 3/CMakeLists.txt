@@ -14,8 +14,6 @@ set (CMAKE_CXX_FLAGS "-ggdb -fPIC -Wno-unused-parameter -std=c++20 -Wall -Wextra
 add_subdirectory(lib)
 add_subdirectory(instr_set)
 
-#add_subdirectory(lib/vector)
-
 #  testing
 
 #add_subdirectory(tests)

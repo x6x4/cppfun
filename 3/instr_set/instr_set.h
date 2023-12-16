@@ -9,56 +9,53 @@
 
 //  UNARY OPERATORS
 
-void Oper_Increment (Operand &opd1);
+void Oper_Increment (my_std::Vec<std::unique_ptr<Operand>> &opds);
 
-class Oper_Inc : public UnaryOperator {
+class Oper_Inc : public Operator {
 public:
-    Oper_Inc() : UnaryOperator("inc") { oper = Oper_Increment; }
+    Oper_Inc() : Operator("inc") { oper = Oper_Increment; }
 };
 
-void Oper_Jump (Operand &opd1);
+void Oper_Jump (my_std::Vec<std::unique_ptr<Operand>> &opds);
 
-class Oper_Jmp : public UnaryOperator {
+class Oper_Jmp : public Operator {
 public:
-    Oper_Jmp() : UnaryOperator("jmp") { oper = Oper_Jump; } 
+    Oper_Jmp() : Operator("jmp") { oper = Oper_Jump; } 
 };
 
-void Oper_Syscall (Operand &opd1, Operand &opd2);
-
-class Oper_SysCall : public BinaryOperator {
-public:
-    Oper_SysCall() : BinaryOperator("syscall") { oper = Oper_Syscall; } 
-};
 
 //  BINARY OPERATORS
 
-void Oper_Movement (Operand &opd1, Operand &opd2);
+void Oper_Movement (my_std::Vec<std::unique_ptr<Operand>> &opds);
 
-class Oper_Mov : public BinaryOperator {
+class Oper_Mov : public Operator {
 public:
-    Oper_Mov() : BinaryOperator("mov") { oper = Oper_Movement;}
+    Oper_Mov() : Operator("mov") { oper = Oper_Movement;}
+};
+
+void Oper_Syscall (my_std::Vec<std::unique_ptr<Operand>> &opds);
+
+class Oper_SysCall : public Operator {
+public:
+    Oper_SysCall() : Operator("syscall") { oper = Oper_Syscall; } 
 };
 
 //  TERNARY OPERATORS
 
-void Oper_FindSymbol (Operand &opd1, Operand &opd2, Operand &opd3);
+void Oper_FindSymbol (my_std::Vec<std::unique_ptr<Operand>> &opds);
 
-class Oper_FindSym : public TernaryOperator {
+class Oper_FindSym : public Operator {
 public:
-    Oper_FindSym() : TernaryOperator("fsym") { oper = Oper_FindSymbol; } 
+    Oper_FindSym() : Operator("fsym") { oper = Oper_FindSymbol; } 
 };
 
-void Oper_CompareStrings (Operand &opd1, Operand &opd2, Operand &opd3);
+void Oper_CompareStrings (my_std::Vec<std::unique_ptr<Operand>> &opds);
 
-class Oper_CmpStr : public TernaryOperator {
+class Oper_CmpStr : public Operator {
 public:
-    Oper_CmpStr() : TernaryOperator("cmpstr") { oper = Oper_CompareStrings;}
+    Oper_CmpStr() : Operator("cmpstr") { oper = Oper_CompareStrings;}
 };
 
-
-extern unary_instr_set uset; 
-extern binary_instr_set bset;
-extern ternary_instr_set tset;
 
 extern InstrSet iset;
 

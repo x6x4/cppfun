@@ -27,7 +27,7 @@ public:
 
 TEST_CASE("SIMPLE CASES") {
 
-    CPU cpu (iset);
+    CPU cpu (iset, 3);
     // store a call to a function object
     std::function<void(bpNum)> f = CLI_DBG(&cpu);
 
@@ -56,9 +56,9 @@ TEST_CASE("SIMPLE CASES") {
     "r0 r1 r2 r3 r4 r5 r6 r7 \n 0  0  1  1  0  0  0  0 \n0 0 0 0 0 0 0 0 \npc(2) zf(0) \n");
     out.str("");
 
-    REQUIRE_THROWS(load_file_cpu(cpu, "/home/cracky/cppfun/3/prog2.asm", avl_bps));
+    REQUIRE_THROWS(load_file_cpu(cpu, "/home/cracky/cppfun/3/prog1.asm", avl_bps));
 
-    load_file_cpu(cpu, "/home/cracky/cppfun/3/programs/prog2.asm", avl_bps);
+    load_file_cpu(cpu, "/home/cracky/cppfun/3/programs/test.asm", avl_bps);
     bps = {bpNum(5, 0)};        
     exec(cpu, bps, f);
     REQUIRE(out.str() == 

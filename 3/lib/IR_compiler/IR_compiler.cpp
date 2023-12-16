@@ -168,13 +168,11 @@ size_t parse_dr(NumberedLine data_str, std::unordered_set<ID> &data_label_table,
 
     ID label = "";
 
-    label.set_addr(data_str.num);
+    label.addr = data_str.num;
     if (tokens[0].back() == ':') { 
         if (tokens[0][0] == ':') throw std::logic_error ("empty label");
         label = tokens[0].substr(0, tokens[0].length() - 1).c_str();  //  shrink trailing ':'
-        if (tokens[1] == ".ascii") label.set_ascii(1);
-        if (!data_label_table.insert(label).second)
-            throw std::logic_error ("can't add label");
+        if (tokens[1] == ".ascii") label.is_ascii = 1;
     } else {
         throw std::logic_error ("bad label");
     }
@@ -192,6 +190,9 @@ size_t parse_dr(NumberedLine data_str, std::unordered_set<ID> &data_label_table,
     }
     data->push_back(0);
     DataSize++;
+    label.end_of_mem = label.addr + DataSize - 1;
+    if (!data_label_table.insert(label).second)
+        throw std::logic_error ("can't add label");
     return DataSize;
 }
 
@@ -219,7 +220,7 @@ const std::unordered_set<ID> &data_label_table, std::unordered_set<ID> &code_lab
 
     //   PARSE LABEL
 
-    label.set_addr(cmd_str.num);
+    label.addr = cmd_str.num;
     if (tokens[0].back() == ':') { 
         if (tokens[0][0] == ':') throw std::logic_error ("empty label");
         cur_tok_num++; label = tokens[0].substr(0, tokens[0].length() - 1).c_str();  //  shrink trailing ':'
@@ -233,23 +234,11 @@ const std::unordered_set<ID> &data_label_table, std::unordered_set<ID> &code_lab
 
     //  1st significant token is operator  
 
-    UnaryOperator uoper;
-    BinaryOperator binoper;
-    TernaryOperator ternoper;
-
-    if (num_sign_tok == 2) {         //  parse Uoper
-        uoper = iset.FindUnOper(tokens[cur_tok_num]); 
-
-    } else if (num_sign_tok == 3) {  //  parse Boper
-        binoper = iset.FindBinOper(tokens[cur_tok_num]); 
-    } else {  //  parse Toper
-        ternoper = iset.FindTernOper(tokens[cur_tok_num]);
-    }
-
-    cur_tok_num++;
+    Operator oper = iset.FindOper(tokens[cur_tok_num++]); 
 
     //  parse 1st opd
 
+    my_std::Vec<std::unique_ptr<Operand>> parsed_opds;
     std::unique_ptr<Operand> opd1;
 
     if (tokens[cur_tok_num][0] == '%')  {  //  register
@@ -258,19 +247,21 @@ const std::unordered_set<ID> &data_label_table, std::unordered_set<ID> &code_lab
 
     } else if (tokens[cur_tok_num][0] == '$')  {  //  data label
         ID data_label = FindLabel(data_label_table, tokens[cur_tok_num].substr(1).c_str());
-        opd1 = std::make_unique<DataCell>(DataCell(data_label.get_addr()));
+        opd1 = std::make_unique<DataCell>(DataCell(data_label.addr));
     }  else if (!std::isdigit(tokens[cur_tok_num][0])) {  //  code label
         ID code_label = FindLabel(code_label_table, tokens[cur_tok_num].c_str());
-        opd1 = std::make_unique<PCRegister>(PCRegister(code_label.get_addr()));
+        opd1 = std::make_unique<PCRegister>(PCRegister(code_label.addr));
     } else {
         throw std::logic_error("First operand can't be immediate");
     }
 
+    parsed_opds.push_back(std::move(opd1));
+
     cur_tok_num++;
 
     if (cur_tok_num == num_tok) {
-        std::unique_ptr<UnaryCommand> ucmd = 
-        std::make_unique<UnaryCommand>(UnaryCommand(label, uoper, std::move(opd1)));
+        std::unique_ptr<Command> ucmd = 
+        std::make_unique<Command>(Command(label, oper, std::move(parsed_opds)));
         
         return ucmd;
     }
@@ -284,10 +275,10 @@ const std::unordered_set<ID> &data_label_table, std::unordered_set<ID> &code_lab
         opd2 = std::make_unique<GPRegister>(std::stoi(reg_num));
     } else if (tokens[cur_tok_num][0] == '$')  {  //  data label
         ID data_label = FindLabel(data_label_table, tokens[cur_tok_num].substr(1).c_str());
-        if (data_label.iSascii())
-            opd2 = std::make_unique<String>(String(data_label.get_addr()));
+        if (data_label.is_ascii)
+            opd2 = std::make_unique<String>(String(data_label.addr, data_label.end_of_mem));
         else 
-            opd2 = std::make_unique<DataCell>(DataCell(data_label.get_addr()));
+            opd2 = std::make_unique<DataCell>(DataCell(data_label.addr));
     } else if (std::isdigit(tokens[cur_tok_num][0])) {  //  imm int
         opd2 = std::make_unique<ImmOperand>(std::stoi(tokens[cur_tok_num]));
     } else if (std::isalpha(tokens[cur_tok_num][0])) {  //  imm char
@@ -296,11 +287,13 @@ const std::unordered_set<ID> &data_label_table, std::unordered_set<ID> &code_lab
         throw std::logic_error("invalid 2nd operand");
     }
 
+    parsed_opds.push_back(std::move(opd2));
+
     cur_tok_num++;
 
     if (cur_tok_num == num_tok) {
-        std::unique_ptr<BinaryCommand> bincmd = 
-        std::make_unique<BinaryCommand>(BinaryCommand(label, binoper, std::move(opd1), std::move(opd2)));
+        std::unique_ptr<Command> bincmd = 
+        std::make_unique<Command>(Command(label, oper, std::move(parsed_opds)));
         return bincmd;
     }
 
@@ -310,14 +303,16 @@ const std::unordered_set<ID> &data_label_table, std::unordered_set<ID> &code_lab
 
     if (tokens[cur_tok_num][0] == '$')  {  //  data label
         ID data_label = FindLabel(data_label_table, tokens[cur_tok_num].substr(1).c_str());
-        opd3 = std::make_unique<String>(String(data_label.get_addr()));
+        opd3 = std::make_unique<String>(String(data_label.addr, data_label.end_of_mem));
     }
+
+    parsed_opds.push_back(std::move(opd3));
 
     cur_tok_num++;
 
     if (cur_tok_num == num_tok) {
-        std::unique_ptr<TernaryCommand> terncmd = 
-        std::make_unique<TernaryCommand>(TernaryCommand(label, ternoper, std::move(opd1), std::move(opd2), std::move(opd3)));
+        std::unique_ptr<Command> terncmd = 
+        std::make_unique<Command>(Command(label, oper, std::move(parsed_opds)));
         return terncmd;
     }
 
@@ -332,10 +327,10 @@ std::logic_error CE (const char *section, const char *error, std::size_t line_nu
     return std::logic_error(ss.str());
 }
 
-const ID& FindLabel (const std::unordered_set<ID> &label_table, const ID &id) {
-    auto label = label_table.find(id);
+const ID& FindLabel (const std::unordered_set<ID> &label_table, const ID &_id) {
+    auto label = label_table.find(_id);
     if (label == label_table.end())
-        throw std::logic_error("Unknown label: " + id.get_id());
+        throw std::logic_error("Unknown label: " + _id.id);
     else 
         return label._M_cur->_M_v();
 }

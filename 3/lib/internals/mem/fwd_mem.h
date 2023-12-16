@@ -9,7 +9,6 @@ class Memory;
 #include <ostream>
 #include <stdexcept>
 #include <utility>
-#include "../../vector/libvec/vec.h"
 
 using SafeText = my_std::Vec<std::unique_ptr<Command>>;
 using Data = my_std::Vec<int>;
