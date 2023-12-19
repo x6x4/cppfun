@@ -77,14 +77,14 @@ bool operator== (const Operator &a, const Operator &b) noexcept{
 
 //  INSTR SET  //
 
-Operator &InstrSet::FindOper (const Mnemonic &str) const {
+const Operator &InstrSet::FindOper (const Mnemonic &str) const {
     
     auto oper = iset.find(Operator(str));
 
     if (oper == iset.end())
         throw std::logic_error("Operator not found");
     else 
-        return oper._M_cur->_M_v();
+        return *oper;
 };
 
 InstrSet& InstrSet::operator+=(const InstrSet& otherSet) {

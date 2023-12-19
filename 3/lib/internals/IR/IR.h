@@ -349,7 +349,7 @@ public:
     * @throw std::logic_error "Operator not found"
     * @return A reference to the Operator object.
     */
-    Operator &FindOper(const Mnemonic &str) const;
+    const Operator &FindOper(const Mnemonic &str) const;
 
     InstrSet& operator+=(const InstrSet& otherSet);
 
