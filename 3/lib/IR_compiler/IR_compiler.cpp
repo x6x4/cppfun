@@ -234,7 +234,7 @@ const std::unordered_set<ID> &data_label_table, std::unordered_set<ID> &code_lab
 
     //  1st significant token is operator  
 
-    Operator oper = iset.FindOper(tokens[cur_tok_num++]); 
+    const Operator &oper = iset.FindOper(tokens[cur_tok_num++]); 
 
     //  parse 1st opd
 

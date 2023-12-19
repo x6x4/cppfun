@@ -1,5 +1,6 @@
 #pragma once
 #include "../lib/IR_compiler/fwd_IR_compiler.h"
+#include "../plugin/plugin_internals/library_manager/include/library_manager.h"
 
 class CLI_DBG {
 
@@ -16,4 +17,4 @@ public:
     };
 };
 
-InstrSet *load_iset ();
+InstrSet load_iset (LibraryManager &libManager);

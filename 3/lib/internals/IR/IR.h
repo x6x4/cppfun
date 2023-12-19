@@ -258,7 +258,7 @@ class Operator : public OperatorBase {
 
 protected:
 public:
-    void (*oper)(my_std::Vec<std::unique_ptr<Operand>> &opds);
+    virtual void oper (my_std::Vec<std::unique_ptr<Operand>> &opds) const { std::cout << "Bad inher"; };
 
 public:
     Operator() {};
@@ -290,10 +290,11 @@ public:
     * @param other The Operator object to compare with.
     * @return True if the mnemonics are the same, false otherwise.
     */    
-    
+    bool operator== (const Operator& other) noexcept {
+        return mnemonics() == other.mnemonics();
+    }
 };
 
-bool operator== (const Operator& a, const Operator& b) noexcept;
 
 
 namespace std {
@@ -307,11 +308,11 @@ namespace std {
         }
     };   
 
-    template<> struct hash<Operator>
+    template<> struct hash<Operator*>
     {
-        std::size_t operator()(const Operator& oper) const noexcept
+        std::size_t operator()(const Operator *oper) const noexcept
         {
-            std::size_t hash = std::hash<Mnemonic>()(oper.mnemonics());
+            std::size_t hash = std::hash<Mnemonic>()(oper->mnemonics());
             return hash;
         }
     };
@@ -325,13 +326,15 @@ namespace std {
  * and construct own instruction set from them.                                                             
  */
 
-using instr_set = std::unordered_set<Operator>;
+using instr_set = std::unordered_set<Operator*>;
 
 
 class InstrSet {
-    instr_set iset;
+    
 
 public:
+
+    instr_set iset;
 
     InstrSet() {};
 
@@ -442,7 +445,7 @@ class Command : public CommandBase {
 friend ExecUnit;
 
     my_std::Vec<std::unique_ptr<Operand>> opds;
-    Operator oper;
+    const Operator &oper;
 
 protected:
 
@@ -509,7 +512,7 @@ public:
     * @param _oper Operator to be applied to operand
     * @param _opd1 Unique pointer to the first operand
     */
-    Command(const ID _lbl, const Operator _oper, my_std::Vec<std::unique_ptr<Operand>> _opds);
+    Command(const ID _lbl, const Operator &_oper, my_std::Vec<std::unique_ptr<Operand>> _opds);
 
     /**
     * @brief Constructor for Command class
@@ -517,7 +520,7 @@ public:
     * @param _oper Operator to be applied to operand
     * @param _opd1 Unique pointer to the first operand
     */
-    Command(const Operator _oper, my_std::Vec<std::unique_ptr<Operand>> _opds);
+    Command(const Operator &_oper, my_std::Vec<std::unique_ptr<Operand>> _opds);
 
 };
 

@@ -1,4 +1,5 @@
 #include "dynamic_library.h"
+#include <iostream>
 
 DynamicLibrary::DynamicLibrary() noexcept: lib(nullptr) {}
 

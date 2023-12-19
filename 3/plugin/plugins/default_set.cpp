@@ -6,20 +6,21 @@
 #include "../plugin_internals/api/include/plugin_manager.h"
 
 
-void Oper_Increment (my_std::Vec<std::unique_ptr<Operand>> &opds) {
-    auto &opd1 = *opds.at(0);
-    opd1.set(opd1.val() + 1);
-};
-
 class Oper_Inc : public Operator {
 public:
-    Oper_Inc() : Operator("inc") { oper = Oper_Increment; }
+    Oper_Inc() : Operator("inc") {}
+
+    void oper (my_std::Vec<std::unique_ptr<Operand>> &opds) const override {
+        std::cout << "here";
+        auto &opd1 = *opds.at(0);
+        opd1.set(opd1.val() + 1);
+    }
 };
 
 
 class DefaultSetPlugin: public InstructionSetPlugin {
 
-  InstrSet iset {{Oper_Inc()}};
+  InstrSet iset {{new Oper_Inc()}};
 
 public:
 

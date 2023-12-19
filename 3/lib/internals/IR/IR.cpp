@@ -70,28 +70,25 @@ std::ostream &operator<<(std::ostream &os, const OperatorBase &op) {
     return os;
 }
 
-bool operator== (const Operator &a, const Operator &b) noexcept{
-    return a.mnemonics() == b.mnemonics();
-}
-
 
 //  INSTR SET  //
 
 const Operator &InstrSet::FindOper (const Mnemonic &str) const {
     
-    auto oper = iset.find(Operator(str));
+    Operator buf = Operator(str);
+    auto oper = iset.find(&buf);
 
     if (oper == iset.end())
         throw std::logic_error("Operator not found");
     else 
-        return *oper;
+        return **oper;
 };
 
 InstrSet& InstrSet::operator+=(const InstrSet& otherSet) {
     for (const auto& oper : otherSet.iset) {
         if (!iset.insert(oper).second)
         throw std::runtime_error(
-            "Can't insert operator " + oper.mnemonics() + '\n');
+            "Can't insert operator " + oper->mnemonics() + '\n');
     }
     return *this;
 }
@@ -124,11 +121,11 @@ Command* Command::clone () const {
     return new Command(lbl, oper, std::move(_opds)); 
 }
 
-Command::Command(const ID _lbl, const Operator _oper, 
+Command::Command(const ID _lbl, const Operator &_oper, 
     my_std::Vec<std::unique_ptr<Operand>> _opds) 
     : opds(std::move(_opds)), oper(_oper) { CommandBase::lbl = _lbl; }
 
-Command::Command(const Operator _oper, 
+Command::Command(const Operator &_oper, 
     my_std::Vec<std::unique_ptr<Operand>> _opds) 
     : opds(std::move(_opds)), oper(_oper) {}
 
