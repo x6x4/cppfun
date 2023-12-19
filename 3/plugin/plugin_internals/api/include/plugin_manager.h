@@ -11,17 +11,17 @@ class PluginManager {
 
   public:
 
-  void addPlugin(const OperatorPlugin& plugin);
+  void addPlugin(const InstructionSetPlugin& plugin);
 
   void removePlugin(const std::string& name);
 
-  const std::unordered_map<std::string, std::reference_wrapper<const OperatorPlugin>>& getPlugins();
+  const std::unordered_map<std::string, std::reference_wrapper<const InstructionSetPlugin>>& getPlugins();
 
   static PluginManager& getInstance();
 
   private:
 
-  std::unordered_map<std::string, std::reference_wrapper<const OperatorPlugin>> plugins;
+  std::unordered_map<std::string, std::reference_wrapper<const InstructionSetPlugin>> plugins;
 
   PluginManager() = default;
 
@@ -31,13 +31,13 @@ class PluginToken {
 
   public:
 
-  PluginToken(const OperatorPlugin& plugin);
+  PluginToken(const InstructionSetPlugin& plugin);
 
   ~PluginToken();
 
   private:
 
-  const OperatorPlugin& plugin;
+  const InstructionSetPlugin& plugin;
 };
 
 #endif // PLUGIN_MANAGER_H

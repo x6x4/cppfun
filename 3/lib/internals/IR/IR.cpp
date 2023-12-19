@@ -70,20 +70,31 @@ std::ostream &operator<<(std::ostream &os, const OperatorBase &op) {
     return os;
 }
 
-bool Operator::operator== (const Operator &other) const noexcept{
-    return mnemonics() == other.mnemonics();
+bool operator== (const Operator &a, const Operator &b) noexcept{
+    return a.mnemonics() == b.mnemonics();
 }
 
 
 //  INSTR SET  //
 
 Operator &InstrSet::FindOper (const Mnemonic &str) const {
+    
     auto oper = iset.find(Operator(str));
+
     if (oper == iset.end())
         throw std::logic_error("Operator not found");
     else 
         return oper._M_cur->_M_v();
 };
+
+InstrSet& InstrSet::operator+=(const InstrSet& otherSet) {
+    for (const auto& oper : otherSet.iset) {
+        if (!iset.insert(oper).second)
+        throw std::runtime_error(
+            "Can't insert operator " + oper.mnemonics() + '\n');
+    }
+    return *this;
+}
 
 
 //  COMMAND BASE  //

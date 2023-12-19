@@ -9,21 +9,19 @@ set (AUX_FLAGS "-O0 -coverage ")
 
 set (CMAKE_CXX_FLAGS "-ggdb -fPIC -Wno-unused-parameter -std=c++20 -Wall -Wextra -Wpedantic")
 
+find_package(fmt)
+
 #  libs 
 
 add_subdirectory(lib)
-add_subdirectory(instr_set)
-
-#  testing
-
-#add_subdirectory(tests)
-#target_link_libraries(test1 instr_set IR_compiler fmt::fmt)
-
-find_package(fmt)
-
-#add_subdirectory(plugin)
+add_subdirectory(plugin)
+add_subdirectory(gen)
 
 add_executable(main main.cpp)
-target_link_libraries(main instr_set IR_compiler fmt::fmt)
+#add_executable(threads threads.cpp)
+
+target_link_libraries(main gen fmt::fmt)
+#target_link_libraries(threads gen fmt::fmt)
+
 
 

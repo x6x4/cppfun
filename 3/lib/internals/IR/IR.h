@@ -6,6 +6,7 @@
 #pragma once
 #include "fwd_IR.h"
 #include <initializer_list>
+#include <stdexcept>
 
 
 /* 
@@ -252,10 +253,11 @@ std::ostream &operator<<(std::ostream &os, const OperatorBase &op);
  *  Consists of operation acting on operands.      
  *                                                               
  */
-//template <class ... Args>
+
 class Operator : public OperatorBase {
 
 protected:
+public:
     void (*oper)(my_std::Vec<std::unique_ptr<Operand>> &opds);
 
 public:
@@ -288,8 +290,10 @@ public:
     * @param other The Operator object to compare with.
     * @return True if the mnemonics are the same, false otherwise.
     */    
-    bool operator== (const Operator& other) const noexcept;
+    
 };
+
+bool operator== (const Operator& a, const Operator& b) noexcept;
 
 
 namespace std {
@@ -325,9 +329,11 @@ using instr_set = std::unordered_set<Operator>;
 
 
 class InstrSet {
-    const instr_set iset;
+    instr_set iset;
 
 public:
+
+    InstrSet() {};
 
     /**
     * @brief Constructor for the InstrSet class.
@@ -344,6 +350,9 @@ public:
     * @return A reference to the Operator object.
     */
     Operator &FindOper(const Mnemonic &str) const;
+
+    InstrSet& operator+=(const InstrSet& otherSet);
+
 };
 
 

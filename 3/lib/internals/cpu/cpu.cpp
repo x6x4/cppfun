@@ -94,15 +94,7 @@ void CPU::load_mem (Mem &&m) {
 }
 
 void CPU::assign(const Command &cmd) {
-    for (std::size_t i = 0; i < EUs.size(); i++) {
-        auto &eu = EUs[i];
-        if (eu.first == State::FREE) {
-            EUs[i].first = State::BUSY;
-            EUs[i].second.exec(cmd);
-            EUs[i].first = State::FREE;
-            return;
-        }
-    }
+    EU.exec(cmd);
 }
 
 //  EXEC UNIT  //

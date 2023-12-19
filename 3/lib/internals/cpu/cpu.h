@@ -91,7 +91,7 @@ friend ExecUnit;
     std::size_t bitness = 4;
     std::size_t mem_cap = std::pow(2, bitness);
 
-    ExecUnits EUs = {std::make_pair(State::FREE, ExecUnit(this))};
+    ExecUnit EU = ExecUnit (this);
     RegBlock gp_rb = RegBlock(8);
     Memory mem = Memory(mem_cap);
     Data cache_data;
@@ -113,14 +113,14 @@ public:
     *
     * @param _iset Instruction set.
     */
-    CPU(InstrSet& _iset) : iset(_iset) { }
+    CPU(InstrSet &_iset) : iset(_iset) { }
 
         /**
     * @brief Constructor for the CPU class.
     *
     * @param _iset Instruction set.
     */
-    CPU(InstrSet& _iset, std::size_t _bitness) : bitness(_bitness), iset(_iset) { }
+    CPU(InstrSet &_iset, std::size_t _bitness) : bitness(_bitness), iset(_iset) { }
 
     /**
     * @brief Accessor for general-purpose register block by number.

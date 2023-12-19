@@ -22,5 +22,4 @@ enum class State {
     BUSY
 };
 
-using ExecUnits = my_std::Vec<std::pair<State,ExecUnit>>;
 using Mem = std::pair<std::unique_ptr<Data>, std::unique_ptr<SafeText>>;

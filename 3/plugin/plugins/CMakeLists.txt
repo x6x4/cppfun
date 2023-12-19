@@ -1,3 +1,3 @@
-add_library(current_time SHARED current_time.cpp)
-set_property(TARGET current_time PROPERTY POSITION_INDEPENDENT_CODE ON)
-target_link_libraries(current_time plugin plugin_manager)
+add_library(default_set SHARED default_set.cpp)
+set_property(TARGET default_set PROPERTY POSITION_INDEPENDENT_CODE ON)
+target_link_libraries(default_set plugin plugin_manager IR)

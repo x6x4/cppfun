@@ -2,13 +2,16 @@
 #define PLUGIN_H
 
 #include <string>
+#include "../../../../lib/internals/IR/IR.h"
 
-class OperatorPlugin {
+class InstructionSetPlugin {
+
 public:
+
   virtual std::string getName() const = 0;
   virtual std::string getVersion() const = 0;
-  virtual std::string getMsg() const = 0;
-  virtual ~OperatorPlugin() = default;
+  virtual const InstrSet &getInstrSet() const = 0;
+  virtual ~InstructionSetPlugin() = default;
 };
 
 #endif // PLUGIN_H

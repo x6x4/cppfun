@@ -5,10 +5,10 @@ PluginManager& PluginManager::getInstance() {
   return manager;
 }
 
-void PluginManager::addPlugin(const OperatorPlugin& plugin) {
+void PluginManager::addPlugin(const InstructionSetPlugin& plugin) {
   auto res = plugins.emplace(plugin.getName(), std::ref(plugin));
   if(!res.second) {
-    const OperatorPlugin& oldPlugin = res.first->second;
+    const InstructionSetPlugin& oldPlugin = res.first->second;
     throw std::runtime_error(
         fmt::format("duplicate plugin: {}:{} and {}:{}",
                     oldPlugin.getName(), oldPlugin.getVersion(),
@@ -20,11 +20,11 @@ void PluginManager::removePlugin(const std::string& name) {
   plugins.erase(name);
 }
 
-const std::unordered_map<std::string, std::reference_wrapper<const OperatorPlugin>>& PluginManager::getPlugins() {
+const std::unordered_map<std::string, std::reference_wrapper<const InstructionSetPlugin>>& PluginManager::getPlugins() {
   return plugins;
 }
 
-PluginToken::PluginToken(const OperatorPlugin& plugin): plugin(plugin) {
+PluginToken::PluginToken(const InstructionSetPlugin& plugin): plugin(plugin) {
   PluginManager::getInstance().addPlugin(plugin);
 }
 

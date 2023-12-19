@@ -49,10 +49,10 @@ void Oper_Syscall (my_std::Vec<std::unique_ptr<Operand>> &opds) {
 
 //  TERNARY OPERATORS
 
-int find_sym (const my_std::Vec<int> &str, char sym, size_t init_pos, size_t final_pos) {
+int find_sym (const my_std::Vec<int> &data_mem, char sym, size_t init_pos, size_t final_pos) {
     int sym_pos = -1;
 
-    for (auto i = str.begin()+init_pos; i != str.begin() + final_pos; i++) {
+    for (auto i = data_mem.begin()+init_pos; i != data_mem.begin() + final_pos; i++) {
         if (*i == sym) {
             sym_pos = *i; break;
         }
@@ -61,7 +61,7 @@ int find_sym (const my_std::Vec<int> &str, char sym, size_t init_pos, size_t fin
     return sym_pos;
 }
 
-int find_sym_mt (const my_std::Vec<int> &str, char sym, size_t init_pos, size_t final_pos) {
+int find_sym_mt (const my_std::Vec<int> &data_mem, char sym, size_t init_pos, size_t final_pos) {
     std::size_t chars_num = final_pos - init_pos;
     size_t thread_prelim_num = std::thread::hardware_concurrency();
     auto thread_num = std::min(thread_prelim_num, chars_num);
@@ -73,8 +73,8 @@ int find_sym_mt (const my_std::Vec<int> &str, char sym, size_t init_pos, size_t 
         size_t end_i = start_i + chars_num/thread_num;
         auto start = init_pos + start_i;
         auto end = init_pos + end_i;
-        threads[i] = std::thread( [=, &results]() {
-            results[i] = find_sym(str, sym, start, end) - init_pos + 1;
+        threads[i] = std::thread( [=, &data_mem, &results]() {
+            results[i] = find_sym(data_mem, sym, start, end) - init_pos + 1;
         } );
     }
 

@@ -1,29 +1,23 @@
 
 #include "gen/gen.h"
 #include <iostream>
-#include <filesystem>
-#include <memory>
 
 
 int main (int, char **argv) {
 
     try {
 
-        InstrSet *iset = load_iset();
-        Operator test = iset->FindOper("inc");
-
-        my_std::Vec<std::unique_ptr<Operand>> b;
-        b.push_back({std::make_unique<Operand>(Operand())});
-
-        test.oper(b);
-        
-        CPU cpu (*iset, 4);
+        InstrSet iset = load_iset();
+        CPU cpu (iset, 25);
 
         if (!argv[1]) throw std::logic_error ("No arguments.");
 
         my_std::Vec<std::size_t> avl_bps;
-        
-        load_file_cpu(cpu, argv[1], avl_bps);
+        std::string program_text = ".text\nfsym %r6 z $key\n.data\nkey: .ascii k";
+        for (int i = 0; i < 32000000; i++)
+            program_text.push_back('a');
+
+        load_text_cpu(cpu, program_text, avl_bps);
 
         my_std::Vec <bpNum> bps = {bpNum(1, 0), bpNum(2, 0), bpNum(3, 0), bpNum(4, 0), bpNum(5, 0)};
 
