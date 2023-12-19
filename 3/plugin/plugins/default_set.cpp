@@ -11,7 +11,6 @@ public:
     Oper_Inc() : Operator("inc") {}
 
     void oper (my_std::Vec<std::unique_ptr<Operand>> &opds) const override {
-        std::cout << "here";
         auto &opd1 = *opds.at(0);
         opd1.set(opd1.val() + 1);
     }

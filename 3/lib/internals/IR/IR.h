@@ -257,10 +257,10 @@ std::ostream &operator<<(std::ostream &os, const OperatorBase &op);
 class Operator : public OperatorBase {
 
 protected:
-public:
     virtual void oper (my_std::Vec<std::unique_ptr<Operand>> &opds) const { std::cout << "Bad inher"; };
 
 public:
+    virtual ~Operator() {};
     Operator() {};
 
     Operator(const Operator &copy) = default;
@@ -308,14 +308,27 @@ namespace std {
         }
     };   
 
-    template<> struct hash<Operator*>
+    /*template<> struct hash<Operator*>
     {
         std::size_t operator()(const Operator *oper) const noexcept
         {
             std::size_t hash = std::hash<Mnemonic>()(oper->mnemonics());
             return hash;
         }
-    };
+    };*/
+}
+
+namespace detail {
+struct OperatorComparator{
+    bool operator()(const Operator* lhs,  const Operator* rhs) 
+    const {return lhs->mnemonics() == rhs->mnemonics();}
+};
+
+struct OperatorHasher
+{
+    size_t operator()(const Operator* opr) const {return std::hash<std::string>{}(opr->mnemonics());}
+};
+
 }
 
 /*
@@ -326,11 +339,12 @@ namespace std {
  * and construct own instruction set from them.                                                             
  */
 
-using instr_set = std::unordered_set<Operator*>;
-
+using instr_set = std::unordered_set<Operator*, detail::OperatorHasher, 
+detail::OperatorComparator>;
 
 class InstrSet {
     
+   // ~InstrSet() { for (auto oper : iset) delete oper; }
 
 public:
 

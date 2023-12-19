@@ -10,7 +10,6 @@ int main (int, char **argv) {
     try {
         LibraryManager libManager;
         InstrSet iset = load_iset(libManager);
-        std::cout << iset.iset.begin()._M_cur->_M_v()->mnemonics();
         
         CPU cpu (iset, 4);
 
