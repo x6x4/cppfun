@@ -5,3 +5,7 @@ target_link_libraries(default_set plugin plugin_manager IR operands)
 add_library(multithread SHARED multithread.cpp)
 set_property(TARGET multithread PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_link_libraries(multithread plugin plugin_manager IR operands)
+
+add_library(petuha SHARED petuha.cpp)
+set_property(TARGET petuha PROPERTY POSITION_INDEPENDENT_CODE ON)
+target_link_libraries(petuha plugin plugin_manager IR operands)

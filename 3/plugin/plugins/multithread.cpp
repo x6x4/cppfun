@@ -81,11 +81,7 @@ public:
   std::string getName() const override {
     return "Plugin: Operators FindSymbol";
   }
-
-  std::string getVersion() const override {
-    return "1.0.0";
-  }
-
+  
   const InstrSet &getInstrSet() const override {
     return iset;
   }

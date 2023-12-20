@@ -56,10 +56,6 @@ public:
     return "Plugin: Operators Inc, Mov, Syscall";
   }
 
-  std::string getVersion() const override {
-    return "1.0.0";
-  }
-
   const InstrSet &getInstrSet() const override {
     return iset;
   }
