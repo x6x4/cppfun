@@ -14,6 +14,10 @@
 //  empty is tested by default & sized constructor
 //  begin, end and == are used everywhere
 
+size_t f (size_t val, std::string str) {
+    return val += str.size();
+}
+
 TEST_CASE("Vec") {
     SECTION("Constructors") {
         SECTION("Default") {
@@ -292,6 +296,11 @@ TEST_CASE("Vec") {
             _vec.push_back("3");
             REQUIRE(_vec == my_std::Vec<std::string>{"1", "2", "3"});
             REQUIRE(_vec.capacity() == 4);
+        }
+        SECTION("REDUCE") {
+            my_std::Vec<std::string> _vec {"abc", "cccc", "d"};
+            size_t x = _vec.reduce<size_t>(0, f);
+            REQUIRE(x == 8);
         }
     }
 }

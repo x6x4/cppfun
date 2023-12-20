@@ -3,13 +3,14 @@
  * @brief A custom vector template container implementation.
  *
  * This file contains a sequence container that encapsulates dynamic C-style arrays (stripped std::vector).
- * It meets the standard requirements and provides access to elements through an custom vec_iterator iterator.
+ * It meets the standard requirements and provides access to elements through a pointer iterator.
  * Warning: NO ALLOCATORS!
  */
 
 #pragma once
 #include "fwd_vec.h"
 #include <cstdlib>
+#include <functional>
 #include <iterator>
 #include <memory>
 #include <new>
@@ -594,9 +595,25 @@ namespace my_std
             *  @param    
             *
             *  
+            добавить шаблонную функцию свёртки вектора.
+Vector<T> reduce() -> R
+reduce(R, (R, T) const -> R)
+в reduce передается начальное значение R и функция, получающая новое значение R на основе предыдущего значения R и очередного T
+Пример:
+"abc", "cccc", "d"
+reduce(0, f)
+где f(int i, string s) -> i + s.lengh; 
+f(0, "abc") -> 3
+f(3, "cccc") -> 7
+f(7, "d") -> 8
+
             */
-            void reduce () {
-                
+            template<typename R>
+            R reduce (R accum, std::function<R (R, T)> f) {
+                for (const auto &el : *this)
+                    accum = f(accum, el);
+
+                return accum;
             }
 
             private:
