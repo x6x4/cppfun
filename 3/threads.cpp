@@ -3,14 +3,11 @@
 #include <iostream>
 
 
-int main (int, char **argv) {
+int main () {
 
     try {
-
-        InstrSet iset = load_iset();
-        CPU cpu (iset, 25);
-
-        if (!argv[1]) throw std::logic_error ("No arguments.");
+        LibraryManager libManager;
+        CPU cpu (load_iset(libManager), 25);
 
         my_std::Vec<std::size_t> avl_bps;
         std::string program_text = ".text\nfsym %r6 z $key\n.data\nkey: .ascii k";
@@ -21,7 +18,7 @@ int main (int, char **argv) {
 
         my_std::Vec <bpNum> bps = {bpNum(1, 0), bpNum(2, 0), bpNum(3, 0), bpNum(4, 0), bpNum(5, 0)};
 
-        std::function<void(bpNum)> f = CLI_DBG(&cpu);
+        std::function<void(bpNum)> f = CLI_DBG_MT(&cpu);
         
         exec(cpu, bps, f);
         std::cout << std::endl;

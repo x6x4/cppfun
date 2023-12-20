@@ -8,7 +8,7 @@
 
 
 
-InstrSet iset {{Oper_Inc(), Oper_Jmp(), Oper_Mov(), Oper_SysCall(), Oper_FindSym(), Oper_CmpStr()}};
+InstrSet iset {{Oper_Inc(), Oper_Jmp(), Oper_Mov(), Oper_FindSymbol(), Oper_FindSym(), Oper_CmpStr()}};
 
 
 //  UNARY OPERATORS
@@ -84,7 +84,7 @@ int find_sym_mt (const my_std::Vec<int> &data_mem, char sym, size_t init_pos, si
     return -1;
 }
 
-void Oper_FindSymbol (my_std::Vec<std::unique_ptr<Operand>> &opds) {
+void Oper_FindSymbo (my_std::Vec<std::unique_ptr<Operand>> &opds) {
     auto &opd1 = *opds.at(0);
     auto &opd2 = *opds.at(1);
     auto &opd3 = *opds.at(2);

@@ -6,6 +6,7 @@
 #pragma once
 #include "fwd_IR.h"
 #include <initializer_list>
+#include <memory>
 #include <stdexcept>
 
 
@@ -320,13 +321,13 @@ namespace std {
 
 namespace detail {
 struct OperatorComparator{
-    bool operator()(const Operator* lhs,  const Operator* rhs) 
+    bool operator()(std::shared_ptr<Operator> lhs,  std::shared_ptr<Operator> rhs) 
     const {return lhs->mnemonics() == rhs->mnemonics();}
 };
 
 struct OperatorHasher
 {
-    size_t operator()(const Operator* opr) const {return std::hash<std::string>{}(opr->mnemonics());}
+    size_t operator()(std::shared_ptr<Operator> oper) const {return std::hash<std::string>{}(oper->mnemonics());}
 };
 
 }
@@ -339,12 +340,11 @@ struct OperatorHasher
  * and construct own instruction set from them.                                                             
  */
 
-using instr_set = std::unordered_set<Operator*, detail::OperatorHasher, 
+using instr_set = std::unordered_set<std::shared_ptr<Operator>, 
+detail::OperatorHasher, 
 detail::OperatorComparator>;
 
 class InstrSet {
-    
-   // ~InstrSet() { for (auto oper : iset) delete oper; }
 
 public:
 

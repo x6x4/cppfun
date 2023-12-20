@@ -8,13 +8,11 @@
 int main (int, char **argv) {
 
     try {
-        LibraryManager libManager;
-        InstrSet iset = load_iset(libManager);
-        
-        CPU cpu (iset, 4);
-
         if (!argv[1]) throw std::logic_error ("No arguments.");
 
+        LibraryManager libManager;
+        CPU cpu (load_iset(libManager), 4);
+        
         my_std::Vec<std::size_t> avl_bps;
         
         load_file_cpu(cpu, argv[1], avl_bps);

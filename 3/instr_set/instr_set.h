@@ -35,18 +35,18 @@ public:
 
 void Oper_Syscall (my_std::Vec<std::unique_ptr<Operand>> &opds);
 
-class Oper_SysCall : public Operator {
+class Oper_FindSymbol : public Operator {
 public:
-    Oper_SysCall() : Operator("syscall") { oper = Oper_Syscall; } 
+    Oper_FindSymbol() : Operator("syscall") { oper = Oper_Syscall; } 
 };
 
 //  TERNARY OPERATORS
 
-void Oper_FindSymbol (my_std::Vec<std::unique_ptr<Operand>> &opds);
+void Oper_FindSymbo (my_std::Vec<std::unique_ptr<Operand>> &opds);
 
 class Oper_FindSym : public Operator {
 public:
-    Oper_FindSym() : Operator("fsym") { oper = Oper_FindSymbol; } 
+    Oper_FindSym() : Operator("fsym") { oper = Oper_FindSymbo; } 
 };
 
 void Oper_CompareStrings (my_std::Vec<std::unique_ptr<Operand>> &opds);

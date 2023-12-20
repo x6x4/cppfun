@@ -76,12 +76,10 @@ std::ostream &operator<<(std::ostream &os, const OperatorBase &op) {
 const Operator &InstrSet::FindOper (const Mnemonic &str) const {
     
     Operator buf = Operator(str);
-    auto oper = iset.find(&buf);
+    auto oper = iset.find(std::make_shared<Operator>(buf));
 
-    if (oper == iset.end())
-        throw std::logic_error("Operator not found");
-    else 
-        return **oper;
+    if (oper == iset.end()) throw std::logic_error("Operator not found");
+    else return **oper;
 };
 
 InstrSet& InstrSet::operator+=(const InstrSet& otherSet) {

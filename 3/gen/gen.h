@@ -17,4 +17,18 @@ public:
     };
 };
 
+class CLI_DBG_MT {
+
+CPU *cpu = nullptr;
+
+public:
+
+    CLI_DBG_MT (CPU *_cpu) : cpu(_cpu) {};
+
+    void operator() (bpNum) { 
+        cpu->print_gpregblock(std::cout); 
+        cpu->print_spregblock(std::cout);
+    };
+};
+
 InstrSet load_iset (LibraryManager &libManager);
