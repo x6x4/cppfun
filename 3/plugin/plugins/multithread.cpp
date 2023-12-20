@@ -72,7 +72,7 @@ public:
     }
 };
 
-class DefaultSetPlugin: public InstructionSetPlugin {
+class MultithreadPlugin: public InstructionSetPlugin {
 
   InstrSet iset {{std::make_shared<Oper_FindSymbol>(Oper_FindSymbol())}};
 
@@ -91,5 +91,5 @@ public:
   }
 };
 
-static DefaultSetPlugin plugin;
+static MultithreadPlugin plugin;
 static auto token = PluginToken(plugin);

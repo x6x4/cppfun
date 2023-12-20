@@ -1,0 +1,23 @@
+
+InstrSet iset {{Oper_Jmp(), Oper_CmpStr()}};
+
+
+void Oper_Jump (my_std::Vec<std::unique_ptr<Operand>> &opds) {
+    auto &opd1 = *opds.at(0);
+    if (typeid(opd1) == typeid(PCRegister&))
+        static_cast<PCRegister&>(opd1).set_num(0);
+    else 
+        throw std::logic_error ("Runtime error: jmp instruction requires code label operand");
+}
+
+
+void Oper_CompareStrings (my_std::Vec<std::unique_ptr<Operand>> &opds) {
+    /*auto &opd1 = *opds.at(0);
+    auto &opd2 = *opds.at(1);
+    auto &opd3 = *opds.at(2);*/
+}
+
+//  parallel programming 
+//  Oper_Strcmp %r1/%r2 scmpsb
+
+

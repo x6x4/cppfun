@@ -44,7 +44,7 @@ public:
     }
 };
 
-class DefaultSetPlugin: public InstructionSetPlugin {
+class MultithreadPlugin: public InstructionSetPlugin {
 
   InstrSet iset {{std::make_shared<Oper_Inc>(Oper_Inc()), 
   std::make_shared<Oper_Mov>(Oper_Mov()),
@@ -65,5 +65,5 @@ public:
   }
 };
 
-static DefaultSetPlugin plugin;
+static MultithreadPlugin plugin;
 static auto token = PluginToken(plugin);
