@@ -1,12 +1,8 @@
 #  simple test program 
 
 .text
-inc %r6 
-inc %r2
-inc %r4
 mov %r3 5
-inc $dd
-mov $dd %r2 
+binpowrem %r3 2 17
 
 .data
 d: 5

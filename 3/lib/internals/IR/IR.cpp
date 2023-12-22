@@ -115,6 +115,7 @@ void Command::print(std::ostream &os) const {
 
 Command* Command::clone () const {
     my_std::Vec<std::unique_ptr<Operand>> _opds; 
+    //for (const auto &opd : opds) std::cout << *opd << ' ';
     for (const auto &opd : opds) _opds.push_back(opd->clone());
     return new Command(lbl, oper, std::move(_opds)); 
 }

@@ -304,6 +304,11 @@ const std::unordered_set<ID> &data_label_table, std::unordered_set<ID> &code_lab
     if (tokens[cur_tok_num][0] == '$')  {  //  data label
         ID data_label = FindLabel(data_label_table, tokens[cur_tok_num].substr(1).c_str());
         opd3 = std::make_unique<String>(String(data_label.addr, data_label.end_of_mem));
+    } else if (std::isdigit(tokens[cur_tok_num][0])) {  //  imm int
+        opd3 = std::make_unique<ImmOperand>(std::stoi(tokens[cur_tok_num]));
+    } else if (tokens[cur_tok_num][0] == '%')  {  //  register
+        std::string reg_num (tokens[cur_tok_num].substr(2));
+        opd2 = std::make_unique<GPRegister>(std::stoi(reg_num));
     }
 
     parsed_opds.push_back(std::move(opd3));

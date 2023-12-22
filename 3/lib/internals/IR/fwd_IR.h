@@ -6,7 +6,7 @@
 #include <memory>
 #include <stdexcept>
 #include <unordered_set>
-#include "../../vector/libvec/vec.h"
+#include "../../vector/vec.h"
 
 
 class CPU_Cache;

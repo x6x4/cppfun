@@ -6,7 +6,7 @@
 #include <limits>
 #define CATCH_CONFIG_MAIN 
 
-#include "libvec/vec.h"
+#include "vec.h"
 #include <catch2/catch.hpp>
 #include <array>
 

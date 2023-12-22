@@ -14,15 +14,15 @@ find_package(fmt)
 #  libs 
 
 add_subdirectory(lib)
-add_subdirectory(lib/vector)
+#add_subdirectory(lib/vector)
 add_subdirectory(plugin)
 add_subdirectory(gen)
 
-#add_executable(main main.cpp)
-#add_executable(threads threads.cpp)
+add_executable(main main.cpp)
+add_executable(threads threads.cpp)
 
-#target_link_libraries(main gen fmt::fmt)
-#target_link_libraries(threads gen fmt::fmt)
+target_link_libraries(main gen fmt::fmt)
+target_link_libraries(threads gen fmt::fmt)
 
 
 
