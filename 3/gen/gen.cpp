@@ -1,16 +1,21 @@
 
 #include "gen.h"
 
+#include <cstdlib>
 #include <filesystem>
+#include <stdexcept>
 #include <string>
-#include <vector>
 #include "../plugin/plugin_internals/api/include/plugin_manager.h"
 
 
 constexpr auto dlExt = ".so";
-constexpr auto searchDir = "/home/cracky/cppfun/3/build/plugin/plugins";
+
 
 InstrSet load_iset (LibraryManager &libManager) {
+
+    const char *searchDir = std::getenv("PLUGINS_PATH");
+    std::cout << "Loaded from:" << searchDir << std::endl;
+    if (!searchDir) throw std::runtime_error ("Bad environmental variable\n");
 
     libManager.scan(searchDir, dlExt);
 
